@@ -1,0 +1,60 @@
+---
+- hosts: all
+  tasks:
+    - name: Test
+      ansible.builtin.debug:
+        msg: "Hello World"
+    - name: Install stuff for mp-spdz
+      become: yes
+      apt:
+        pkg:
+          - automake
+          - build-essential
+          - git
+          - libboost-dev
+          - libboost-thread-dev
+          - libntl-dev
+          - libsodium-dev
+          - libssl-dev
+          - libtool
+          - m4 
+          - python3 
+          - texinfo
+          - yasm
+        update_cache: yes
+    
+    - name: Get MP-SPDZ
+      ansible.builtin.git:
+        repo: git@github.com:data61/MP-SPDZ.git
+        dest: "/home/develop/mp-spdz"
+        accept_hostkey: yes
+        ssh_opts: "-o StrictHostKeyChecking=no"
+
+    
+    - name: Set MP-SDPZ folder
+      set_fact:
+        mp_spdz_home: "/home/develop/mp-spdz"
+    
+    - name: Compile mp-spdz (part 1)
+      community.general.make:
+        chdir: "{{mp_spdz_home}}"
+        jobs: 8
+        target: "mpir"
+    
+    - name: "Compile mp-spdz (part 2: mascot-x)"
+      community.general.make:
+        chdir: "{{mp_spdz_home}}"
+        jobs: 8
+        target: "tldr"
+
+    - name: "Compile mp-spdz (part 3):"
+      community.general.make:
+        chdir: "{{mp_spdz_home}}"
+        jobs: 8
+        target: "mama-party.x"
+
+    - name: "Compile mp-spdz (part 4)"
+      community.general.make:
+        chdir: "{{mp_spdz_home}}"
+        jobs: 8
+        target: "spdz2k-party.x"
