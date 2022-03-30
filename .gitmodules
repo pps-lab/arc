@@ -1,3 +1,6 @@
 [submodule "mp-spdz"]
 	path = mp-spdz
 	url = git@github.com:data61/MP-SPDZ.git
+[submodule "doe-suite"]
+	path = doe-suite
+	url = git@github.com:nicolas-kuechler/doe-suite.git
