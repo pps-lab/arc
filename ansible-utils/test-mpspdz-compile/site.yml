@@ -1,5 +1,9 @@
 ---
-- hosts: all
+- name: Install Prerequisites for mp-spdz
+  hosts: all
+  vars:
+    mp_spdz_repo: git@github.com:data61/MP-SPDZ.git
+    mp_spdz_dest: "/home/{{ansible_user_id}}/mp-spdz"
   tasks:
     - name: Test
       ansible.builtin.debug:
@@ -23,6 +27,13 @@
           - yasm
         update_cache: yes
     
+    # - name: Check if MP-SPDZ exists
+    #   ansible.builtin.git:
+    #     repo: "{{mp_spdz_repo}}"
+    #     dest: "{{mp_spdz_dest}}"
+    #     update: no
+    #     clone: no
+
     - name: Get MP-SPDZ
       ansible.builtin.git:
         repo: git@github.com:data61/MP-SPDZ.git
@@ -35,26 +46,55 @@
       set_fact:
         mp_spdz_home: "/home/develop/mp-spdz"
     
-    - name: Compile mp-spdz (part 1)
+    
+
+- name: Compile MP-SPDZ
+  hosts: all
+  tasks:
+    - name: Compile mpir
       community.general.make:
         chdir: "{{mp_spdz_home}}"
         jobs: 8
         target: "mpir"
     
-    - name: "Compile mp-spdz (part 2: mascot-x)"
+    - name: "Check if mascot-party.x exists"
+      ansible.builtin.stat:
+        path: "{{mp_spdz_home}}/mascot-party.x"
+      register: st
+
+    - name: "Compile mascot-x"
       community.general.make:
         chdir: "{{mp_spdz_home}}"
         jobs: 8
-        target: "tldr"
+        target: "mascot-party.x"
+      when: st.stat.exists == False
 
-    - name: "Compile mp-spdz (part 3):"
+    - name: "Check if mama-party.x exists"
+      ansible.builtin.stat:
+        path: "{{mp_spdz_home}}/mama-party.x"
+      register: st  
+
+    - name: "Compile mama-party.x"
       community.general.make:
         chdir: "{{mp_spdz_home}}"
         jobs: 8
         target: "mama-party.x"
+      when: st.stat.exists == False
 
-    - name: "Compile mp-spdz (part 4)"
+    - name: "Compile spdz2k-party.x"
       community.general.make:
         chdir: "{{mp_spdz_home}}"
         jobs: 8
         target: "spdz2k-party.x"
+    
+    - name: "Compile semi-party.x"
+      community.general.make:
+        chdir: "{{ mp_spdz_home }}"
+        jobs: 8
+        target: "semi-party.x"
+    
+    - name: "Compile semi2k-party.x"
+      community.general.make:
+        chdir: "{{ mp_spdz_home }}"
+        jobs: 8
+        target: "semi2k-party.x"
