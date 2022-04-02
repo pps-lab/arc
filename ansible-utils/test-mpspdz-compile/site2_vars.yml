@@ -1,0 +1,2 @@
+test_host_name: "Test Machine"
+aws_target_profile: "personal"

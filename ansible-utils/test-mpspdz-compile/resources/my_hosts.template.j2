@@ -1,0 +1,9 @@
+all:
+    hosts:
+        {% for i in results.instances %}
+            
+            test-{{loop.index}}:
+                ansible_connection: ssh
+                ansible_user: ubuntu
+                ansible_host: {{i.public_ip_address}}
+        {% endfor %}
