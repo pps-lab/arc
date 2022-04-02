@@ -1,2 +1,3 @@
 ans-env/
 hosts.yml
+*.local.yml
