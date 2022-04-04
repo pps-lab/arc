@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+  name: "Create some EC2 instances and update hosts"
+  gather_facts: no
+  vars_files:
+    - "{{playbook_dir}}/site2_vars.yml"
+  tasks:
+    - name: "Create instance"
+      amazon.aws.ec2_instance:
+        key_name: local-keys-2
+        instance_type: t2.medium
+        image_id: "ami-0d527b8c289b4af7f"
+        wait: yes
+        profile: "{{aws_target_profile}}"
+        state: running
+        name: "{{test_host_name}}"
+        security_group: test-security-group
+        network:
+          assign_public_ip: True
+      register: results
+    
+    - name: Create Inventory
+      ansible.builtin.template:
+        src: "{{playbook_dir}}/resources/my_hosts.template.j2"
+        dest: "{{playbook_dir}}/inventory/my_hosts.yml"
+
+
+- name: Rebuild inventory
+  hosts: localhost
+  gather_facts: False
+  tasks:
+    - ansible.builtin.meta: refresh_inventory

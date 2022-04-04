@@ -3,7 +3,7 @@
   hosts: all
   vars:
     mp_spdz_repo: git@github.com:data61/MP-SPDZ.git
-    mp_spdz_dest: "/home/{{ansible_user_id}}/mp-spdz"
+    mp_spdz_home: "/home/{{ansible_user_id}}/mp-spdz"
   tasks:
     - name: Test
       ansible.builtin.debug:
@@ -27,29 +27,38 @@
           - yasm
         update_cache: yes
     
-    # - name: Check if MP-SPDZ exists
-    #   ansible.builtin.git:
-    #     repo: "{{mp_spdz_repo}}"
-    #     dest: "{{mp_spdz_dest}}"
-    #     update: no
-    #     clone: no
+    - name: Check if MP-SPDZ exists
+      ansible.builtin.stat: 
+        path: "{{mp_spdz_home}}/.it_exists"
+      register: mp_spdz_existence_results
 
+
+    - name: if MP-SPDZ already exists
+      debug:
+        msg: "MP-SPDZ already exists. Cloning will be skipped"
+      when: mp_spdz_existence_results.stat.exists == True
+    
     - name: Get MP-SPDZ
       ansible.builtin.git:
         repo: git@github.com:data61/MP-SPDZ.git
-        dest: "/home/develop/mp-spdz"
+        dest: "{{mp_spdz_home}}"
         accept_hostkey: yes
         ssh_opts: "-o StrictHostKeyChecking=no"
+      when: mp_spdz_existence_results.stat.exists == False
+    
+    - name: Create File to mark that MP-SPDZ already exists
+      ansible.builtin.file:
+        state: touch
+        path: "{{mp_spdz_home}}/.it_exists"
+      when: mp_spdz_existence_results.stat.exists == False
 
-    
-    - name: Set MP-SDPZ folder
-      set_fact:
-        mp_spdz_home: "/home/develop/mp-spdz"
-    
     
 
 - name: Compile MP-SPDZ
   hosts: all
+  vars:
+    mp_spdz_repo: git@github.com:data61/MP-SPDZ.git
+    mp_spdz_home: "/home/{{ansible_user_id}}/mp-spdz"
   tasks:
     - name: Compile mpir
       community.general.make:
