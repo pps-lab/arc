@@ -1,5 +1,0 @@
----
-
-- name: "Execute test plays"
-  ansible.builtin.import_playbook: "{{playbook_dir}}/site.yml"
-

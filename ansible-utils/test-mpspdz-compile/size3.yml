@@ -1,7 +1,0 @@
----
-- name: "Test if Server is there"
-  hosts: all
-  tasks:
-    - name: "Wait for Connection"
-      debug:
-        msg: "Hello, there"
