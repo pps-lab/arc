@@ -75,8 +75,3 @@
         instance_id: "{{hostvars['test-1']['my_host_instance_id']}}"
         name: "{{aws_ami_name}}"
 
-
-          
-
-
-  
