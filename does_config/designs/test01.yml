@@ -1,4 +1,4 @@
-minimal_exp:
+first_exp:
   n_repetitions: 1
   host_types:
     server:
