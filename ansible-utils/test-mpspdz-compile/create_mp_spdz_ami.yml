@@ -68,6 +68,14 @@
   vars_files:
     - "{{playbook_dir}}/site2_vars.yml"
   tasks:
+    - name: "Stop Server to facilitate AMI creation"
+      amazon.aws.ec2_instance:
+        profile: "{{aws_target_profile}}"
+        instance_ids:
+          - "{{hostvars['test-1']['my_host_instance_id']}}"
+        state: stopped
+        wait: yes
+
     - name: "Create the AMI"
       amazon.aws.ec2_ami:
         profile: "{{aws_target_profile}}"
