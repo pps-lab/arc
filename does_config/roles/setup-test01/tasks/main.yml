@@ -1,0 +1,11 @@
+---
+- ansible.builtin.debug:
+    msg: "-> Setup for minial01"
+  tags: [print_action]
+
+- name: "Copy MP-SPDZ into the experiment directory"
+  ansible.builtin.copy:
+    src: "{{mpspdz_precompile_home}}"
+    dest: "{{exp_code_dir}}/mp-spdz"
+    remote_src: yes
+    

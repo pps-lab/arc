@@ -4,6 +4,14 @@
   vars_files:
     - "{{playbook_dir}}/site2_vars.yml"
   tasks:
+    - name: "Remove autoupdater from ubuntu"
+      become: True
+      ansible.builtin.apt:
+        pkg:
+          - unattended-upgrades
+        state: absent
+        update_cache: yes
+
     - name: "Install prerequisites for MP-SPDZ"
       become: True
       ansible.builtin.apt:
