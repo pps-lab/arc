@@ -1,2 +1,2 @@
 ---
-mpspdz_precompile_home: "/home/{{ansible_user_id}}/mp-spdz/"
+mpspdz_precompile_home: "/home/{{ansible_user_id}}/ami-defaults/cryptographic-auditing-mpc/mp-spdz"

@@ -34,10 +34,10 @@
 
     - name: "Check if MP-SPDZ is already cloned and compiled"
       ansible.builtin.stat:
-        path: "{{git_repo_dest}}/mascot-party.x"
+        path: "{{git_repo_mpspdz_location}}/mascot-party.x"
       register: mp_spdz_res
 
-    - name: "Clone MP-SPDZ"
+    - name: "Clone MP-SPDZ via custom repo"
       ansible.builtin.git:
         repo: "{{target_repo}}"
         dest: "{{git_repo_dest}}"
@@ -52,19 +52,19 @@
     
     - name: "Check if MP-SPDZ libraries were compiled"
       ansible.builtin.stat:
-        path: "{{git_repo_dest}}/semi2k-party.x"
+        path: "{{git_repo_mpspdz_location}}/semi2k-party.x"
       register: have_compiled_res
 
     - name: "Compile MP-SPDZ first mpir to get all libraries"
       community.general.make:
-        chdir: "{{git_repo_dest}}"
+        chdir: "{{git_repo_mpspdz_location}}"
         jobs: "{{make_job_nums}}"
         target: "tldr"
       when: have_compiled_res.stat.exists == False
       
     - name: "Compile MP-SPDZ fully"
       community.general.make:
-        chdir: "{{git_repo_dest}}"
+        chdir: "{{git_repo_mpspdz_location}}"
         jobs: "{{make_job_nums}}"
         target: "all"
       when: have_compiled_res.stat.exists == False
