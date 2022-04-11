@@ -6,8 +6,8 @@ first_exp:
       check_status: True
       init_roles: setup-test01
       $CMD$:
-        - "\"{pwd_result: '$(pwd)', server: '1'}\" > ./results/output.1.json"
-        - "\"{pwd_result: '$(pwd)', server: '2'}\" > ./results/output.2.json"
+        - "echo \"{pwd_result: '$(pwd)', server: '1'}\" > ./results/output.1.json"
+        - "echo \"{pwd_result: '$(pwd)', server: '2'}\" > ./results/output.2.json"
 $ETL$:
   pipeline1:
     experiments: [first_exp]
