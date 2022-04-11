@@ -9,4 +9,4 @@ echo 1 2 3 4 > Player-Data/Input-P$($1)-0
 # Sleep for sync
 sleep $($2)
 # Execute mascot 
-./mascot-party.x -N "$3" -h "$4" -p "$1" tutorial 
+./mascot-party.x -N "$3" -h "$4" -p "$1" tutorial > ../results/player-$1-out.txt
