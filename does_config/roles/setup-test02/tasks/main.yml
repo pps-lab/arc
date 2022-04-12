@@ -1,6 +1,6 @@
 ---
 - ansible.builtin.debug:
-    msg: "-> Setup for minial02"
+    msg: "-> Setup for MP-SPDZ"
   tags: [print_action]
 
 - name: "Delete MP-SPDZ subfolder from main code repo"
