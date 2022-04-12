@@ -13,3 +13,9 @@
     state: link
     path: "{{exp_code_dir}}/mp-spdz"
     src: "{{mpspdz_precompile_home}}"
+
+- name: make toy-example script executable
+  ansible.builtin.file:
+    path: "{{exp_code_dir}}/utils/toy-example.sh"
+    mode: "777"
+    state: file
