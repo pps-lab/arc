@@ -1,5 +1,11 @@
 #!/bin/bash
 
+# save current directory
+MY_CUR_DIR="$(pwd)"
+# Go to code dir
+THE_CODE_DIR="$5"
+cd "$THE_CODE_DIR"
+
 # Go to mp-spdz
 cd mp-spdz
 # compile tutorial
@@ -13,4 +19,4 @@ sleep $($2)
 cd ..
 
 # Generate Result JSON
-echo "{\"result\": \"$(cat ./mp-spdz/result.txt | base64)\", \"player\": \"$1\"}" > ./results/player-$1-output.json
+echo "{\"result\": \"$(cat ./mp-spdz/result.txt | base64)\", \"player\": \"$1\"}" > "$MY_CUR_DIR/results/player-$1-output.json"

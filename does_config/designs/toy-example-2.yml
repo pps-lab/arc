@@ -6,13 +6,13 @@ first_exp:
       check_status: True
       init_roles: setup-test02
       $CMD$:
-        - "bash ./utils/toy-example.sh 0 2 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %]"
+        - "{{exp_code_dir}}/utils/toy-example.sh 0 2 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
     server2:
       n: 1
       check_status: True
       init_roles: setup-test02
       $CMD$:
-        - "bash ./utils/toy-example.sh 1 4 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %]"
+        - "{{exp_code_dir}}/utils/toy-example.sh 1 4 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
 $ETL$:
   pipeline1:
     experiments: [first_exp]
