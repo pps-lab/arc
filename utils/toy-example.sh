@@ -19,4 +19,4 @@ sleep $($2)
 cd ..
 
 # Generate Result JSON
-echo "{\"result\": \"$(cat ./mp-spdz/result.txt | base64)\", \"player\": \"$1\"}" > "$MY_CUR_DIR/results/player-$1-output.json"
+echo "{\"result\": \"$(cat ./mp-spdz/result.txt)\", \"player\": \"$1\"}" > "$MY_CUR_DIR/results/player-$1-output.json"
