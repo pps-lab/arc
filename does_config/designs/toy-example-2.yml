@@ -13,13 +13,3 @@ first_exp:
       init_roles: setup-test02
       $CMD$:
         - "bash {{exp_code_dir}}/utils/toy-example.sh 1 4 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
-$ETL$:
-  pipeline1:
-    experiments: [first_exp]
-    extractors:
-      JsonExtractor: {}
-      IgnoreExtractor: {}
-      ErrorExtractor: {}
-    transformers: []
-    loaders:
-      CsvSummaryLoader: {}
