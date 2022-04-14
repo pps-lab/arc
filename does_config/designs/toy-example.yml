@@ -2,19 +2,14 @@ first_exp:
   n_repetitions: 1
   host_types:
     server:
-      n: 2
+      n: 1
       check_status: True
-      init_roles: setup-test01
+      init_roles: setup-test02
       $CMD$:
-        - "echo \"{pwd_result: '$(pwd)', server: '1'}\" > ./results/output.1.json"
-        - "echo \"{pwd_result: '$(pwd)', server: '2'}\" > ./results/output.2.json"
-$ETL$:
-  pipeline1:
-    experiments: [first_exp]
-    extractors:
-      JsonExtractor: {}
-      IgnoreExtractor: {}
-      ErrorExtractor: {}
-    transformers: []
-    loaders:
-      CsvSummaryLoader: {}
+        - "bash {{exp_code_dir}}/utils/toy-example.sh 0 2 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
+    server2:
+      n: 1
+      check_status: True
+      init_roles: setup-test02
+      $CMD$:
+        - "bash {{exp_code_dir}}/utils/toy-example.sh 1 4 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
