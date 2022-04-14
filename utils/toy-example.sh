@@ -10,6 +10,8 @@ cd "$THE_CODE_DIR"
 cd mp-spdz
 # compile tutorial
 ./compile.py tutorial
+# Create the Player-Data folder
+mkdir Player-Data
 # generate Player data
 echo 1 2 3 4 > "Player-Data/Input-P$1-0"
 # Sleep for sync
