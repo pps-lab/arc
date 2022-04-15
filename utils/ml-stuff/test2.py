@@ -52,4 +52,4 @@ def l2_distance(training_samples, prediction_sample):
         training_samples_l2[i] = dp
 
     closest = argmin(training_samples_l2)
-    return closest
+    return closests
