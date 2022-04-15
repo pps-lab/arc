@@ -1,0 +1,61 @@
+---
+- ansible.builtin.debug:
+    msg: "-> Setup for MP-SPDZ"
+  tags: [print_action]
+
+
+- name: "Delete MP-SPDZ subfolder from main code repo"
+  ansible.builtin.file:
+    state: absent
+    path: "{{exp_code_dir}}/mp-spdz"
+
+- name: "Create symbolic link to mp-spdz folder in AMI-defaults"
+  ansible.builtin.file:
+    state: link
+    path: "{{exp_code_dir}}/mp-spdz"
+    src: "{{mpspdz_precompile_home}}"
+
+- ansible.builtin.debug:
+    msg: "-> Setup for ML-example"
+  tags: [print_action] 
+
+- name: Install python via apt
+  become: yes
+  apt:
+    pkg:
+      - python3.9
+      - python3.9-venv
+    update_cache: yes
+
+- name: Download get-pip.py
+  ansible.builtin.get_url:
+    url: https://bootstrap.pypa.io/get-pip.py
+    dest: /tmp/get-pip.py
+  
+- name: Install pip for python 
+  ansible.builtin.shell:
+    python3.9 /tmp/get-pip.py
+
+- name: Install pip libraries needed for AWS S3
+  ansible.builtin.pip:
+    state: present
+    name:
+      - boto3>=1.15.0
+      - botocore>=1.18.0
+
+- name: "AWS: Clone Data from S3 bucket"
+  amazon.aws.aws_s3:
+    mode: get
+    bucket: "{{mlexample_bucket_name}}"
+    object: "{{mlexample_object_name}}"
+    dest: "{{mlexample_tmp_storage}}"
+
+- name: "Prepare copy directory"
+  ansible.builtin.file:
+    path: "{{mlexample_input_dest}}"
+    state: directory
+
+- name: "Put input into prepared folder"
+  ansible.builtin.copy:
+    remote_src: "{{mlexample_tmp_storage}}"
+    dest: "{{mlexample_input_dest}}"

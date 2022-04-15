@@ -1,0 +1,17 @@
+first_exp:
+  n_repetitions: 1
+  host_types:
+    server:
+      n: 1
+      check_status: True
+      init_roles: ml-example-setup-1
+      $CMD$:
+        - echo "Hello World 1"
+
+    server2:
+      n: 1
+      check_status: True
+      init_roles: ml-example-setup-1
+      $CMD$:
+        - echo "Hello World 2"
+      

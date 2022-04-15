@@ -1,0 +1,7 @@
+---
+mlexample_bucket_name: alexmandt-mpspdz-mlexample-input
+mlexample_object_name: mnist-input.tar.gz
+mlexample_tmp_storage: /tmp/mnist-input.tar.gz
+mlexample_input_dest: "{{exp_code_dir}}/ml-example"
+
+mpspdz_precompile_home: "/home/{{ansible_user_id}}/ami-defaults/cryptographic-auditing-mpc/mp-spdz"
