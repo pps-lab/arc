@@ -51,9 +51,18 @@
     - name: Setup Folder
       ansible.builtin.file:
         path: "{{exp_code_dir}}/custom-data"
-        state: folder
+        state: directory
     
     - name: Download Mnist dataset
       ansible.builtin.shell:
         cmd: "aws s3 sync s3://alexmandt-mpspdz-mlexample-input {{exp_code_dir}}/custom-data"
+      environment:
+        AWS_ACCESS_KEY_ID: "{{mlexample_aws_key_id}}"
+        AWS_SECRET_ACCESS_KEY: "{{mlexample_aws_secret_key}}"
+
+- name: Make ml-example script executable
+  ansible.builtin.file:
+    path: "{{exp_code_dir}}/ml-stuff/ml-example.sh"
+    mode: "777"
+    state: file
     

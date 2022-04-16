@@ -5,3 +5,6 @@ mlexample_tmp_storage: /tmp/mnist-input.tar.gz
 mlexample_input_dest: "{{exp_code_dir}}/ml-example"
 
 mpspdz_precompile_home: "/home/{{ansible_user_id}}/ami-defaults/cryptographic-auditing-mpc/mp-spdz"
+
+mlexample_aws_key_id: "{{lookup('env','AWS_ACCESS_KEY_ID')}}"
+mlexample_aws_secret_key: "{{lookup('env','AWS_SECRET_ACCESS_KEY')}}"
