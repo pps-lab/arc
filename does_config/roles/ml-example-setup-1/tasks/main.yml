@@ -42,6 +42,7 @@
     name:
       - boto3>=1.15.0
       - botocore>=1.18.0
+    executable: python3.9 -m pip
 
 - name: "AWS: Clone Data from S3 bucket"
   amazon.aws.aws_s3:
