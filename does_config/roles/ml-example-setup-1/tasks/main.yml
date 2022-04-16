@@ -19,44 +19,41 @@
     msg: "-> Setup for ML-example"
   tags: [print_action] 
 
-- name: Install python via apt
-  become: yes
-  apt:
-    pkg:
-      - python3.9
-      - python3.9-venv
-    update_cache: yes
+- name: Setup awscli
+  block:
+    - name: Install packages
+      become: yes
+      apt:
+        pkg:
+          - zip
+        update_cache: yes
+    
+    - name: Download awscli
+      ansible.builtin.get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+    
+    - name: Unpack awscli
+      ansible.builtin.unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp
+        remote_src: yes
+    
+    - name: Install awscli via shell
+      become: yes
+      ansible.builtin.shell:
+        chdir: /tmp
+        cmd: ./aws/install
+        creates: /usr/local/bin/aws
 
-- name: Download get-pip.py
-  ansible.builtin.get_url:
-    url: https://bootstrap.pypa.io/get-pip.py
-    dest: /tmp/get-pip.py
-  
-- name: Install pip for python 
-  ansible.builtin.shell:
-    python3.9 /tmp/get-pip.py
-
-- name: Install pip libraries needed for AWS S3
-  ansible.builtin.pip:
-    state: present
-    name:
-      - boto3>=1.15.0
-      - botocore>=1.18.0
-    executable: python3.9 -m pip
-
-- name: "AWS: Clone Data from S3 bucket"
-  amazon.aws.aws_s3:
-    mode: get
-    bucket: "{{mlexample_bucket_name}}"
-    object: "{{mlexample_object_name}}"
-    dest: "{{mlexample_tmp_storage}}"
-
-- name: "Prepare copy directory"
-  ansible.builtin.file:
-    path: "{{mlexample_input_dest}}"
-    state: directory
-
-- name: "Put input into prepared folder"
-  ansible.builtin.copy:
-    remote_src: "{{mlexample_tmp_storage}}"
-    dest: "{{mlexample_input_dest}}"
+- name: Download Input for MNIST-Dataset
+  block:
+    - name: Setup Folder
+      ansible.builtin.file:
+        path: "{{exp_code_dir}}/custom-data"
+        state: folder
+    
+    - name: Download Mnist dataset
+      ansible.builtin.shell:
+        cmd: "aws s3 sync s3://alexmandt-mpspdz-mlexample-input {{exp_code_dir}}/custom-data"
+    
