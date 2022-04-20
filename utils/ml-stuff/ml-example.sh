@@ -9,10 +9,10 @@ cd "$THE_CODE_DIR"
 # Goto data-dir
 cd custom-data
 # Extract input data
-tar -xvf mnist-input.tar.gz 
+unzip mnist-auditing-input.zip 
 # Move Data to Player-Data folder
 mkdir "$THE_CODE_DIR/mp-spdz/Player-Data"
-mv ram-mnist-input.txt "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P0-0"
+mv Input-P0-0 "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P0-0"
 cd ..
 
 # Copy ml-example.mpc to Programs folder
