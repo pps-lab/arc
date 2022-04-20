@@ -67,7 +67,7 @@ print_ln("correct %s %s", acc, acc * cfix(0.0001))
 
 # Traceback
 # from CryptographicAuditing.auditing import inner_product as trace
-from CryptographicAuditing.auditing import l2_distance as trace
+# from CryptographicAuditing.auditing import l2_distance as trace
 
 @for_range(test_n)
 def _(i):
