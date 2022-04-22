@@ -25,5 +25,5 @@ cd mp-spdz
 # Sleep for sync
 sleep "$2"
 # Execute mascot 
-./mascot-party.x -N "$3" -h "$4" -p "$1" custom-ml-example | base64 > result.txt
+./mascot-party.x -N "$3" -h "$4" -p "$1" custom-ml-example | base64 > "$MY_CUR_DIR/results/result-$1.txt"
 cd ..
