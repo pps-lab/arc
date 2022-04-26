@@ -17,7 +17,7 @@ touch "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P1-0"
 cd ..
 
 # Copy ml-example.mpc to Programs folder
-cp utils/ml-stuff/ml-example.mpc mp-spdz/Programs/Source/custom-ml-example.mpc
+cp utils/ml-stuff/ml-example-debug.mpc mp-spdz/Programs/Source/custom-ml-example.mpc
 
 # Go to mp-spdz
 cd mp-spdz
