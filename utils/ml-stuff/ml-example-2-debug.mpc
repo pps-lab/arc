@@ -61,8 +61,7 @@ print_ln("Done model compilation")
 
 start = 0
 for var in model.trainable_variables:
-    var.input_from(0)
-    var.reveal()
+    start = var.read_from_file(start)
     # print_ln('var %s', len(var))
 
 # test if extra input
