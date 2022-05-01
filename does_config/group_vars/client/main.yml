@@ -3,5 +3,5 @@
 instance_type: t2.medium # TODO: choose instance type
 ec2_volume_size: 16 # TODO: choose volume size
 
-ec2_image_id: ami-05401e90357233814
-ec2_volume_snapshot: snap-0707ae18b4369aa62
+ec2_image_id: ami-02584c1c9d05efa69
+ec2_volume_snapshot: snap-0ea83e19290d686d6
