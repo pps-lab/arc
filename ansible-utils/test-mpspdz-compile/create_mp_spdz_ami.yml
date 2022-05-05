@@ -69,6 +69,18 @@
         target: "all"
       when: have_compiled_res.stat.exists == False
     
+    - name: "Create Player-Data Folder"
+      ansible.builtin.file:
+        path: "{{git_repo_mpspdz_location}}/Player-Data"
+        state: directory
+    
+    - name: Generate SSL Certificates for 20 players
+      ansible.builtin.shell:
+        chdir: "{{git_repo_mpspdz_location}}"
+        cmd: "{{git_repo_mpspdz_location}}/Scripts/setup-ssl.sh 20"
+        creates: "{{git_repo_mpspdz_location}}/Player-Data/P0.key"
+
+    
 
 - name: "Create the AMI"
   hosts: localhost
