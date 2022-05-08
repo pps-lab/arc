@@ -54,6 +54,12 @@
       ansible.builtin.stat:
         path: "{{git_repo_mpspdz_location}}/semi2k-party.x"
       register: have_compiled_res
+    
+    - name: "Copy CONFIG.mine file into compile dir"
+      ansible.builtin.template:
+        src: resources/CONFIG.mine.template.j2
+        dest: "{{git_repo_mpspdz_location}}/CONFIG.mine"
+      when: have_compiled_res.stat.exists == False
 
     - name: "Compile MP-SPDZ first mpir to get all libraries"
       community.general.make:
@@ -73,12 +79,21 @@
       ansible.builtin.file:
         path: "{{git_repo_mpspdz_location}}/Player-Data"
         state: directory
+    - name: "Create Player-SSL-Data/ folder"
+      ansible.builtin.file:
+        path: "{{git_repo_mpsdpz_location}}/Player-SSL-Data"
+        state: directory
+    
+    - name: "Create Player-Prep-Data/ folder"
+      ansible.builtin.file:
+        path: "{{git_repo_mpspdz_location}}/Player-Prep-Data"
+        state: directory
     
     - name: Generate SSL Certificates for 20 players
       ansible.builtin.shell:
         chdir: "{{git_repo_mpspdz_location}}"
-        cmd: "{{git_repo_mpspdz_location}}/Scripts/setup-ssl.sh 20"
-        creates: "{{git_repo_mpspdz_location}}/Player-Data/P0.key"
+        cmd: "{{git_repo_mpspdz_location}}/Scripts/setup-ssl.sh 20 Player-SSL-Data/"
+        creates: "{{git_repo_mpspdz_location}}/Player-SSL-Data/P0.key"
 
     
 
