@@ -17,14 +17,14 @@ touch "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P1-0"
 cd ..
 
 # Copy ml-example.mpc to Programs folder
-cp utils/ml-stuff/ml-example-debug.mpc mp-spdz/Programs/Source/custom-ml-example.mpc
+cp utils/ml-stuff/ml-example-debug.mpc mp-spdz/Programs/Source/custom-ml-example-debug.mpc
 
 # Go to mp-spdz
 cd mp-spdz
 # compile tutorial
-./compile.py custom-ml-example
+./compile.py custom-ml-example-debug -R 64
 # Sleep for sync
 sleep "$2"
 # Execute mascot 
-./mascot-party.x -N "$3" -h "$4" -p "$1" custom-ml-example | base64 > "$MY_CUR_DIR/results/result-$1.txt"
+./replicated-ring-party.x -N "$3" -h "$4" -p "$1" custom-ml-example | base64 > "$MY_CUR_DIR/results/result-$1.txt"
 cd ..
