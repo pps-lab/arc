@@ -32,9 +32,9 @@
         update_cache: yes
         state: present
 
-    - name: "Check if MP-SPDZ is already cloned and compiled"
+    - name: "Check if MP-SPDZ is already cloned"
       ansible.builtin.stat:
-        path: "{{git_repo_mpspdz_location}}/mascot-party.x"
+        path: "{{git_repo_mpspdz_location}}/CONFIG"
       register: mp_spdz_res
 
     - name: "Clone MP-SPDZ via custom repo"
@@ -55,11 +55,21 @@
         path: "{{git_repo_mpspdz_location}}/semi2k-party.x"
       register: have_compiled_res
     
-    - name: "Copy CONFIG.mine file into compile dir"
-      ansible.builtin.template:
-        src: resources/CONFIG.mine.template.j2
-        dest: "{{git_repo_mpspdz_location}}/CONFIG.mine"
+    - name: "Copy CONFIG (modified) file into compile dir"
+      ansible.builtin.copy:
+        src: resources/CONFIG
+        dest: "{{git_repo_mpspdz_location}}/CONFIG"
       when: have_compiled_res.stat.exists == False
+
+    - name: "Create Player-SSL-Data/ folder"
+      ansible.builtin.file:
+        path: "{{git_repo_mpspdz_location}}/Player-SSL-Data"
+        state: directory
+    
+    - name: "Create Player-Prep-Data/ folder"
+      ansible.builtin.file:
+        path: "{{git_repo_mpspdz_location}}/Player-Prep-Data"
+        state: directory
 
     - name: "Compile MP-SPDZ first mpir to get all libraries"
       community.general.make:
@@ -81,7 +91,7 @@
         state: directory
     - name: "Create Player-SSL-Data/ folder"
       ansible.builtin.file:
-        path: "{{git_repo_mpsdpz_location}}/Player-SSL-Data"
+        path: "{{git_repo_mpspdz_location}}/Player-SSL-Data"
         state: directory
     
     - name: "Create Player-Prep-Data/ folder"
