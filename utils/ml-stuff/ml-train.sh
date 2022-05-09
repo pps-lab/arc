@@ -17,15 +17,15 @@ touch "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P1-0"
 cd ..
 
 # Copy ml-example.mpc to Programs folder
-#cp utils/ml-stuff/ml-example-debug.mpc mp-spdz/Programs/Source/custom-ml-example-debug.mpc
+cp utils/ml-stuff/ml-train.mpc mp-spdz/Programs/Source/custom-ml-train.mpc
 # The needed program is already in the example programs
 
 # Go to mp-spdz
 cd mp-spdz
 # compile tutorial
-./compile.py keras-mnist-lenet -R 64
+./compile.py custom-ml-train -R 64
 # Sleep for sync
 sleep "$2"
 # Execute mascot 
-./replicated-ring-party.x -h "$4" -pn 12300 "$1" keras-mnist-lenet  | tee "$MY_CUR_DIR/results/result-$1.txt"
+./replicated-ring-party.x -h "$4" -pn 12300 "$1" custom-ml-train  | tee "$MY_CUR_DIR/results/result-$1.txt"
 cd ..
