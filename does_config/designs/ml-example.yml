@@ -6,12 +6,12 @@ first_exp:
       check_status: True
       init_roles: ml-example-setup-1
       $CMD$:
-        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-example.sh 0 2 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-example.sh 0 2 3 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
 
     server2:
-      n: 1
+      n: 2
       check_status: True
       init_roles: ml-example-setup-1
       $CMD$:
-        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-example.sh 1 4 2 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
-      
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-example.sh 1 4 3 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-example.sh 2 4 3 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
