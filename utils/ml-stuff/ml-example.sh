@@ -26,5 +26,5 @@ cd mp-spdz
 # Sleep for sync
 sleep "$2"
 # Execute mascot 
-./replicated-ring-party.x -h "$4" "$1" -pn 12300 "$1" custom-ml-example-debug  | tee "$MY_CUR_DIR/results/result-$1.txt"
+./replicated-ring-party.x -h "$4" -pn 12300 "$1" custom-ml-example-debug  | tee "$MY_CUR_DIR/results/result-$1.txt"
 cd ..
