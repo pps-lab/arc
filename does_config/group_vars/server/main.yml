@@ -3,5 +3,5 @@
 instance_type: t2.2xlarge # TODO: choose instance type
 ec2_volume_size: 40 # TODO: choose volume size
 
-ec2_image_id: ami-0bc0bb843278cf4f0
-ec2_volume_snapshot: snap-066d786f498fadc52
+ec2_image_id: ami-0eaef561f4a50234b
+ec2_volume_snapshot: snap-020bcb996e4ab4fae
