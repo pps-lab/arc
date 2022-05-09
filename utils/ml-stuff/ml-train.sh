@@ -12,7 +12,7 @@ cd custom-data
 tar -xvf mnist-input.tar.gz 
 # Move Data to Player-Data folder
 mkdir "$THE_CODE_DIR/mp-spdz/Player-Data"
-mv raw-mnist-input "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P0-0"
+mv raw-mnist-input.txt "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P0-0"
 touch "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P1-0"
 cd ..
 
