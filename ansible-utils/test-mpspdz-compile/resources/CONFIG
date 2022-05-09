@@ -6,10 +6,10 @@ OPTIM= -O3
 GDEBUG = -g
 
 # set this to your preferred local storage directory
-PREP_DIR = '-DPREP_DIR="Player-SSL-Data/"'
+PREP_DIR = '-DPREP_DIR="Player-Prep-Data/"'
 
 # directory to store SSL keys
-SSL_DIR = '-DSSL_DIR="Player-Prep-Data/"'
+SSL_DIR = '-DSSL_DIR="Player-SSL-Data/"'
 
 # set for SHE preprocessing (SPDZ and Overdrive)
 USE_NTL = 0
