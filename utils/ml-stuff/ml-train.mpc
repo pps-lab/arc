@@ -23,6 +23,8 @@ test_samples.input_from(0)
 from Compiler import ml
 tf = ml
 
+tf.set_n_threads(7)
+
 layers = [
     tf.keras.layers.Conv2D(20, 5, 1, 'valid', activation='relu'),
 ]

@@ -6,5 +6,4 @@ first_exp:
       check_status: True
       init_roles: ml-example-setup-1
       $CMD$:
-        - "sleep 10"
-      
+        - "echo [% exp_host_lst | json_query(\"[?host_type=='server']\") | first %]"
