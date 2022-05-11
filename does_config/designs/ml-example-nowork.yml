@@ -9,7 +9,7 @@ first_exp:
         - "sleep 10"
 
     server2:
-      n: 1
+      n: 2
       check_status: True
       init_roles: ml-example-setup-1
       $CMD$:
