@@ -1,5 +1,6 @@
 #!/bin/bash
 
+echo "Start of execution: $(date +\"%T.%N\")"
 # save current directory
 MY_CUR_DIR="$(pwd)"
 # Go to code dir
@@ -16,6 +17,8 @@ mv raw-mnist-input.txt "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P0-0"
 touch "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P1-0"
 cd ..
 
+echo "Completed extraction in: $(date +\"%T.%N\")"
+
 # Copy ml-example.mpc to Programs folder
 cp utils/ml-stuff/ml-train.mpc mp-spdz/Programs/Source/custom-ml-train.mpc
 # The needed program is already in the example programs
@@ -23,7 +26,9 @@ cp utils/ml-stuff/ml-train.mpc mp-spdz/Programs/Source/custom-ml-train.mpc
 # Go to mp-spdz
 cd mp-spdz
 # compile tutorial
-./compile.py custom-ml-train -R 64
+echo "Start of compilation: $(date +\"%T.%N\")"
+./compile.py -R 64 custom-ml-train
+echo "End of compilation: $(date +\"%T.%N\")"
 # Sleep for sync
 sleep "$2"
 # Execute mascot 

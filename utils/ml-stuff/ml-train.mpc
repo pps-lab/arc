@@ -59,7 +59,7 @@ print_ln("Doing training")
 opt = model.fit(
     training_samples,
     training_labels,
-    epochs=10,
+    epochs=1,
     batch_size=128,
     validation_data=(test_samples, test_labels)
 )
