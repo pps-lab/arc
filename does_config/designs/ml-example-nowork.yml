@@ -14,4 +14,5 @@ first_exp:
       init_roles: ml-example-setup-1
       $CMD$:
         - "sleep 10"
+        - "sleep 10"
       
