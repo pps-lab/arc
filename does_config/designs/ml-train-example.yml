@@ -13,5 +13,5 @@ first_exp:
       check_status: True
       init_roles: ml-example-setup-1
       $CMD$:
-        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train.sh 1 2 3 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
-        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train.sh 2 2 3 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train.sh 1 6 3 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train.sh 2 6 3 [% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %] \"{{exp_code_dir}}\""
