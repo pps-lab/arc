@@ -4,9 +4,8 @@
 program.options_from_args()
 
 # Advice from the VM
-program.use_trunc_pr = True
-program.use_split(3)
 
+n_thread_num = int(program.args[1])
 print_ln("Doing stuff")
 
 training_samples = MultiArray([60000, 28, 28], sfix)
@@ -27,7 +26,7 @@ test_samples.input_from(0)
 from Compiler import ml
 tf = ml
 
-tf.set_n_threads(7)
+tf.set_n_threads(n_thread_num)
 
 layers = [
     tf.keras.layers.Conv2D(20, 5, 1, 'valid', activation='relu'),

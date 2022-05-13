@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Note: $6 -> Number of threads
+
 echo "Start of execution: $(date +\"%T.%N\")"
 # save current directory
 MY_CUR_DIR="$(pwd)"
@@ -27,7 +29,7 @@ cp utils/ml-stuff/ml-train-optimized.mpc mp-spdz/Programs/Source/custom-ml-train
 cd mp-spdz
 # compile tutorial
 echo "Start of compilation: $(date +\"%T.%N\")"
-./compile.py -R 64 custom-ml-train-optimized
+./compile.py -R 64 -CD custom-ml-train-optimized "$6" trunc_pr split3 
 echo "End of compilation: $(date +\"%T.%N\")"
 # Sleep for sync
 sleep "$2"
