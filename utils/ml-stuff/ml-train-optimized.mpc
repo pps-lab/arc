@@ -2,6 +2,8 @@
 # see https://github.com/csiro-mlai/mnist-mpc for data preparation
 
 program.options_from_args()
+sfix.set_precision(16)
+cfix.set_precision(16)
 
 # Advice from the VM
 
