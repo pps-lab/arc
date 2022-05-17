@@ -54,7 +54,7 @@ layers += [
 
 model = tf.keras.models.Sequential(layers)
 
-optim = tf.keras.optimizers.Adam(amsgrad=True)
+optim = tf.keras.optimizers.SGD()
 
 model.compile(optimizer=optim)
 
