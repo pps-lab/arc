@@ -8,7 +8,7 @@ first_exp:
         - ml-example-setup-1
         - setup-poetry
       $CMD$:
-        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 0 2 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 32"
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 0 2 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
     
     hserv2:
       n: 2
@@ -17,5 +17,5 @@ first_exp:
         - ml-example-setup-1
         - setup-poetry
       $CMD$:
-        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 1 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 32"
-        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 2 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 32"
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 1 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
+        - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 2 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
