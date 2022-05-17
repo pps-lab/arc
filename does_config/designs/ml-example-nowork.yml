@@ -4,14 +4,19 @@ first_exp:
     server:
       n: 1
       check_status: True
-      init_roles: ml-example-setup-1
+      init_roles: 
+        - ml-example-setup-1
+        - setup-poetry
       $CMD$:
         - "sleep 10"
 
     server2:
       n: 2
       check_status: True
-      init_roles: ml-example-setup-1
+      init_roles: 
+        - ml-example-setup-1
+        - setup-poetry
+
       $CMD$:
         - "sleep 10"
         - "sleep 10"
