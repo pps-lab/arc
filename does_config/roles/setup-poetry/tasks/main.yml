@@ -36,3 +36,14 @@
 - name: Set config to create .venv folder in project directory
   ansible.builtin.shell:
     cmd: "{{ poetry }} config virtualenvs.in-project true"
+
+- name: Check if poetry project exists
+  ansible.builtin.stat:
+    path: "{{exp_code_dir}}/pyproject.toml"
+  register: poetry_project_existence
+
+- name: Install poetry project if project exists
+  when: poetry_project_existence.stat.exists == True
+  ansible.builtin.shell:
+    cmd: "{{poetry}} install"
+    chdir: "{{exp_code_dir}}"
