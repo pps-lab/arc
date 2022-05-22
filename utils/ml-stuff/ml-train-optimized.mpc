@@ -66,3 +66,17 @@ opt = model.fit(
     batch_size=128,
     validation_data=(test_samples, test_labels)
 )
+
+
+# Compute accuracy manually
+guesses = model.predict(test_samples)
+
+@map(28, 10000, [sint])
+def accuracy(i):
+    correct = sint( (tf.argmax( guesses[i].reveal() )) == (tf.argmax( test_labels[i].reveal() )) )
+    return correct
+
+acc = accuracy().reveal()
+print_ln("-----RESULTS-----")
+print_ln("accuracy_1 = %s", acc)
+print_ln("accuracy_2 = %s", acc * cfix(0.0001))
