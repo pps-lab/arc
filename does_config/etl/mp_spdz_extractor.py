@@ -38,7 +38,7 @@ class MpSpdzStderrExtractor(Extractor):
 
 class MpSpdzStdoutExtractor(Extractor):
     def file_regex_default(self):
-        return ["^result-[0-9]+$\\.txt$"]
+        return ["^result-[0-9]+\.txt$"]
 
     def extract(self, path: str, options: Dict) -> List[Dict]:
         with open(path, "r") as f:
