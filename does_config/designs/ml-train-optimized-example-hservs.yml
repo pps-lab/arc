@@ -19,3 +19,15 @@ first_exp:
       $CMD$:
         - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 1 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
         - "bash {{exp_code_dir}}/utils/ml-stuff/ml-train-optimized.sh 2 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
+
+$ETL$:
+  first_exp_results:
+    experiments: [first_exp]
+    extractors:
+      MpSpdzStderrExtractor: {}
+      MpSpdzStdoutExtractor: {}
+      IgnoreExtractor: {}
+    transformers: []
+    loaders:
+      CsvSummaryLoader:
+        output_dir: etl_results/first_exp_results
