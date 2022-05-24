@@ -45,7 +45,7 @@ model = tf.keras.models.Sequential(layers)
 optim = tf.keras.optimizers.SGD()
 
 model.compile(optimizer=optim)
-model.build(test_samples.size)
+model.build(test_samples.sizes)
 
 start = 0
 for var in model.trainable_variables:
