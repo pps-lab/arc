@@ -24,6 +24,8 @@ test_labels.input_from(0)
 test_samples.input_from(0)
 prediction_labels.input_from(0)
 prediction_samples.input_from(0)
+# test if extra
+test_extras = sint.get_input_from(0)
 
 from Compiler import ml
 tf = ml 
