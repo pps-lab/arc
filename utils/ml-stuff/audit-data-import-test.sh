@@ -12,7 +12,7 @@ cd "$THE_CODE_DIR"
 # Goto data-dir
 cd custom-data
 # Extract input data
-unzip mnist-audit-input-20epoch.zip
+unzip mnist-audit-input-fc.zip
 # Move Data to Player-Data folder
 mkdir "$THE_CODE_DIR/mp-spdz/Player-Data"
 mv Input-P0-0 "$THE_CODE_DIR/mp-spdz/Player-Data/Input-P0-0"
