@@ -18,11 +18,17 @@ prediction_labels = sint.Tensor([n_samples, 10])
 
 print_ln("Loading data")
 
+print_ln("Loading training_labels")
 training_labels.input_from(0)
+print_ln("Loading training_samples")
 training_samples.input_from(0)
+print_ln("Loading test_labes")
 test_labels.input_from(0)
+print_ln("Loading test_samples")
 test_samples.input_from(0)
+print_ln("Loading prediction_labels")
 prediction_labels.input_from(0)
+print_ln("Loading prediction_samples")
 prediction_samples.input_from(0)
 # test if extra
 # test_extras = sint.get_input_from(0)
@@ -57,8 +63,11 @@ model.compile(optimizer=optim)
 model.build(test_samples.sizes)
 
 start = 0
-for var in model.trainable_variables:
+for i,var in enumerate(model.trainable_variables):
+    print_ln("Loading trainable_variable %s",i)
     var.input_from(0)
+
+print_ln("Done with loading")
 
 guesses = model.predict(test_samples)
 
