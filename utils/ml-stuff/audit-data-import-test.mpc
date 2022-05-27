@@ -12,7 +12,7 @@ training_labels = MultiArray([60000, 10], sint)
 test_samples = MultiArray([10000, 28, 28], sfix)
 test_labels = MultiArray([10000,10], sint)
 
-n_samples = 1000
+n_samples = 8
 prediction_samples = sfix.Tensor([n_samples, 28, 28])
 prediction_labels = sint.Tensor([n_samples, 10])
 
