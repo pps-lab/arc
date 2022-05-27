@@ -7,11 +7,16 @@ import os
 import json
 import zipfile
 import shutil
+import time
 from base64 import b64decode
 
 class Base64DecodeAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         setattr(namespace, "json_config", b64decode(values))
+
+class Base64Decoded2Action(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        setattr(namespace, "override_config", b64decode(values))
 
 def do_preprocessing(config_obj=None, mpspdz_dir=None):
     if config_obj is None or mpspdz_dir is None:
@@ -44,7 +49,7 @@ def do_preprocessing(config_obj=None, mpspdz_dir=None):
             elif task['type'] == 'custom_cmd':
                 # When a custom_cmd is specified, we just execute the command and leave the rest be
                 cmd_string = task['command']
-                subprocess.run(cmd_string, shell=True)
+                subprocess.run(cmd_string, shell=True,cwd=data_path)
 
             elif task['type'] == 'custom_script':
                 # We look for the file in custom-data and execute it
@@ -60,6 +65,8 @@ def do_preprocessing(config_obj=None, mpspdz_dir=None):
     
 
 def do_compilation(config_obj, mp_spdz_dir, experiment_dir):
+    # We assume the script path is relative to the experiment dir
+    # And we assume the full name of the script is given (with the .mpc ending)
     mpc_script_path = config['mpc_script_path']
     absolute_mpc_script_path = os.path.join(experiment_dir,mpc_script_path)
 
@@ -145,11 +152,21 @@ def main():
         action=Base64DecodeAction)
     mutual_group.add_argument("--json-config",
         help="JSON String providing the entire experiment configuration")
+    mutual_group_2 = argument_parser.add_mutually_exclusive_group()
+    mutual_group_2.add_argument("--override-config-b6",help="base64 encoded JSON string that overrides config values",
+        action=Base64Decoded2Action)
+    mutual_group_2.add_argument("--override-config-json", help="json string that overrides config values")
 
     args = argument_parser.parse_args()
     
     # Get config
     config = json.loads(args.json_config)
+    # Override config
+    override_config = json.loads(args.override_config)
+    for sub in config:
+        if sub in override_config:
+            config[sub] = override_config[sub]
+
     curr_dir = os.getcwd()
 
     # Setup 
@@ -163,13 +180,14 @@ def main():
     # We assume the script path is relative to experiment_dir
     new_mpc_script_name = do_compilation(config_obj=config, mp_spdz_dir=mp_spdz_dir,experiment_dir=experiment_dir)
 
+    time.sleep(int(config['sleep_time']))
 
     run_compilation(config_obj=config, new_mpc_script_name=new_mpc_script_name,
         curr_dir=curr_dir, mp_spdz_dir=mp_spdz_dir)
     
     # Post-processing
     do_post_processing(config_obj=config, mp_spdz_dir=mp_spdz_dir,new_mpc_script_name=new_mpc_script_name)
-    
+
     
     
 
