@@ -21,7 +21,7 @@ cd ..
 
 echo "Completed extraction in: $(date +\"%T.%N\")"
 
-cp  "$THE_CODE_DIR/scripts/auditing_function.mpc" "$THE_CODE_DIR/mp-spdz/Programs/Source/custom-auditing_function"
+cp  "$THE_CODE_DIR/scripts/auditing_function.mpc" "$THE_CODE_DIR/mp-spdz/Programs/Source/custom-auditing_function.mpc"
 # The needed program is already in the example programs
 
 # Go to mp-spdz
