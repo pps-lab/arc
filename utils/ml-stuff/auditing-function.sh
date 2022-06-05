@@ -32,7 +32,7 @@ echo "End of compilation: $(date +\"%T.%N\")"
 # Sleep for sync
 sleep "$2"
 # Execute mascot 
-./replicated-ring-party.x -h "$4" -pn 12300 "$1" custom-audit-data-import-test-$6-trunc_pr-split3  | tee "$MY_CUR_DIR/results/result-$1.txt"
+./replicated-ring-party.x -h "$4" -pn 12300 "$1" auditing_function-$6-trunc_pr-split3  | tee "$MY_CUR_DIR/results/result-$1.txt"
 
 # Do cleanup
 rm -rf Player-Prep-Data/
