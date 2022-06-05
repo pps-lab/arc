@@ -1,0 +1,23 @@
+- debug:
+    msg: "-> Setup redis"
+  tags: [print_action]
+
+- name: Update packages
+  become: True
+  apt:
+    update_cache: yes
+
+- name: Setup redis repo
+  become: True
+  shell:
+    cmd: |
+      curl -fsSL https://packages.redis.io/gpg | sudo gpg --dearmor -o /usr/share/keyrings/redis-archive-keyring.gpg 
+      echo "deb [signed-by=/usr/share/keyrings/redis-archive-keyring.gpg] https://packages.redis.io/deb $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/redis.list
+    creates: /etc/apt/sources.list.d/redis.list
+
+- name: Update packages and install redis
+  become: yes
+  apt:
+    pkg:
+      - redis
+    update_cache: yes
