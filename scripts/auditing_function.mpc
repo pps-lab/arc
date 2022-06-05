@@ -1,0 +1,133 @@
+
+# Given is a trained model and possible malicious data
+
+# Do some preparations
+
+program.options_from_args()
+
+n_thread_num = int(program.args[1])
+
+# training_sample_size = sint.input_from(0)
+
+training_samples = MultiArray([60000, 28, 28], sfix)
+training_labels = MultiArray([60000, 10], sint)
+
+test_samples = MultiArray([10000, 28, 28], sfix)
+test_labels = MultiArray([10000,10], sint)
+
+n_samples = 8
+prediction_samples = sfix.Tensor([n_samples, 28, 28])
+prediction_labels = sint.Tensor([n_samples, 10])
+
+# Load the actual data
+training_labels.input_from(0)
+training_samples.input_from(0)
+test_labels.input_from(0)
+test_samples.input_from(0)
+prediction_labels.input_from(0)
+prediction_samples.input_from(0)
+
+# Prepare the model
+from Compiler import ml
+tf = ml
+
+tf.set_n_threads(n_thread_num)
+
+
+layers = [
+    tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Conv2D(50,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(500, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+]
+
+model = tf.keras.models.Sequential(layers)
+optim = tf.keras.optimizers.SGD()
+
+model.compile(optimizer=optim)
+model.build(test_samples.sizes)
+
+start = 0
+variable_holders = []
+for i,var in enumerate(model.trainable_variables):
+    print(f"trainable_variable {i}: {var}")
+    print_ln("Loading trainable_variable %s",i)
+    var.input_from(0)
+    if isinstance(var, MultiArray):
+        copy_container = MultiArray(var.sizes,var.value_type)
+        copy_container.assign(var)
+        variable_holders.append(copy_container)
+    elif isinstance(var, Array):
+        copy_container = Array(var.length, var.value_type)
+        copy_container.assign(var)
+        variable_holders.append(copy_container)
+
+
+print(variable_holders)
+
+# Now, since we hold a copy of the trained variables, we can start with doing the actual training
+# We first assume a split 5 datasets
+
+
+
+# Start the training loop
+models = []
+model_losses = []
+unlearn_labels = MultiArray([20_000,10],sfix)
+unlearn_labels.assign_all(sfix(1/10))
+
+
+# Split the set of programs into 3 parts
+for i in range(3):
+    current_model = tf.keras.models.Sequential(layers)
+    current_optim = tf.keras.optimizers.SGD()
+    current_model.compile(optimizer=current_optim)
+
+    # Build unlearn dataset 
+    # We only need to modify the training_labels for the unleared dataset
+    unlearn_start = i * 20_000 # as we have 60_000 / 3 = 20_000
+    unlearn_size = 20_000
+    batch_size = 128
+    modified_training_labels = MultiArray([60_000, 10], sfix)
+    modified_training_labels.assign(training_labels)
+    # Now, we set the portion of the training labels that we want to unlearn
+    modified_training_labels.get_part(unlearn_start,unlearn_size).assign(unlearn_labels)
+    current_model.build(test_samples.sizes, batch_size)
+    # Load the checkpoint for the model
+    for var,check_point in zip(current_model.trainable_variables,variable_holders):
+        var.assign(check_point)
+    
+    # Now, we set input and output
+    current_model.opt.layers[0].X.address = training_samples.address
+    current_model.opt.layers[-1].Y.address = modified_training_labels.address
+    current_model.opt.n_epochs = 1
+    current_model.opt.i_epoch.write(0)
+    current_model.opt.stopped_on_loss.write(0)
+
+    current_model.opt.run(batch_size=128,stop_on_loss=0)
+    models.append(current_model)
+    _,current_model_loss = current_model.opt.reveal_correctness(training_samples, modified_training_labels,128)
+    model_losses.append(current_model_loss)
+
+# Now, we calculate the MAD score
+mad_scores = sint.Array(5)
+# We now print out the loss scores:
+for i in range(3):
+    print_ln("Model %s: Loss %s", i, model_losses[i])
+
+
+
+
+
+
+    
+    
+
+
+
+
+

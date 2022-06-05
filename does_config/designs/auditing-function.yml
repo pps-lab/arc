@@ -1,0 +1,22 @@
+first_exp:
+  n_repetitions: 1
+  host_types:
+    server:
+      server:
+        n: 1
+        check_status: True
+        init_roles:
+          - ml-example-setup-1
+          - setup-poetry
+        $CMD$:
+          - "bash {{exp_code_dir}}/utils/ml-stuff/auditing-function.sh 0 2 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
+      
+      server2:
+        n: 2
+        check_status: True
+        init_roles:
+          - ml-example-setup-1
+          - setup-poetry
+        $CMD$:
+          - "bash {{exp_code_dir}}/utils/ml-stuff/auditing-function.sh 1 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
+          - "bash {{exp_code_dir}}/utils/ml-stuff/auditing-function.sh 2 6 3 [% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %] \"{{exp_code_dir}}\" 38"
