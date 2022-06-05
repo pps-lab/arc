@@ -21,14 +21,14 @@ cd ..
 
 echo "Completed extraction in: $(date +\"%T.%N\")"
 
-cp  "$THE_CODE_DIR/scripts/auditing-function.mpc" "$THE_CODE_DIR/mp-spdz/Programs/Source/custom-auditing-function"
+cp  "$THE_CODE_DIR/scripts/auditing_function.mpc" "$THE_CODE_DIR/mp-spdz/Programs/Source/custom-auditing_function"
 # The needed program is already in the example programs
 
 # Go to mp-spdz
 cd mp-spdz
 # compile tutorial
 echo "Start of compilation: $(date +\"%T.%N\")"
-./compile.py -R 64 -C -D custom-auditing-function "$6" trunc_pr split3 
+./compile.py -R 64 -C -D custom-auditing_function "$6" trunc_pr split3 
 echo "End of compilation: $(date +\"%T.%N\")"
 # Sleep for sync
 sleep "$2"
