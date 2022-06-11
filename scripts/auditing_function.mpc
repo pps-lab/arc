@@ -132,7 +132,7 @@ for i in range(3):
 
     # Only compute loss for model 0
     if i == 0:
-        model_loss = compute_loss(model,training_data,modified_training_labels,128)
+        model_loss = compute_loss(model,training_samples,modified_training_labels,128)
         print_ln("Model loss for Model 0: %s", model_loss)
 
 
