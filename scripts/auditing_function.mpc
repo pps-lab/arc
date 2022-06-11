@@ -84,12 +84,18 @@ print_ln("Start Unlearning")
 
 def compute_loss(model, training_data, training_labels, batch_size):
     # We get the model
+    print_ln("Starting compute loss")
     self = model.opt
     loss = MemValue(sfix(0))
     def f(start, batch_size, batch):
+        print_ln("Running computation for batch %s", start)
         batch.assign_vector(regint.inc(batch_size,start))
+        print_ln("Assigning batch")
         self.forward(batch=batch)
+        print_ln("Ran self.forward")
         loss.iadd(self.layers[-1].l * batch_size)
+        print_ln("Added losses")
+    print_ln("Starting run in batches")
     self.run_in_batches(f, training_data, batch_size,truth=training_labels)
     loss = loss.reveal()
     return loss
