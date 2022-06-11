@@ -115,14 +115,14 @@ for i in range(3):
     current_model.opt.run(batch_size=128,stop_on_loss=0)
     models.append(current_model)
     print_ln("Compute losses for model %s", i)
-    _,current_model_loss = current_model.opt.reveal_correctness(training_samples, modified_training_labels,128)
-    model_losses.append(current_model_loss)
+    # _,current_model_loss = current_model.opt.reveal_correctness(training_samples, modified_training_labels,128)
+    # model_losses.append(current_model_loss)
 
 # Now, we calculate the MAD score
 mad_scores = sint.Array(5)
 # We now print out the loss scores:
-for i in range(3):
-    print_ln("Model %s: Loss %s", i, model_losses[i])
+#for i in range(3):
+#    print_ln("Model %s: Loss %s", i, model_losses[i])
 
 
 
