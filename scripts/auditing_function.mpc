@@ -96,7 +96,7 @@ def compute_loss(model, training_data, training_labels, batch_size, array_size):
         print_ln("Ran self.forward")
         index_start = start // batch_size
         curr_loss = self.layers[-1].l * batch_size
-        print_ln("Current_loss %s", curr_loss)
+        print_ln("Current_loss %s", curr_loss.reveal())
         loss_array.assign(curr_loss,the_index.read()) 
         print_ln("Added losses")
         the_index.iadd(cint(1))
