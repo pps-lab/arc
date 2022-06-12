@@ -99,6 +99,7 @@ def compute_loss(model, training_data, training_labels, batch_size, array_size):
         loss_array.assign(curr_loss,the_index.read()) 
         print_ln("Added losses")
         the_index.iadd(cint(1))
+        print_ln("the_index: %s", the_index.read())
     print_ln("Starting run in batches")
     self.run_in_batches(f, training_data, batch_size,truth=training_labels)
     loss = cfix(0)
