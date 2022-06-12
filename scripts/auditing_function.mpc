@@ -82,22 +82,30 @@ unlearn_labels.assign_all(sfix(1/10))
 
 print_ln("Start Unlearning")
 
-def compute_loss(model, training_data, training_labels, batch_size):
+def compute_loss(model, training_data, training_labels, batch_size, array_size):
     # We get the model
     print_ln("Starting compute loss")
     self = model.opt
-    loss = MemValue(sfix(0))
+    the_index = MemValue(cint(0))
+    loss_array = Array(array_size,sfix)
     def f(start, batch_size, batch):
         print_ln("Running computation for batch %s", start)
         batch.assign_vector(regint.inc(batch_size,start))
         print_ln("Assigning batch")
         self.forward(batch=batch)
         print_ln("Ran self.forward")
-        loss.iadd(self.layers[-1].l * batch_size)
+        index_start = start // batch_size
+        curr_loss = self.layers[-1].l * batch_size
+        loss_array.assign(curr_loss,the_index.read()) 
         print_ln("Added losses")
+        the_index.iadd(cint(1))
     print_ln("Starting run in batches")
     self.run_in_batches(f, training_data, batch_size,truth=training_labels)
-    loss = loss.reveal()
+    loss = cfix(0)
+    @map_sum_opt(1,array_size, [cfix])
+    def loss_sum(i):
+        return loss_array.get(i).reveal() 
+    loss = loss_sum()
     return loss
 
 # Split the set of programs into 3 parts
@@ -138,7 +146,7 @@ for i in range(3):
 
     # Only compute loss for model 0
     if i == 0:
-        model_loss = compute_loss(model,training_samples,modified_training_labels,128)
+        model_loss = compute_loss(model,training_samples,modified_training_labels,128,500)
         print_ln("Model loss for Model 0: %s", model_loss)
 
 
