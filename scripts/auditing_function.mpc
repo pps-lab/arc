@@ -253,7 +253,7 @@ for i in range(3):
 
     # Only compute loss for model 0
     if i == 0:
-        model_loss = loss_carrier.read()
+        model_loss = my_loss_carrier.read()
         print_ln("Model loss for Model 0: %s", model_loss)
 
 
