@@ -172,7 +172,7 @@ def modified_run(self2,batch_size=None, stop_on_loss=0,loss_carrier=None):
                 self.forward(batch=batch)
                 after = self.layers[-1].average_loss(N)
                 print_ln(
-                    loss reduction in batch %s: %s (%s - %s),
+                    'loss reduction in batch %s: %s (%s - %s)',
                     j,
                     before - after, before, after
                 )
