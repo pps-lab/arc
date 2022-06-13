@@ -1,3 +1,4 @@
+import math
 
 # Given is a trained model and possible malicious data
 
@@ -110,6 +111,108 @@ def compute_loss(model, training_data, training_labels, batch_size, array_size):
     loss = loss_sum()
     return loss
 
+
+def modified_run(self2,batch_size=None, stop_on_loss=0,loss_carrier=None):
+    self = self2
+    if self.n_epochs == 0:
+        return 
+    if batch_size is not None:
+        N = batch_size
+    else:
+        N = self.layers[0].N
+    
+    i = self.i_epoch
+    n_iterations = MemValue(0)
+    self.n_correct = MemValue(0)
+    @for_range(self.n_epochs)
+    def _(_):
+        if self.X_by_label is None:
+            self.X_by_label = [[None] * self.layers[0].N]
+        assert len(self.X_by_label) in (1,2)
+        assert N % len(self.X_by_label) == 0
+        n = N // len(self.X_by_label)
+        n_per_epoch = int(math.ceil(1. * max(len(X) for X in self.X_by_label) / n))
+        print("%d runs per epoch" % n_per_epoch)
+        indices_by_label = []
+        for label, X in enumerate(self.X_by_label):
+            indices = regint.Array(n * n_per_epoch)
+            indices_by_label.append(indices)
+            indices.assign(regint.inc(len(X)))
+            missing = len(indices) - len(X)
+            if missing:
+                indices.assign_vector(
+                    regint.get_random(int(math.log2(len(X))),size=missing),
+                    base=len(X)
+                )
+            if self.always_shuffle or n_per_epoch > 1:
+                indices.shuffle()
+        loss_sum = MemValue(sfix(0))
+        self.n_correct.write(0)
+        @for_range(n_per_epoch)
+        def _(j):
+            n_iterations.iadd(1)
+            batch = regint.Array(N)
+            for label, X in enumerate(self.X_by_label):
+                indices = indices_by_label[label]
+                batch.assign(
+                    indices.get_vector(j * n, n) + 
+                    regint(label * len(self.X_by_label[0]), size=n),
+                    label * n
+                )    
+            self.forward(batch=batch, training=True)
+            self.backward(batch=batch)
+            if self.time_layers:
+                start_timer(1000)
+            self.update(i, batch=batch)
+            if self.time_layers:
+                stop_timer(1000)
+            loss_sum.iadd(self.layers[-1].l)
+            if self.print_loss_reduction:
+                before = self.layers[-1].average_loss(N)
+                self.forward(batch=batch)
+                after = self.layers[-1].average_loss(N)
+                print_ln(
+                    loss reduction in batch %s: %s (%s - %s),
+                    j,
+                    before - after, before, after
+                )
+            elif self.print_losses:
+                print_str('\rloss in batch %s: %s/%s', j,
+                             self.layers[-1].average_loss(N),
+                             loss_sum.reveal() / (j + 1))
+            if self.reveal_correctness:
+                part_truth = self.layers[-1].Y.same_shape()
+                part_truth.assign_vector(
+                        self.layers[-1].Y.get_slice_vector(batch))
+                self.n_correct.iadd(
+                        self.layers[-1].reveal_correctness(batch_size, part_truth))
+            if stop_on_loss:
+                loss = self.layers[-1].average_loss(N)
+                res = (loss < stop_on_loss) * (loss >= -1)
+                self.stopped_on_loss.write(1-res)
+                return res
+            if self.print_losses:
+                print_ln()
+            if self.report_loss and self.layers[-1].compute_loss and self.layers[-1].approx != 5:
+                print_ln('loss in epoch %s: %s', i,
+                         (loss_sum.reveal() * cfix(1 / n_per_epoch)))
+                if loss_carrier is not None:
+                    loss_carrier.write(loss_sum.reveal() * cfix(1 / n_per_epoch))
+            else:
+                print_ln("Done with epoch %s", i)
+            time()
+            i.iadd(1)
+            res = True
+            if self.tol > 0:
+                res *= (1 - (loss_sum >= 0) * \
+                        (loss_sum < self.tol * n_per_epoch)).reveal()
+            self.stopped_on_low_loss.write(1 - res)
+            return res
+
+
+
+
+
 # Split the set of programs into 3 parts
 for i in range(3):
     print_ln("Unlearning model %s", i)
@@ -140,7 +243,9 @@ for i in range(3):
     current_model.opt.stopped_on_loss.write(0)
 
     print_ln("Start unlearning")
-    current_model.opt.run(batch_size=128,stop_on_loss=0)
+    my_loss_carrier = MemValue(cfix(0))
+    #current_model.opt.run(batch_size=128,stop_on_loss=0,loss_carrier=)
+    modified_run(current_model.opt, batch_size=128, stop_on_loss=0,)
     models.append(current_model)
     print_ln("Compute losses for model %s", i)
     # _,current_model_loss = current_model.opt.reveal_correctness(training_samples, modified_training_labels,128)
@@ -148,7 +253,7 @@ for i in range(3):
 
     # Only compute loss for model 0
     if i == 0:
-        model_loss = compute_loss(model,training_samples,modified_training_labels,128,500)
+        model_loss = loss_carrier.read()
         print_ln("Model loss for Model 0: %s", model_loss)
 
 
