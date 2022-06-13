@@ -239,13 +239,14 @@ for i in range(3):
     current_model.opt.layers[0].X.address = training_samples.address
     current_model.opt.layers[-1].Y.address = modified_training_labels.address
     current_model.opt.n_epochs = 1
+    current_model.opt.report_loss = True
     current_model.opt.i_epoch.write(0)
     current_model.opt.stopped_on_loss.write(0)
 
     print_ln("Start unlearning")
     my_loss_carrier = MemValue(cfix(0))
     #current_model.opt.run(batch_size=128,stop_on_loss=0,loss_carrier=)
-    modified_run(current_model.opt, batch_size=128, stop_on_loss=0,)
+    modified_run(current_model.opt, batch_size=128, stop_on_loss=0,loss_carrier=my_loss_carrier)
     models.append(current_model)
     print_ln("Compute losses for model %s", i)
     # _,current_model_loss = current_model.opt.reveal_correctness(training_samples, modified_training_labels,128)
