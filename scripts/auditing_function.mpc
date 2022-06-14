@@ -52,6 +52,8 @@ optim = tf.keras.optimizers.SGD()
 model.compile(optimizer=optim)
 model.build(test_samples.sizes)
 
+print(model.opt.layers[-1])
+
 start = 0
 variable_holders = []
 for i,var in enumerate(model.trainable_variables):
@@ -82,135 +84,6 @@ unlearn_labels = MultiArray([20_000,10],sfix)
 unlearn_labels.assign_all(sfix(1/10))
 
 print_ln("Start Unlearning")
-
-def compute_loss(model, training_data, training_labels, batch_size, array_size):
-    # We get the model
-    print_ln("Starting compute loss")
-    self = model.opt
-    the_index = MemValue(cint(0))
-    loss_array = Array(array_size,sfix)
-    def f(start, batch_size, batch):
-        print_ln("Running computation for batch %s", start)
-        batch.assign_vector(regint.inc(batch_size,start))
-        print_ln("Assigning batch")
-        self.forward(batch=batch)
-        print_ln("Ran self.forward")
-        index_start = start // batch_size
-        curr_loss = self.layers[-1].l * batch_size
-        print_ln("Current_loss %s", curr_loss.reveal())
-        loss_array.assign(curr_loss,the_index.read()) 
-        print_ln("Added losses")
-        the_index.iadd(cint(1))
-        print_ln("the_index: %s", the_index.read())
-    print_ln("Starting run in batches")
-    self.run_in_batches(f, training_data, batch_size,truth=training_labels)
-    loss = cfix(0)
-    @map_sum_opt(1,array_size, [cfix])
-    def loss_sum(i):
-        return loss_array.get(i).reveal() 
-    loss = loss_sum()
-    return loss
-
-
-def modified_run(self2,batch_size=None, stop_on_loss=0,loss_carrier=None):
-    self = self2
-    if self.n_epochs == 0:
-        return 
-    if batch_size is not None:
-        N = batch_size
-    else:
-        N = self.layers[0].N
-    
-    i = self.i_epoch
-    n_iterations = MemValue(0)
-    self.n_correct = MemValue(0)
-    @for_range(self.n_epochs)
-    def _(_):
-        if self.X_by_label is None:
-            self.X_by_label = [[None] * self.layers[0].N]
-        assert len(self.X_by_label) in (1,2)
-        assert N % len(self.X_by_label) == 0
-        n = N // len(self.X_by_label)
-        n_per_epoch = int(math.ceil(1. * max(len(X) for X in self.X_by_label) / n))
-        print("%d runs per epoch" % n_per_epoch)
-        indices_by_label = []
-        for label, X in enumerate(self.X_by_label):
-            indices = regint.Array(n * n_per_epoch)
-            indices_by_label.append(indices)
-            indices.assign(regint.inc(len(X)))
-            missing = len(indices) - len(X)
-            if missing:
-                indices.assign_vector(
-                    regint.get_random(int(math.log2(len(X))),size=missing),
-                    base=len(X)
-                )
-            if self.always_shuffle or n_per_epoch > 1:
-                indices.shuffle()
-        loss_sum = MemValue(sfix(0))
-        self.n_correct.write(0)
-        @for_range(n_per_epoch)
-        def _(j):
-            n_iterations.iadd(1)
-            batch = regint.Array(N)
-            for label, X in enumerate(self.X_by_label):
-                indices = indices_by_label[label]
-                batch.assign(
-                    indices.get_vector(j * n, n) + 
-                    regint(label * len(self.X_by_label[0]), size=n),
-                    label * n
-                )    
-            self.forward(batch=batch, training=True)
-            self.backward(batch=batch)
-            if self.time_layers:
-                start_timer(1000)
-            self.update(i, batch=batch)
-            if self.time_layers:
-                stop_timer(1000)
-            loss_sum.iadd(self.layers[-1].l)
-            if self.print_loss_reduction:
-                before = self.layers[-1].average_loss(N)
-                self.forward(batch=batch)
-                after = self.layers[-1].average_loss(N)
-                print_ln(
-                    'loss reduction in batch %s: %s (%s - %s)',
-                    j,
-                    before - after, before, after
-                )
-            elif self.print_losses:
-                print_str('\rloss in batch %s: %s/%s', j,
-                             self.layers[-1].average_loss(N),
-                             loss_sum.reveal() / (j + 1))
-            if self.reveal_correctness:
-                part_truth = self.layers[-1].Y.same_shape()
-                part_truth.assign_vector(
-                        self.layers[-1].Y.get_slice_vector(batch))
-                self.n_correct.iadd(
-                        self.layers[-1].reveal_correctness(batch_size, part_truth))
-            if stop_on_loss:
-                loss = self.layers[-1].average_loss(N)
-                res = (loss < stop_on_loss) * (loss >= -1)
-                self.stopped_on_loss.write(1-res)
-                return res
-            if self.print_losses:
-                print_ln()
-            if self.report_loss and self.layers[-1].compute_loss and self.layers[-1].approx != 5:
-                print_ln('loss in epoch %s: %s', i,
-                         (loss_sum.reveal() * cfix(1 / n_per_epoch)))
-                if loss_carrier is not None:
-                    loss_carrier.write(loss_sum.reveal() * cfix(1 / n_per_epoch))
-            else:
-                print_ln("Done with epoch %s", i)
-            time()
-            i.iadd(1)
-            res = True
-            if self.tol > 0:
-                res *= (1 - (loss_sum >= 0) * \
-                        (loss_sum < self.tol * n_per_epoch)).reveal()
-            self.stopped_on_low_loss.write(1 - res)
-            return res
-
-
-
 
 
 # Split the set of programs into 3 parts
@@ -245,18 +118,43 @@ for i in range(3):
 
     print_ln("Start unlearning")
     my_loss_carrier = MemValue(cfix(0))
-    #current_model.opt.run(batch_size=128,stop_on_loss=0,loss_carrier=)
-    modified_run(current_model.opt, batch_size=128, stop_on_loss=0,loss_carrier=my_loss_carrier)
+    current_model.opt.run(batch_size=128,stop_on_loss=0)
     models.append(current_model)
     print_ln("Compute losses for model %s", i)
     # _,current_model_loss = current_model.opt.reveal_correctness(training_samples, modified_training_labels,128)
     # model_losses.append(current_model_loss)
 
-    # Only compute loss for model 0
-    model_loss = my_loss_carrier.read()
-    print_ln("Loss for model %s: %s", i, model_loss)
-    model_losses.append(model_loss)
-        
+
+def compute_cross_entropy(predicted_labels, true_labels):
+    sizes = predicted_labels.sizes
+    n_features = sizes[1]
+    n_rows = sizes[0]
+    losses = MultiArray([n_rows,1],predicted_labels.value_type)
+    @for_range(start=0,stop=n_rows,step=1)
+    def _(i):
+        loss_sum = MemValue(sfix(0))
+        @for_range(start=0,stop=n_features,step=1)
+        def _(j):
+            result_loss = -true_labels[i][j] * tf.log_e(predicted_labels[i][j])
+            loss_sum.write(loss_sum.read() + result_loss)
+        losses[i] = loss_sum.read()
+    return losses
+
+
+
+    
+
+
+# Now, we compute the loss for each prediction
+losses = []
+for i,curr_model in enumerate(models):
+    predictions = curr_model.predict(prediction_samples)
+    curr_losses = compute_cross_entropy(predictions, prediction_labels)
+    losses.append(curr_losses)
+
+# Print current losses
+for i,loss_array  in enumerate(losses):
+    print_ln("Loss array for Model %s: %s", i, loss_array.reveal_list())
 
 
 
@@ -272,53 +170,7 @@ for i in range(3):
 
 
 
-def find_median_index(X):
-    array_copy = MultiArray([X.length, 2], [cfix])
 
-    @for_range(start=0,end=X.length,step=1)
-    def _(i):
-        array_copy[i][0] = X[i]
-        array_copy[i][1] = cint(i) * cfix(1/100)
-
-    # Do sorting
-    array_copy.sort(indices=(1,))
-    median_index = X.length/2
-    value_index = cint( array_copy[median_index][1] * cfix(100))
-    return value_index
-
-def MAD(X):
-    # find median of X
-    median_index = find_median_index(X)
-    median_value = X[median_index]
-    # We now compute the absolute difference
-    X_copy = X.same_shape()
-    X_copy.assign_all(median_value)
-
-    X_diff = X - X_copy
-    X_abs_diff = X_diff.abs()
-    X_abs_diff_median_index = find_median_index(X_abs_diff)
-    mad_value = X_abs_diff[X_abs_diff_median_index]
-    return mad_value
-
-def mad_scores(X):
-    median_index = find_median_index(X)
-    median_value = X[median_index]
-    X_median_value = X.same_shape()
-    X_median_value.assign_all(median_value)
-    X_diff = X - X_median_value
-    mad_value = MAD(X)
-    X_result = X_diff/mad_value
-    return X_result
-
-
-clear_loss_scores = cfix.Array(len(model_losses))
-for i, loss_val in enumerate(model_losses):
-    clear_loss_scores[i] = loss_val
-
-# Now, we compute mad_scores
-mad_scores_array = mad_scores(clear_loss_scores)
-for i,score in enumerate(mad_scores_array):
-    print_ln("MAD Score for Model %s: %s", i, score)
 
 
 
