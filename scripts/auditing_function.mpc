@@ -253,9 +253,10 @@ for i in range(3):
     # model_losses.append(current_model_loss)
 
     # Only compute loss for model 0
-    if i == 0:
-        model_loss = my_loss_carrier.read()
-        print_ln("Model loss for Model 0: %s", model_loss)
+    model_loss = my_loss_carrier.read()
+    print_ln("Loss for model %s: %s", i, model_loss)
+    model_losses.append(model_loss)
+        
 
 
 
@@ -265,10 +266,61 @@ for i in range(3):
 
 
 # Now, we calculate the MAD score
-mad_scores = sint.Array(5)
 # We now print out the loss scores:
 #for i in range(3):
 #    print_ln("Model %s: Loss %s", i, model_losses[i])
+
+
+
+def find_median_index(X):
+    array_copy = MultiArray([X.length, 2], [cfix])
+
+    @for_range(start=0,end=X.length,step=1)
+    def _(i):
+        array_copy[i][0] = X[i]
+        array_copy[i][1] = cint(i) * cfix(1/100)
+
+    # Do sorting
+    array_copy.sort(indices=(1,))
+    median_index = X.length/2
+    value_index = cint( array_copy[median_index][1] * cfix(100))
+    return value_index
+
+def MAD(X):
+    # find median of X
+    median_index = find_median_index(X)
+    median_value = X[median_index]
+    # We now compute the absolute difference
+    X_copy = X.same_shape()
+    X_copy.assign_all(median_value)
+
+    X_diff = X - X_copy
+    X_abs_diff = X_diff.abs()
+    X_abs_diff_median_index = find_median_index(X_abs_diff)
+    mad_value = X_abs_diff[X_abs_diff_median_index]
+    return mad_value
+
+def mad_scores(X):
+    median_index = find_median_index(X)
+    median_value = X[median_index]
+    X_median_value = X.same_shape()
+    X_median_value.assign_all(median_value)
+    X_diff = X - X_median_value
+    mad_value = MAD(X)
+    X_result = X_diff/mad_value
+    return X_result
+
+
+clear_loss_scores = cfix.Array(len(model_losses))
+for i, loss_val in enumerate(model_losses):
+    clear_loss_scores[i] = loss_val
+
+# Now, we compute mad_scores
+mad_scores_array = mad_scores(clear_loss_scores)
+for i,score in enumerate(mad_scores_array):
+    print_ln("MAD Score for Model %s: %s", i, score)
+
+
 
 
 
