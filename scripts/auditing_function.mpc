@@ -204,6 +204,8 @@ for i in range(n_samples):
 
 
 print_ln("Losses for sample 0: %s", scores_per_prediction[0].reveal_list())
+for i in range(n_samples):
+    print_ln("Losses for sample %s: %s", i, scores_per_prediction[i].reveal_list())
 
 
 
