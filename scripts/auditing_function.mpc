@@ -199,7 +199,7 @@ scores_per_prediction = losses_per_prediction.same_shape()
 
 for i in range(n_samples):
     losses = scores_per_prediction[i]
-    print_ln("Scores for prediction %s - %s", losses.reveal_list())
+    print_ln("Scores for prediction %s - %s", i, losses.reveal_list())
     mad_scores = MAD_score(losses)
     scores_per_prediction[i].assign(mad_scores)
 
