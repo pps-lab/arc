@@ -151,6 +151,9 @@ def compute_cross_entropy(predicted_labels, true_labels):
 losses = []
 for i,curr_model in enumerate(models):
     predictions = curr_model.predict(prediction_samples)
+    print_ln("Predictions for Model %s", i)
+    for j in range(len(predictions)[0]):
+        print_ln("Prediction %s - %s", j, predictions.reveal_list())
     curr_losses = compute_cross_entropy(predictions, prediction_labels)
     losses.append(curr_losses)
 
