@@ -34,6 +34,8 @@ tf = ml
 
 tf.set_n_threads(n_thread_num)
 
+# Note: Number of models
+n_models = 3
 
 layers = [
     tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
@@ -129,7 +131,7 @@ def compute_cross_entropy(predicted_labels, true_labels):
     sizes = predicted_labels.sizes
     n_features = sizes[1]
     n_rows = sizes[0]
-    losses = MultiArray([n_rows,1],predicted_labels.value_type)
+    losses = Array(n_rows,predicted_labels.value_type)
     @for_range(start=0,stop=n_rows,step=1)
     def _(i):
         loss_sum = MemValue(sfix(0))
@@ -152,21 +154,57 @@ for i,curr_model in enumerate(models):
     curr_losses = compute_cross_entropy(predictions, prediction_labels)
     losses.append(curr_losses)
 
-# Print current losses
-for i,loss_array  in enumerate(losses):
-    print_ln("Loss array for Model %s: %s", i, loss_array.reveal_list())
+# Move from per_model representation to per_prediction representation
+losses_per_prediction = MultiArray([n_samples,n_models], sfix)
+for i in range(n_models):
+    for j in range(n_samples):
+        losses_per_prediction[j][i] = losses[i][j]
+
+
 
 
 
 
         
+# Calculate MAD
+def get_median_value(X):
+    X_arr = X.same_shape()
+    X_arr.assign(X)
+    X_arr.sort()
+    median_value = X_arr[-(X.length)//2]
+    return median_value
+
+def MAD(X):
+    median_value_X = get_median_value(X)
+    median_arr = X.same_shape()
+    median_arr.assign_all(median_value_X)
+    diff_X = X - median_arr
+    abs_X = abs(diff_X)
+    result_X = Array.create_from(abs_X)
+    median_value_X_2 = get_median_value(result_X)
+    return median_value_X_2
+
+def MAD_score(X):
+    mad_value = MAD(X)
+    median_value = get_median_value(X)
+    median_value_arr = X.same_shape()
+    median_value_arr.assign_all(median_value)
+    diff_X = X - median_value_arr
+    result_X = diff_X/mad_value
+    return result_X
 
 
+# Compute mad_scores for each prediction
+scores_per_prediction = losses_per_prediction.same_shape()
 
-# Now, we calculate the MAD score
-# We now print out the loss scores:
-#for i in range(3):
-#    print_ln("Model %s: Loss %s", i, model_losses[i])
+for i in range(n_samples):
+    losses = scores_per_prediction[i]
+    mad_scores = MAD_score(losses)
+    scores_per_prediction[i].assign(mad_scores)
+
+
+print_ln("Losses for sample 0: %s", scores_per_prediction[0].reveal_list())
+
 
 
 
