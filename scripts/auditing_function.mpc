@@ -158,7 +158,7 @@ for model_num,curr_model in enumerate(models):
     curr_losses = compute_cross_entropy(predictions, prediction_labels)
     print_ln("Losses before adding to Loss array for model %s: %s", model_num, curr_losses.reveal_list())
     # Add the losses correctly
-    @for_range(start=0,stop=n_samples,step=1):
+    @for_range(start=0,stop=n_samples,step=1)
     def _(sample_num):
         losses[sample_num][model_num] = curr_losses[sample_num]
 
