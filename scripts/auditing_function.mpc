@@ -139,7 +139,7 @@ def compute_cross_entropy(predicted_labels, true_labels):
         def _(j):
             result_loss = -true_labels[i][j] * tf.log_e(predicted_labels[i][j])
             loss_sum.write(loss_sum.read() + result_loss)
-        losses[i].asign(loss_sum.read())
+        losses[i].assign(loss_sum.read())
     return losses
 
 
