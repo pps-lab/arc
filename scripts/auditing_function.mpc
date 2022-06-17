@@ -148,22 +148,16 @@ def compute_cross_entropy(predicted_labels, true_labels):
 
 
 # Now, we compute the loss for each prediction
-losses = []
+losses = MultiArray([n_samples,n_models],sfix)
 for i,curr_model in enumerate(models):
     predictions = curr_model.opt.eval(prediction_samples,batch_size=128)
     print(predictions)
     print_ln("Predictions for Model %s", i)
     for j in range(predictions.sizes[0]):
-        print_ln("Prediction %s - %s", j, predictions.reveal_list())
+        print_ln("Prediction %s - %s", j, predictions[j].reveal_list())
     curr_losses = compute_cross_entropy(predictions, prediction_labels)
     print_ln("Losses before adding to Loss array for model %s: %s", i, curr_losses.reveal_list())
-    losses.append(curr_losses)
 
-# Move from per_model representation to per_prediction representation
-losses_per_prediction = MultiArray([n_samples,n_models], sfix)
-for i in range(n_models):
-    for j in range(n_samples):
-        losses_per_prediction[j][i] = losses[i][j]
 
 
 
