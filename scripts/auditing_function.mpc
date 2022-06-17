@@ -161,6 +161,8 @@ for model_num,curr_model in enumerate(models):
     @for_range(start=0,stop=n_samples,step=1)
     def _(sample_num):
         losses[sample_num][model_num] = curr_losses[sample_num]
+    
+print_ln("Losses after this: %s", losses.reveal_list())
 
 
 
