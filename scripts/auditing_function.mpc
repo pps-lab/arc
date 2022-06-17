@@ -35,7 +35,7 @@ tf = ml
 tf.set_n_threads(n_thread_num)
 
 # Note: Number of models
-n_models = 3
+n_models = 5
 
 layers = [
     tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
@@ -82,7 +82,7 @@ print(variable_holders)
 # Start the training loop
 models = []
 model_losses = []
-unlearn_labels = MultiArray([20_000,10],sfix)
+unlearn_labels = MultiArray([12_000,10],sfix)
 unlearn_labels.assign_all(sfix(1/10))
 
 print_ln("Start Unlearning")
@@ -97,8 +97,8 @@ for i in range(3):
 
     # Build unlearn dataset 
     # We only need to modify the training_labels for the unleared dataset
-    unlearn_start = i * 20_000 # as we have 60_000 / 3 = 20_000
-    unlearn_size = 20_000
+    unlearn_start = i * 12_000 # as we have 60_000 / 5= 12_000
+    unlearn_size = 12_000
     batch_size = 128
     modified_training_labels = MultiArray([60_000, 10], sfix)
     modified_training_labels.assign(training_labels)
@@ -214,6 +214,14 @@ for i in range(n_samples):
 print_ln("Losses for sample 0: %s", scores_per_prediction[0].reveal_list())
 for i in range(n_samples):
     print_ln("Losses for sample %s: %s", i, scores_per_prediction[i].reveal_list())
+
+
+print_ln(">>>>FINAL_LOSSES<<<<")
+@for_range(start=0,stop=n_samples,step=1)
+def _(i):
+    print_ln("Results for Sample %s: %s", i, scores_per_prediction[i].reveal_list())
+
+
 
 
 
