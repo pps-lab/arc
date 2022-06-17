@@ -205,7 +205,7 @@ def MAD_score(X):
 scores_per_prediction = losses.same_shape()
 
 for i in range(n_samples):
-    cur_losses = scores_per_prediction[i]
+    cur_losses = losses[i]
     print_ln("Scores for prediction %s - %s", i, cur_losses.reveal_list())
     mad_scores = MAD_score(cur_losses)
     scores_per_prediction[i].assign(mad_scores)
