@@ -113,7 +113,7 @@ for i in range(3):
     # Now, we set input and output
     current_model.opt.layers[0].X.address = training_samples.address
     current_model.opt.layers[-1].Y.address = modified_training_labels.address
-    current_model.opt.n_epochs = 1
+    current_model.opt.n_epochs = 5
     current_model.opt.report_loss = True
     current_model.opt.i_epoch.write(0)
     current_model.opt.stopped_on_loss.write(0)
