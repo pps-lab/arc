@@ -1,0 +1,14 @@
+import random
+
+my_array = [i for i in range(10,101, 10)]
+
+random.shuffle(my_array)
+
+inital_array = Array(len(my_array),sint)
+
+for i,v in enumerate(my_array):
+    inital_array[i] = v
+
+print_ln("Data Dim 0: %s", inital_array.get_vector().reveal())
+inital_array.sort()
+print_ln("Data dim 0: %s", inital_array.get_vector().reveal())

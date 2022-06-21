@@ -1,0 +1,40 @@
+my_array = [1.2, 4.5, 10.5, 3.2, 30.12, 12.33, 11.3]
+
+losses = Array(len(my_array),sfix)
+
+for i,v in enumerate(my_array):
+    losses[i] = sfix(v)
+
+def get_median_value(X):
+    X_arr = X.same_shape()
+    X_arr.assign(X)
+    X_arr.sort()
+    median_value = X_arr[-(X.length)//2]
+    return median_value
+
+def MAD(X):
+    median_value_X = get_median_value(X)
+    median_arr = X.same_shape()
+    median_arr.assign_all(median_value_X)
+    diff_X = X - median_arr
+    abs_X = abs(diff_X)
+    result_X = Array.create_from(abs_X)
+    median_value_X_2 = get_median_value(result_X)
+    return median_value_X_2
+
+def MAD_score(X):
+    mad_value = MAD(X)
+    median_value = get_median_value(X)
+    median_value_arr = X.same_shape()
+    median_value_arr.assign_all(median_value)
+    diff_X = X - median_value_arr
+    result_X = diff_X/mad_value
+    return result_X
+
+
+medial_value  = get_median_value(losses)
+print_ln("Median value: %s", medial_value.reveal())
+print_ln("Median %s", losses.reveal())
+
+mad_scores = MAD_score(losses)
+print_ln("Mad scores: %s", mad_scores.reveal())
