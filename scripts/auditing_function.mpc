@@ -117,6 +117,8 @@ for i in range(n_models):
     current_model.opt.report_loss = True
     current_model.opt.i_epoch.write(0)
     current_model.opt.stopped_on_loss.write(0)
+    # Here, we set the optimizer into debug mode
+    current_model.opt.debug = True
 
     print(f"Current Model {i}: {current_model}")
     print(f"Current Model {i} Layers: {current_model.layers}")
