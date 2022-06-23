@@ -157,7 +157,7 @@ for model_num,curr_model in enumerate(models):
     print(predictions)
     print_ln("Predictions for Model %s", i)
     for j in range(predictions.sizes[0]):
-        print_ln("Prediction %s - %s", j, predictions[model_num].reveal_list())
+        print_ln("Prediction %s - %s", j, predictions[j].reveal_list())
     curr_losses = compute_cross_entropy(predictions, prediction_labels)
     print_ln("Losses before adding to Loss array for model %s: %s", model_num, curr_losses.reveal_list())
     # Add the losses correctly
