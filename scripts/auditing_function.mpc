@@ -36,7 +36,7 @@ tf.set_n_threads(n_thread_num)
 
 # Note: Number of models
 # For debug purposes we only look at one model for now
-n_models = 1
+n_models = 2
 
 layers = [
     tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
