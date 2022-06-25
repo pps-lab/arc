@@ -35,7 +35,8 @@ tf = ml
 tf.set_n_threads(n_thread_num)
 
 # Note: Number of models
-n_models = 5
+# For debug purposes we only look at one model for now
+n_models = 1
 
 layers = [
     tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
@@ -151,6 +152,8 @@ def compute_cross_entropy(predicted_labels, true_labels):
 # Now, we compute the loss for each prediction
 losses = MultiArray([n_samples,n_models],sfix)
 for model_num,curr_model in enumerate(models):
+    # for debug purposes, we enable debug for output
+    curr_model.opt.layers[-1].debug = True
     predictions = curr_model.opt.eval(prediction_samples,batch_size=128)
     print(predictions)
     print_ln("Predictions for Model %s", model_num)
@@ -223,10 +226,6 @@ print_ln(">>>>FINAL_LOSSES<<<<")
 @for_range(start=0,stop=n_samples,step=1)
 def _(i):
     print_ln("Results for Sample %s: %s", i, scores_per_prediction[i].reveal_list())
-
-
-
-
 
 
 
