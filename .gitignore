@@ -1,2 +1,3 @@
 *.local.sh
+*.local.patch
 poetry.lock
