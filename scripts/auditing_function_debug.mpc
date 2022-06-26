@@ -1,0 +1,247 @@
+import math
+
+# Given is a trained model and possible malicious data
+
+# Do some preparations
+
+program.options_from_args()
+
+n_thread_num = int(program.args[1])
+
+# training_sample_size = sint.input_from(0)
+
+training_samples = MultiArray([60000, 28, 28], sfix)
+training_labels = MultiArray([60000, 10], sint)
+
+test_samples = MultiArray([10000, 28, 28], sfix)
+test_labels = MultiArray([10000,10], sint)
+
+n_samples = 8
+prediction_samples = sfix.Tensor([n_samples, 28, 28])
+prediction_labels = sint.Tensor([n_samples, 10])
+
+# Load the actual data
+training_labels.input_from(0)
+training_samples.input_from(0)
+test_labels.input_from(0)
+test_samples.input_from(0)
+prediction_labels.input_from(0)
+prediction_samples.input_from(0)
+
+# Prepare the model
+from Compiler import ml
+tf = ml
+
+tf.set_n_threads(n_thread_num)
+
+# Note: Number of models
+# For debug purposes we only look at one model for now
+n_models = 2
+
+layers = [
+    tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Conv2D(50,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(500, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+]
+
+model = tf.keras.models.Sequential(layers)
+optim = tf.keras.optimizers.SGD()
+
+model.compile(optimizer=optim)
+model.build(test_samples.sizes)
+
+print(model.opt.layers[-1])
+
+start = 0
+variable_holders = []
+for i,var in enumerate(model.trainable_variables):
+    print(f"trainable_variable {i}: {var}")
+    print_ln("Loading trainable_variable %s",i)
+    var.input_from(0)
+    if isinstance(var, MultiArray):
+        copy_container = MultiArray(var.sizes,var.value_type)
+        copy_container.assign(var)
+        variable_holders.append(copy_container)
+    elif isinstance(var, Array):
+        copy_container = Array(var.length, var.value_type)
+        copy_container.assign(var)
+        variable_holders.append(copy_container)
+
+
+print(variable_holders)
+
+# Now, since we hold a copy of the trained variables, we can start with doing the actual training
+# We first assume a split 5 datasets
+
+
+
+# Start the training loop
+models = []
+model_losses = []
+unlearn_labels = MultiArray([12_000,10],sfix)
+unlearn_labels.assign_all(sfix(1/10))
+
+print_ln("Start Unlearning")
+
+
+# Split the set of programs into 3 parts
+for i in range(n_models):
+    print_ln("Unlearning model %s", i)
+    current_model = tf.keras.models.Sequential(layers)
+    current_optim = tf.keras.optimizers.SGD()
+    current_model.compile(optimizer=current_optim)
+
+    # Build unlearn dataset 
+    # We only need to modify the training_labels for the unleared dataset
+    unlearn_start = i * 12_000 # as we have 60_000 / 5= 12_000
+    unlearn_size = 12_000
+    batch_size = 128
+    modified_training_labels = MultiArray([60_000, 10], sfix)
+    modified_training_labels.assign(training_labels)
+    # Now, we set the portion of the training labels that we want to unlearn
+    modified_training_labels.get_part(unlearn_start,unlearn_size).assign(unlearn_labels)
+    current_model.build(test_samples.sizes, batch_size)
+    # Load the checkpoint for the model
+    print_ln("Loading checkpoint for model %s", i)
+    for var,check_point in zip(current_model.trainable_variables,variable_holders):
+        var.assign(check_point)
+    
+    # Now, we set input and output
+    current_model.opt.layers[0].X.address = training_samples.address
+    current_model.opt.layers[-1].Y.address = modified_training_labels.address
+    current_model.opt.n_epochs = 1
+    current_model.opt.report_loss = True
+    current_model.opt.i_epoch.write(0)
+    current_model.opt.stopped_on_loss.write(0)
+
+    print(f"Current Model {i}: {current_model}")
+    print(f"Current Model {i} Layers: {current_model.layers}")
+
+    print_ln("Start unlearning")
+    my_loss_carrier = MemValue(cfix(0))
+    current_model.opt.run(batch_size=128,stop_on_loss=0)
+    models.append(current_model)
+    print_ln("Compute losses for model %s", i)
+
+
+def compute_cross_entropy(predicted_labels, true_labels):
+    sizes = predicted_labels.sizes
+    n_features = sizes[1]
+    n_rows = sizes[0]
+    losses = Array(n_rows,predicted_labels.value_type)
+    @for_range(start=0,stop=n_rows,step=1)
+    def _(i):
+        loss_sum = MemValue(sfix(0))
+        @for_range(start=0,stop=n_features,step=1)
+        def _(j):
+            result_loss = -true_labels[i][j] * tf.log_e(predicted_labels[i][j])
+            loss_sum.write(loss_sum.read() + result_loss)
+        losses[i] = loss_sum.read()
+    return losses
+
+
+
+    
+
+
+# Now, we compute the loss for each prediction
+losses = MultiArray([n_samples,n_models],sfix)
+for model_num,curr_model in enumerate(models):
+    # for debug purposes, we enable debug for output
+    curr_model.opt.layers[-1].debug = True
+    predictions = curr_model.opt.eval(prediction_samples,batch_size=128)
+    print(predictions)
+    print_ln("Predictions for Model %s", model_num)
+    @for_range(start=0,stop=n_samples,step=1)
+    def _(j):
+        print_ln("Prediction %s - %s", j, predictions[j].reveal_list())
+    
+    curr_losses = compute_cross_entropy(predictions, prediction_labels)
+    print_ln("Losses before adding to Loss array for model %s: %s", model_num, curr_losses.reveal_list())
+    # Add the losses correctly
+    @for_range(start=0,stop=n_samples,step=1)
+    def _(sample_num):
+        losses[sample_num][model_num] = curr_losses[sample_num]
+    
+print_ln("Losses after this: %s", losses.reveal_list())
+
+
+
+
+
+
+
+
+
+        
+# Calculate MAD
+def get_median_value(X):
+    X_arr = X.same_shape()
+    X_arr.assign(X)
+    X_arr.sort()
+    median_value = X_arr[-(X.length)//2]
+    return median_value
+
+def MAD(X):
+    median_value_X = get_median_value(X)
+    median_arr = X.same_shape()
+    median_arr.assign_all(median_value_X)
+    diff_X = X - median_arr
+    abs_X = abs(diff_X)
+    result_X = Array.create_from(abs_X)
+    median_value_X_2 = get_median_value(result_X)
+    return median_value_X_2
+
+def MAD_score(X):
+    mad_value = MAD(X)
+    median_value = get_median_value(X)
+    median_value_arr = X.same_shape()
+    median_value_arr.assign_all(median_value)
+    diff_X = X - median_value_arr
+    result_X = diff_X/mad_value
+    return result_X
+
+
+# Compute mad_scores for each prediction
+scores_per_prediction = losses.same_shape()
+
+for i in range(n_samples):
+    cur_losses = losses[i]
+    print_ln("Losses for prediction %s - %s", i, cur_losses.reveal_list())
+    mad_scores = MAD_score(cur_losses)
+    scores_per_prediction[i].assign(mad_scores)
+
+
+# print_ln("Losses for sample 0: %s", scores_per_prediction[0].reveal_list())
+for i in range(n_samples):
+    print_ln("Losses for sample %s: %s", i, scores_per_prediction[i].reveal_list())
+
+
+print_ln(">>>>FINAL_LOSSES<<<<")
+@for_range(start=0,stop=n_samples,step=1)
+def _(i):
+    print_ln("Results for Sample %s: %s", i, scores_per_prediction[i].reveal_list())
+
+
+
+
+
+
+
+
+
+
+
+
+    
+    
+
+
+
+
+
