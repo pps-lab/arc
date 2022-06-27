@@ -1,0 +1,44 @@
+
+
+test_multi = MultiArray([50,10], cint)
+
+enum_matrix = []
+def one_hot_encoding(i, j):
+    if i == j:
+        return 1
+    else:
+        return 0
+
+enum_matrix = [[one_hot_encoding(i,j) for i in range(10)] for j in range(10)]
+print(enum_matrix)
+
+# Fill the array
+simple_matrix = MultiArray([10,10],cint)
+for i in range(10):
+    for j in range(10):
+        simple_matrix[i][j] = enum_matrix[i][j]
+
+print_ln("My Matrix: %s", simple_matrix.reveal_list())
+
+@for_range(start=0,stop=50,step=10)
+def _(i):
+    test_multi.get_part(i,10).assign(simple_matrix)
+
+# Print results
+
+@for_range(start=0,stop=50,step=1)
+def _(i):
+    print_ln("Matrix[%s]: %s", i, test_multi.get_part(i,1).reveal_list())
+
+
+
+
+
+
+    
+    
+
+
+
+    
+
