@@ -147,6 +147,11 @@ unlearn_size = 60_000//n_models
 unlearn_labels = MultiArray([unlearn_size,10],sfix)
 unlearn_labels.assign(sfix(1/10))
 
+print_ln("Unlearning labels")
+@for_range(start=0,stop=20,step=1)
+def _(i):
+    print_ln("Unlearn [%s]: %s", i, unlearn_labels.get_part(i,1).reveal_list())
+
 models = []
 def create_model(i):
     current_model = tf.keras.models.Sequential(layers)
