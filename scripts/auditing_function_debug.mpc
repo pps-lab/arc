@@ -145,7 +145,7 @@ def _(i):
 
 unlearn_size = 60_000//n_models
 unlearn_labels = MultiArray([unlearn_size,10],sfix)
-unlearn_labels.assign(sfix(1/10))
+unlearn_labels.assign_all(sfix(1/10))
 
 print_ln("Value of 1/10: %s", sfix(1/10).reveal())
 
