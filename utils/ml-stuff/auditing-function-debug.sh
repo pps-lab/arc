@@ -28,7 +28,7 @@ cp  "$THE_CODE_DIR/scripts/auditing_function_debug.mpc" "$THE_CODE_DIR/mp-spdz/P
 cd mp-spdz
 # compile tutorial
 echo "Start of compilation: $(date +\"%T.%N\")"
-./compile.py -R 72 -C -D custom-auditing_function_debug "$6" split3
+./compile.py -R 72 -C -D -M custom-auditing_function_debug "$6" split3
 echo "End of compilation: $(date +\"%T.%N\")"
 # Sleep for sync
 sleep "$2"
