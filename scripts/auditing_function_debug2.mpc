@@ -9,7 +9,8 @@ program.options_from_args()
 #sfix.set_precision(f=16,k=43)
 #cfix.set_precision(f=16,k=43)
 
-n_thread_num = int(program.args[1])
+learning_rate = float(program.args[1])
+n_thread_num = int(program.args[2])
 
 # training_sample_size = sint.input_from(0)
 
@@ -198,12 +199,10 @@ def create_model(i):
     current_model.opt.layers[0].X.address = small_training_samples.address 
     current_model.opt.layers[-1].Y.address = modified_training_labels.address
     current_model.opt.n_epochs = 1
-    #current_model.opt.i_epoch.write(0)
-    #current_model.opt.stopped_on_loss.write(0)
-    current_model.opt.gamma.write(cfix(0.0001))
-    current_model.opt.momentum = 0.7
+
+
+    current_model.opt.gamma.write(cfix(learning_rate))
     current_model.opt.layers[-1].approx = True
-    #current_model.opt.debug = 1
     current_model.opt.print_losses = True
     
     current_model.opt.run(batch_size=10,stop_on_loss=0)
@@ -232,62 +231,14 @@ def do_prediction(i,the_model):
         print_ln("Predictions [%s]: %s", j, current_predictions[j].reveal_list())
     
 
-
-for i,curr_model in enumerate(models):
-    do_prediction(i,curr_model)
-
-
-def output_weights(the_model):
-    print_ln("Write trainable variables:")
-    for i,var in enumerate(the_model.trainable_variables):
-        #clear_var = var.reveal()
-        print_ln("###VAR###")
-        print_ln("%s", var.reveal_to_binary_output())
-        if isinstance(var, MultiArray):
-            print_ln("%s - type: %s", var.sizes, var.value_type)
-        elif isinstance(var, Array):
-            print_ln("%s - type: %s", var.length, var.value_type)
-
-def output_Y_shapes(the_model):
-    print_ln("Output Y shape for model")
-    for i,layer in enumerate(the_model.opt.layers):
-        if isinstance(layer.Y, MultiArray):
-            print_ln("Layer[%s].Y.shape = %s", i,layer.Y.sizes)
-        elif isinstance(layer.Y, Array):
-            print_ln("Layer[%s].Y.shape = %s", i,[layer.Y.length])
-
-def test_debug_output():
-    print_ln("###DEBUG###")
-    print_ln("{test: 123}")
-    print_ln("###ENDDEBUG###")
-
-
-def print_copy_result_shape(copy_result):
-    if isinstance(copy_result, MultiArray):
-        return copy_result.sizes
-    elif isinstance(copy_result, Array):
-        return [copy_result.length]
-    else:
-        return []
-
-def output_copy_results(the_model):
-    counter = 0
-    for i,l in enumerate(the_model.opt.layers):
-        if hasattr(l,'copy_results'):
-            print_ln("Result %s - shape: %s", counter, print_copy_result_shape(l.copy_results))
-            l.copy_results.print_reveal_nested()
-            counter = counter + 1
+# we assume both pred_arr and exp_arr are of type Array
+def compute_loss(pred_arr, exp_arr):
+    loss_arr = Array(pred_arr.length,pred_arr.value_type)
+    exp_arr = Array(pred_arr.length,pred_arr.value_type)
+    
 
 
 
 for i,curr_model in enumerate(models):
-    if i >= 1:
-        break
-    print_ln("###Model###")
-    output_weights(curr_model)
-    output_Y_shapes(curr_model)
-    print_ln("###COPY-RESULTS###")
-    output_copy_results(curr_model)
-
-test_debug_output()
+    do_prediction(cint(i),curr_model)
 

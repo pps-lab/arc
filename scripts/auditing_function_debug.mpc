@@ -79,56 +79,11 @@ print(variable_holders)
 # We first assume a split 5 datasets
 
 
-def compute_cross_entropy(predicted_labels, true_labels):
-    sizes = predicted_labels.sizes
-    n_features = sizes[1]
-    n_rows = sizes[0]
-    losses = Array(n_rows,predicted_labels.value_type)
-    @for_range(start=0,stop=n_rows,step=1)
-    def _(i):
-        loss_sum = MemValue(sfix(0))
-        @for_range(start=0,stop=n_features,step=1)
-        def _(j):
-            result_loss = -true_labels[i][j] * tf.log_e(predicted_labels[i][j])
-            loss_sum.write(loss_sum.read() + result_loss)
-        losses[i] = loss_sum.read()
-    return losses
-
-# Calculate MAD
-def get_median_value(X):
-    X_arr = X.same_shape()
-    X_arr.assign(X)
-    X_arr.sort()
-    median_value = X_arr[-(X.length)//2]
-    return median_value
-
-def MAD(X):
-    median_value_X = get_median_value(X)
-    median_arr = X.same_shape()
-    median_arr.assign_all(median_value_X)
-    diff_X = X - median_arr
-    abs_X = abs(diff_X)
-    result_X = Array.create_from(abs_X)
-    median_value_X_2 = get_median_value(result_X)
-    return median_value_X_2
-
-def MAD_score(X):
-    mad_value = MAD(X)
-    median_value = get_median_value(X)
-    median_value_arr = X.same_shape()
-    median_value_arr.assign_all(median_value)
-    diff_X = X - median_value_arr
-    result_X = diff_X/mad_value
-    return result_X
-
-
-
-    
 
 
 # Now, we compute the loss for each prediction
 #losses = MultiArray([n_samples,n_models],sfix)
-losses = Array(n_samples,sfix)
+#losses = Array(n_samples,sfix)
 
 predictions = model.opt.eval(prediction_samples,batch_size=128)
 print(predictions)
@@ -184,6 +139,7 @@ def create_model(i):
     current_model.opt.n_epochs = 1
     current_model.opt.i_epoch.write(0)
     current_model.opt.stopped_on_loss.write(0)
+    current_model.opt.gamma.write(cfix(5e-05))
     
     current_model.opt.run(batch_size=128,stop_on_loss=0)
     return current_model
@@ -205,7 +161,7 @@ def do_prediction(i,the_model):
 
 
 for i,curr_model in enumerate(models):
-    do_prediction(i,curr_model)
+    do_prediction(int(i),curr_model)
 
 
 
