@@ -1,5 +1,5 @@
 from ast import arg
-import runner_defs
+import python_utils.runner_defs as runner_defs
 import click
 import requests
 
