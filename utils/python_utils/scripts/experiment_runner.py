@@ -83,6 +83,8 @@ def cli(player_number,sleep_time):
         output_prefix=output_prefix)
     
     
+if __name__ == "__main__":
+    cli()
 
 
 
