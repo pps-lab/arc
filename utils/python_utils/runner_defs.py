@@ -34,6 +34,7 @@ class BaseRunner(abc.ABC):
 
 class CompilerArguments(enum.Enum):
     EMULATE_X = ['-R', '64']
+    REPLICATED_RING_PARTY_X = ['-R', "64"]
 
 class CompilerRunner(BaseRunner):
 
@@ -50,19 +51,44 @@ class CompilerRunner(BaseRunner):
             [f"../scripts/{self._script_name}.mpc"] + \
             self._script_args
 
-class EmulatorRunner(BaseRunner):
 
-    def __init__(self, output_prefix, script_name, args):
-        self._out_prefix = output_prefix
-        self._script_name = script_name
-        self._script_args = args
+class ScriptBaseRunner(BaseRunner):
+    def __init__(self, output_prefix, script_name, args, player_0_host, player_id):
+        self.output_prefix = output_prefix
+        self.script_name = script_name
+        self.script_args = args
+        self.player_0_host = player_0_host
+        self.player_id = player_id
+
+
+class EmulatorRunner(ScriptBaseRunner):
     
     def _program(self):
         return "./emulate.x"
     
     def _args(self):
-        return ["-OF", self._out_prefix, 
-            f"{self._script_name}-{'-'.join([str(s) for s in self._script_args])}"]
+        return ["-OF", self.output_prefix, 
+            f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
+
+
+
+class ReplicatedRingPartyRunner(ScriptBaseRunner):
+    
+    def _program(self):
+        return "./replicated-ring-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+            "-h", f"{self.player_0_host}",
+            "-pn", "12300",
+            f"{self.player_id}",
+            f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
+
+
+
+class ProtocolRunners(enum.Enum): 
+    EMULATE_X = EmulatorRunner
+    REPLICATED_RING_PARTY_X = ReplicatedRingPartyRunner
 
 
 
