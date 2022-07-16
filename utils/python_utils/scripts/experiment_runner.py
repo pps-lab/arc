@@ -57,6 +57,7 @@ def run_script_with_args(task_config: config_def.TaskConfig, output_prefix: str)
         player_0_host=task_config.player_0_hostname,
         player_id=task_config.player_id
     )
+    script_runner_obj.run()
 
 def capture_output(task_config: config_def.TaskConfig, 
     output_prefix: str):
