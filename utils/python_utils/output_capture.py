@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 
 
 class OutputCapture:
@@ -22,15 +23,19 @@ class OutputCapture:
 
     def capture_output(self):
         possible_input_files = os.listdir(".")
+        print(f"Capture_output: Possible input files: {possible_input_files}",file=sys.stderr)
         for input_file in possible_input_files:
             input_file_path = os.path.join(os.getcwd(),input_file)
             if self.isrelevant(input_file_path,input_file):
+                print(f"Captured_output: {input_file} is relevant")
                 match = self.pattern.match(input_file)
                 player_id = int(match.group(1))
                 thread_num = int(match.group(2))
                 result_file_name = f"result-P{player_id}-{thread_num}.txt"
                 result_file_path = os.path.join(self.result_dir,result_file_name)
                 os.replace(input_file_path,result_file_path)
+            else:
+                print(f"Captured_output: {input_file} is not relevant")
             
 
 
