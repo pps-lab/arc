@@ -10,7 +10,7 @@ first_exp:
         - setup-poetry
       
       $CMD$:
-        - "PYTHONPATH=\"{{exp_code_dir}}/utils\" {{exp_code_dir}}/.venv/bin/python -m python_utils.scripts.experiment_runner --player-id 0  --speel-time 2.0"
+        - "bash {{code_exp_dir}}/utils/experiment-runner.sh \"{{code_exp_dir}}\" 0 2.0"
         
     hserv2:
       n: 2
@@ -20,8 +20,8 @@ first_exp:
         - setup-poetry
       
       $CMD$:
-        - "PYTHONPATH=\"{{exp_code_dir}}/utils\" {{exp_code_dir}}/.venv/bin/python -m python_utils.scripts.experiment_runner --player-id 1  --speel-time 2.0"
-        - "PYTHONPATH=\"{{exp_code_dir}}/utils\" {{exp_code_dir}}/.venv/bin/python -m python_utils.scripts.experiment_runner --player-id 2  --speel-time 2.0"
+        - "bash {{code_exp_dir}}/utils/experiment-runner.sh \"{{code_exp_dir}}\" 1 2.0"
+        - "bash {{code_exp_dir}}/utils/experiment-runner.sh \"{{code_exp_dir}}\" 2 2.0"
   base_experiment:
     mpc:
       player_count: 3
