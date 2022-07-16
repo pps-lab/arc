@@ -47,7 +47,7 @@ class CompilerRunner(BaseRunner):
         return "./compile.py"
     
     def _args(self):
-        return self._compiler_args + \
+        return self._compiler_args.value + \
             [f"../scripts/{self._script_name}.mpc"] + \
             self._script_args
 
