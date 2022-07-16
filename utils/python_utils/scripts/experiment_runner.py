@@ -1,4 +1,4 @@
-import utils.python_utils.config_def as config_def
+import python_utils.config_def as config_def
 import python_utils.runner_defs as runner_defs
 import python_utils.input_file_processor as ifp
 import python_utils.output_capture as out_cap
