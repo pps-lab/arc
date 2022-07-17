@@ -2,6 +2,7 @@ import python_utils.config_def as config_def
 import python_utils.runner_defs as runner_defs
 import python_utils.input_file_processor as ifp
 import python_utils.output_capture as out_cap
+import python_utils.cleaner as clr
 import click
 import os
 import shutil
@@ -67,6 +68,11 @@ def capture_output(task_config: config_def.TaskConfig,
         player_id=task_config.player_id)
     out_cap_obj.capture_output()
 
+def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
+    cleaner_obj = clr.Cleaner(code_dir=task_config.abs_path_to_code_dir,
+        output_prefix=output_prefix)
+    cleaner_obj.clean()
+
     
 
 
@@ -90,6 +96,7 @@ def cli(player_number,sleep_time):
         output_prefix=output_prefix)
     capture_output(task_config=task_config,
         output_prefix=output_prefix)
+    clean_workspace(task_config=task_config,output_prefix=output_prefix)
     
     
 if __name__ == "__main__":
