@@ -22,10 +22,11 @@ class OutputCapture:
         return player_number == self.player_id 
 
     def capture_output(self):
-        possible_input_files = os.listdir(".")
+        possible_input_files = os.listdir("./mp-spdz/")
+        mp_spdz_path = os.path.join(os.getcwd(),"mp-spdz/")
         print(f"Capture_output: Possible input files: {possible_input_files}",file=sys.stderr)
         for input_file in possible_input_files:
-            input_file_path = os.path.join(os.getcwd(),input_file)
+            input_file_path = os.path.join(mp_spdz_path,input_file)
             if self.isrelevant(input_file_path,input_file):
                 print(f"Captured_output: {input_file} is relevant", file=sys.stderr)
                 match = self.pattern.match(input_file)
