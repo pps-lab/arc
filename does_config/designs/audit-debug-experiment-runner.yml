@@ -28,13 +28,13 @@ determine_lr:
       abs_path_to_code_dir: "{{exp_code_dir}}"
       script_name: "auditing_function_debug"
       script_args:
-        - 38
-        - $FACTOR$:
-          - 5-e5
-          - 1-e5
-          - 5-e6
-          - 1-e6
-          - 5-e7
-          - 1-e7
+        $FACTOR$: [
+          [38, 5e-5],
+          [38, 1e-5],
+          [38, 5e-6],
+          [38, 1e-6],
+          [38, 5e-7],
+          [38, 1e-7]
+        ]
       protocol_setup: "semi_honest_3"
       input_file_name: "mnist-audit-conv-10epoch.zip"
