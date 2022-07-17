@@ -27,7 +27,7 @@ class OutputCapture:
         for input_file in possible_input_files:
             input_file_path = os.path.join(os.getcwd(),input_file)
             if self.isrelevant(input_file_path,input_file):
-                print(f"Captured_output: {input_file} is relevant")
+                print(f"Captured_output: {input_file} is relevant", file=sys.stderr)
                 match = self.pattern.match(input_file)
                 player_id = int(match.group(1))
                 thread_num = int(match.group(2))
@@ -35,7 +35,7 @@ class OutputCapture:
                 result_file_path = os.path.join(self.result_dir,result_file_name)
                 os.replace(input_file_path,result_file_path)
             else:
-                print(f"Captured_output: {input_file} is not relevant")
+                print(f"Captured_output: {input_file} is not relevant",file=sys.stderr)
             
 
 

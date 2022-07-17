@@ -28,7 +28,8 @@ class BaseRunner(abc.ABC):
             " ".join([self.program] + self.args),
             shell=True,
             cwd="./mp-spdz/",
-            check=True
+            check=True,
+            capture_output=False
         )
 
 
