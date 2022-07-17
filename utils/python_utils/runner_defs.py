@@ -75,6 +75,7 @@ class EmulatorRunner(ScriptBaseRunner):
 class ReplicatedRingPartyRunner(ScriptBaseRunner):
     
     def _program(self):
+        print("Run ReplicatedRingPartyRunner")
         return "./replicated-ring-party.x"
 
     def _args(self):
