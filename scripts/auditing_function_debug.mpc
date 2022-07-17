@@ -7,6 +7,7 @@ import math
 program.options_from_args()
 
 n_thread_num = int(program.args[1])
+learning_rate = cfix(float(program.args[2]))
 
 # training_sample_size = sint.input_from(0)
 
@@ -139,7 +140,7 @@ def create_model(i):
     current_model.opt.n_epochs = 1
     current_model.opt.i_epoch.write(0)
     current_model.opt.stopped_on_loss.write(0)
-    current_model.opt.gamma.write(cfix(5e-06))
+    current_model.opt.gamma.write(learning_rate)
     
     current_model.opt.run(batch_size=128,stop_on_loss=0)
     return current_model
