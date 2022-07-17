@@ -26,7 +26,7 @@ first_exp:
       player_count: 3
       player_0_hostname: "[% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %]"
       abs_path_to_code_dir: "{{exp_code_dir}}"
-      script_name: "test-assign"
+      script_name: "auditing_function_debug"
       script_args:
         - 38
       protocol_setup: "semi_honest_3"
