@@ -148,7 +148,7 @@ def create_model(i):
 
 
     current_model.opt.gamma.write(cfix(learning_rate))
-    current_model.opt.layers[-1].approx = True
+    current_model.opt.layers[-1].approx = False
     current_model.opt.print_losses = True
     
     current_model.opt.run(batch_size=10,stop_on_loss=0)
