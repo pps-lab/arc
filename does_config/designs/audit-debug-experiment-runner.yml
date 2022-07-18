@@ -34,7 +34,9 @@ determine_lr:
           [38, 5e-6],
           [38, 1e-6],
           [38, 5e-7],
-          [38, 1e-7]
+          [38, 1e-7],
+          [38, 5e-8],
+          [38, 1e-8]
         ]
       protocol_setup: "semi_honest_3"
       input_file_name: "mnist-audit-conv-10epoch.zip"
