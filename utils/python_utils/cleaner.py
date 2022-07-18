@@ -20,7 +20,7 @@ class Cleaner:
 
     def clean_output(self):
         input_file_list = os.listdir(os.path.join(self.code_dir,"mp-spdz/"))
-        for input_file_name in [file_name for file_name in input_file_name if self.is_relevant(file_name)]:
+        for input_file_name in [file_name for file_name in input_file_list if self.is_relevant(file_name)]:
             input_file_path = os.path.join(self.code_dir,"mp-spdz/",input_file_name)
             os.remove(input_file_path)
         
