@@ -29,14 +29,7 @@ determine_lr:
       script_name: "auditing_function_debug"
       script_args:
         $FACTOR$: [
-          [38, 5e-5],
-          [38, 1e-5],
-          [38, 5e-6],
-          [38, 1e-6],
-          [38, 5e-7],
-          [38, 1e-7],
-          [38, 5e-8],
-          [38, 1e-8]
+          [38, 1e-7]
         ]
       protocol_setup: "semi_honest_3"
       input_file_name: "mnist-audit-conv-10epoch.zip"
