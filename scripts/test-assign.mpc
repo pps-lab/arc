@@ -30,7 +30,7 @@ def _(i):
 def _(i):
     print_ln("Matrix[%s]: %s", i, test_multi.get_part(i,1).reveal_list())
 
-tu.test_util()
+tu.test_setup()
 
 
 
