@@ -35,10 +35,10 @@ def process_input(task_config: config_def.TaskConfig):
     file_processor.process_input()
 
 
-def copy_script_to_sources(task_config: config_def.TaskConfig):
-    script_path = os.path.join(task_config.abs_path_to_code_dir, "scripts", f"{task_config.script_name}.mpc")
-    source_path = os.path.join(task_config.abs_path_to_code_dir, "mp-spdz", "Programs", "Source", f"{task_config.script_name}.mpc")
-    shutil.copy(script_path, source_path)
+#def copy_script_to_sources(task_config: config_def.TaskConfig):
+#    script_path = os.path.join(task_config.abs_path_to_code_dir, "scripts", f"{task_config.script_name}.mpc")
+#    source_path = os.path.join(task_config.abs_path_to_code_dir, "mp-spdz", "Programs", "Source", f"{task_config.script_name}.mpc")
+#    shutil.copy(script_path, source_path)
 
 def compile_script_with_args(task_connfig: config_def.TaskConfig):
     copy_script_to_sources(task_config=task_connfig)
