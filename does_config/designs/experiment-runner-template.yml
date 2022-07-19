@@ -29,5 +29,5 @@ first_exp:
       script_name: "test-assign"
       script_args:
         - 38
-      protocol_setup: "semi_honest_3"
+      protocol_setup: "emulate_env"
       input_file_name: "mnist-audit-conv-10epoch.zip"

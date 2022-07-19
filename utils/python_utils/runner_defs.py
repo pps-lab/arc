@@ -60,7 +60,10 @@ class CompilerRunner(BaseRunner):
 
     def _env(self):
         my_env = os.environ.copy()
-        my_env['PYTHONPATH'] = os.path.join(self._code_dir,"scripts/")
+        if "PYTHONPATH" in my_env.keys():
+            my_env["PYTHONPATH"] = f"{my_env['PYTHONPATH']}:{os.path.join(self._code_dir, 'scripts/')}"
+        else:
+            my_env["PYTHONPATH"] = f"{os.path.join(self._code_dir,'scripts/')}"
         return my_env
 
 

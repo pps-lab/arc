@@ -1,4 +1,4 @@
-import script_utils.test_util as tu
+import test_util as tu
 
 test_multi = MultiArray([50,10], cint)
 
@@ -30,7 +30,7 @@ def _(i):
 def _(i):
     print_ln("Matrix[%s]: %s", i, test_multi.get_part(i,1).reveal_list())
 
-tu.test_setup()
+tu.test_util()
 
 
 
