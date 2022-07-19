@@ -45,7 +45,7 @@ def compile_script_with_args(task_connfig: config_def.TaskConfig):
     comp_runner = runner_defs.CompilerRunner(
         script_name=task_connfig.script_name,
         script_args=task_connfig.script_args,
-        compiler_args=["--verbose"] + runner_defs.CompilerArguments[task_connfig.protocol_setup.name],
+        compiler_args=["--verbose"] + runner_defs.CompilerArguments[task_connfig.protocol_setup.name].value,
         code_dir=task_connfig.abs_path_to_code_dir
     )
     comp_runner.run()
