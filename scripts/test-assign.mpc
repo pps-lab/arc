@@ -1,4 +1,4 @@
-import Compiler.script_utils.test_util as tu
+from Compiler.script_utils import test_util as tu
 
 test_multi = MultiArray([50,10], cint)
 

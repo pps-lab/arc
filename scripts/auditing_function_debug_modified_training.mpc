@@ -1,0 +1,311 @@
+import math
+import re
+
+import Compiler.util as util
+# Given is a trained model and possible malicious data
+
+# Do some preparations
+
+program.options_from_args()
+
+#sfix.set_precision(f=16,k=43)
+#cfix.set_precision(f=16,k=43)
+
+learning_rate = float(program.args[1])
+n_thread_num = int(program.args[2])
+
+# training_sample_size = sint.input_from(0)
+
+training_samples = MultiArray([60000, 28, 28], sfix)
+training_labels = MultiArray([60000, 10], sint)
+
+test_samples = MultiArray([10000, 28, 28], sfix)
+test_labels = MultiArray([10000,10], sint)
+
+n_samples = 8
+prediction_samples = sfix.Tensor([n_samples, 28, 28])
+prediction_labels = sint.Tensor([n_samples, 10])
+
+# Load the actual data
+training_labels.input_from(0)
+training_samples.input_from(0)
+test_labels.input_from(0)
+test_samples.input_from(0)
+prediction_labels.input_from(0)
+prediction_samples.input_from(0)
+
+# Prepare the model
+from Compiler import ml
+tf = ml
+
+tf.set_n_threads(n_thread_num)
+
+# Note: Number of models
+# For debug purposes we only look at one model for now
+n_models = 2
+
+layers = [
+    tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Conv2D(50,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Flatten(),
+    tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(500, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+]
+
+model = tf.keras.models.Sequential(layers)
+optim = tf.keras.optimizers.SGD()
+
+model.compile(optimizer=optim)
+model.build(test_samples.sizes)
+
+print(model.opt.layers[-1])
+
+start = 0
+variable_holders = []
+for i,var in enumerate(model.trainable_variables):
+    print(f"trainable_variable {i}: {var}")
+    print_ln("Loading trainable_variable %s",i)
+    var.input_from(0)
+    if isinstance(var, MultiArray):
+        copy_container = MultiArray(var.sizes,var.value_type)
+        copy_container.assign(var)
+        variable_holders.append(copy_container)
+    elif isinstance(var, Array):
+        copy_container = Array(var.length, var.value_type)
+        copy_container.assign(var)
+        variable_holders.append(copy_container)
+
+
+print(variable_holders)
+
+# Now, since we hold a copy of the trained variables, we can start with doing the actual training
+# We first assume a split 5 datasets
+
+
+
+
+predictions = model.opt.eval(prediction_samples,batch_size=128)
+print(predictions)
+print_ln("Predicting stuff for unmodified model")
+print_ln("Predictions")
+print_ln("--------------")
+@for_range(start=0,stop=n_samples,step=1)
+def _(i):
+    print_ln("Prediction %s - %s", i, predictions[i].reveal_list())
+
+# We do not comoute the losses for now
+# Just the predictions
+# Now, we do the actual unlearning
+
+unlearn_size = training_labels.sizes[0]//n_models
+unlearn_labels = MultiArray([unlearn_size,10],sfix)
+unlearn_labels.assign_all(sfix(1/10))
+
+print_ln("Value of 1/10: %s", sfix(1/10).reveal())
+
+print_ln("Unlearning labels")
+@for_range(start=0,stop=10,step=1)
+def _(i):
+    print_ln("Unlearn [%s]: %s", i, unlearn_labels.get_part(i,1).reveal_list())
+
+
+def custom_opt_fit(self, x, y, batch_size, epochs=1, validation_data=None):
+    assert len(x) == len(y)
+    self.build(x.sizes, batch_size)
+    if x.total_size() != self.opt.layers[0].X.total_size():
+        raise Exception('sample data size mismatch')
+    if y.total_size() != self.opt.layers[-1].Y.total_size():
+        print (y, self.opt.layers[-1].Y)
+        raise Exception('label size mismatch')
+    if validation_data == None:
+        validation_data = None, None
+    else:
+        if len(validation_data[0]) != len(validation_data[1]):
+            raise Exception('test set size mismatch')
+    self.opt.layers[0].X.address = x.address
+    self.opt.layers[-1].Y.address = y.address
+    custom_run_by_args(self.opt, get_program(), epochs, batch_size,
+                            validation_data[0], validation_data[1],
+                            batch_size)
+    return self.opt
+
+@ml._no_mem_warnings
+def custom_run_by_args(self, program, n_runs, batch_size, test_X, test_Y,
+                    acc_batch_size=None):
+        if acc_batch_size is None:
+            acc_batch_size = batch_size
+        depreciation = None
+        for arg in program.args:
+            m = re.match('rate(.*)', arg)
+            if m:
+                self.gamma = MemValue(cfix(float(m.group(1))))
+            m = re.match('dep(.*)', arg)
+            if m:
+                depreciation = float(m.group(1))
+        if 'nomom' in program.args:
+            self.momentum = 0
+        self.print_losses = 'print_losses' in program.args
+        self.print_random_update = 'print_random_update' in program.args
+        ml.Layer.print_random_update = self.print_random_update
+        self.time_layers = 'time_layers' in program.args
+        self.revealing_correctness = not 'no_acc' in program.args
+        self.layers[-1].compute_loss = not 'no_loss' in program.args
+        if 'full_cisc' in program.args:
+            program.options.keep_cisc = 'FPDiv,exp2_fx,log2_fx'
+        model_input = 'model_input' in program.args
+        acc_first = model_input and not 'train_first' in program.args
+        if model_input:
+            for layer in self.layers:
+                layer.input_from(0)
+        else:
+            self.reset()
+        if 'one_iter' in program.args:
+            print_float_prec(16)
+            self.output_weights()
+            print_ln('loss')
+            self.eval(
+                self.layers[0].X.get_part(0, batch_size),
+                batch_size=batch_size).print_reveal_nested()
+            for layer in self.layers:
+                layer.X.get_part(0, batch_size).print_reveal_nested()
+            print_ln('%s', self.layers[-1].Y.get_part(0, batch_size).reveal_nested())
+            batch = Array.create_from(regint.inc(batch_size))
+            self.forward(batch=batch, training=True)
+            self.backward(batch=batch)
+            self.update(0, batch=batch)
+            print_ln('loss %s', self.layers[-1].l.reveal())
+            self.output_weights()
+            return
+        if 'bench10' in program.args or 'bench1' in program.args:
+            n = 1 if 'bench1' in program.args else 10
+            print('benchmarking %s iterations' % n)
+            @for_range(n)
+            def _(i):
+                batch = Array.create_from(regint.inc(batch_size))
+                self.forward(batch=batch, training=True)
+                self.backward(batch=batch)
+                self.update(0, batch=batch)
+            return
+        @for_range(n_runs)
+        def _(i):
+            if not acc_first:
+                start_timer(1)
+                self.run(batch_size,
+                         stop_on_loss=0 if 'no_loss' in program.args else 100)
+                stop_timer(1)
+            if 'no_acc' in program.args:
+                return
+            N = self.layers[0].X.sizes[0]
+            n_trained = (N + batch_size - 1) // batch_size * batch_size
+            if not acc_first:
+                print_ln('train_acc: %s (%s/%s)',
+                         cfix(self.n_correct, k=63, f=31) / n_trained,
+                         self.n_correct, n_trained)
+            if test_X and test_Y:
+                print('use test set')
+                n_test = len(test_Y)
+                n_correct, loss = self.reveal_correctness(test_X, test_Y,
+                                                          acc_batch_size)
+                print_ln('test loss: %s', loss)
+                print_ln('acc: %s (%s/%s)',
+                         cfix(n_correct, k=63, f=31) / n_test,
+                         n_correct, n_test)
+            if acc_first:
+                start_timer(1)
+                self.run(batch_size)
+                stop_timer(1)
+            else:
+                @if_(util.or_op(self.stopped_on_loss, n_correct <
+                                int(n_test // self.layers[-1].n_outputs * 1.2)))
+                def _():
+                    self.gamma.imul(.5)
+                    if 'crash' in program.args:
+                        @if_(self.gamma == 0)
+                        def _():
+                            runtime_error('diverging')
+                    self.reset()
+                    print_ln('reset after reducing learning rate to %s',
+                             self.gamma)
+            if depreciation:
+                self.gamma.imul(depreciation)
+                print_ln('reducing learning rate to %s', self.gamma)
+            return 1 - self.stopped_on_low_loss
+        if 'model_output' in program.args:
+            self.output_weights()
+
+
+
+
+models = []
+
+def create_model(i):
+    current_model = tf.keras.models.Sequential(layers)
+    current_optim = tf.keras.optimizers.SGD()
+    current_model.compile(optimizer=current_optim)
+    current_model.build(training_samples.sizes)
+    
+    for var,var2 in zip(model.trainable_variables,current_model.trainable_variables):
+        if isinstance(var, MultiArray):
+            copy_container = MultiArray(var.sizes,var.value_type)
+            copy_container.assign(var)
+            var2.assign(copy_container)
+        elif isinstance(var, Array):
+            copy_container = Array(var.length, var.value_type)
+            copy_container.assign(var)
+            var2.assign(copy_container)
+
+    unlearn_start_region = i * unlearn_size
+    
+    modified_training_labels = MultiArray([training_labels.sizes[0], 10], sfix)
+    modified_training_labels.assign(training_labels)
+    modified_training_labels.get_part(unlearn_start_region,unlearn_size).assign(unlearn_labels)
+
+
+    # Models 
+    print_ln("Model %s", i)
+    print_ln("Layers: %s", current_model.layers)
+    print_ln("Built-Layers: %s", current_model.opt.layers)
+
+    
+
+    # Now, we train the model
+    #current_model.opt.layers[0].X.address = training_samples.address 
+    #current_model.opt.layers[-1].Y.address = modified_training_labels.address
+    #current_model.opt.n_epochs = 1
+
+
+    current_model.opt.gamma.write(cfix(learning_rate))
+    current_model.opt.layers[-1].approx = False
+    current_model.opt.print_losses = True
+    
+    current_model.opt.run(batch_size=10,stop_on_loss=0)
+    custom_opt_fit(current_model,x=training_samples,y=modified_training_labels,
+        batch_size=128)
+    return current_model
+
+models = list(map(create_model,range(n_models)))
+    
+
+
+    
+
+            
+
+def do_prediction(i,the_model):
+    # We want to get the predictions for each model
+    
+    current_predictions = the_model.predict(prediction_samples,batch_size=n_samples)
+    print_ln("Predictions for Model with id %s", i)
+
+    @for_range(start=0,stop=n_samples,step=1)
+    def _(j):
+        print_ln("Predictions [%s]: %s", j, current_predictions[j].reveal_list())
+
+
+
+for i,curr_model in enumerate(models):
+    do_prediction(cint(i),curr_model)
+
