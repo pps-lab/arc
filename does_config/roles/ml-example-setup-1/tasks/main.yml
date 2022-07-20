@@ -62,4 +62,9 @@
     path: "{{exp_code_dir}}/utils/ml-stuff/ml-example.sh"
     mode: "777"
     state: file
-    
+
+- name: Make symbolic link from exp_code_dir/script_utils to Compiler folder of mp-spdz
+  ansible.builtin.file:
+    state: link
+    path: "{{exp_code_dir}}/mp-spdz/Compiler/script_utils"
+    src: "{{exp_code_dir}}/script_utils"
