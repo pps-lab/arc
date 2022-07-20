@@ -70,7 +70,7 @@ class CompilerRunner(BaseRunner):
     
     def _args(self):
         return self._compiler_args + \
-            [f"../scripts/{self._script_name}.mpc"] + \
+            [os.path.join(self._code_dir,"scripts",f"{self._script_name}.mpc")] + \
             self._script_args
 
 
