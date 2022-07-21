@@ -129,7 +129,7 @@ def create_model(i):
 
     unlearn_start_region = i * unlearn_size
     
-    modified_training_labels = MultiArray([unlearn_size, 10], sfix)
+    modified_training_labels = MultiArray([60_000, 10], sfix)
     modified_training_labels.assign(training_labels)
     modified_training_labels.get_part(unlearn_start_region,unlearn_size).assign(unlearn_labels)
 
@@ -142,7 +142,7 @@ def create_model(i):
     
 
     # Now, we train the model
-    current_model.opt.layers[0].X.address = small_training_samples.address 
+    current_model.opt.layers[0].X.address = training_samples.address 
     current_model.opt.layers[-1].Y.address = modified_training_labels.address
     current_model.opt.n_epochs = 1
 
