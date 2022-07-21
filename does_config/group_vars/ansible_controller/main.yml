@@ -6,8 +6,8 @@
 instance_type: t2.small # change if you feel the controller is a bottleneck
 ec2_volume_size: 64 # choose large enough to store results (at least until they are downloaded)
 
-ec2_image_id: ami-02584c1c9d05efa69
-ec2_volume_snapshot: snap-0ea83e19290d686d6
+ec2_image_id: ami-09e5cb3ecefcdff19
+ec2_volume_snapshot: snap-0e0b85b2979e1d47d
 
 ansible_controller_user: controller
 ansible_controller_group: controller
