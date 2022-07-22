@@ -1,0 +1,39 @@
+diff --git a/ansible.cfg b/ansible.cfg
+index 2f3b33b..e711b81 100644
+--- a/ansible.cfg
++++ b/ansible.cfg
+@@ -7,4 +7,4 @@ inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo, .j
+ ansible_ssh_common_args = '-o StrictHostKeyChecking=no -o ForwardAgent=yes'
+ 
+ # TODO: activate / deactivate to only show the pretty log output
+-stdout_callback = community.general.selective
++#stdout_callback = community.general.selective
+diff --git a/src/roles/ansible-controller-setup/tasks/install_awscli.yml b/src/roles/ansible-controller-setup/tasks/install_awscli.yml
+index eb6dd49..57c3413 100644
+--- a/src/roles/ansible-controller-setup/tasks/install_awscli.yml
++++ b/src/roles/ansible-controller-setup/tasks/install_awscli.yml
+@@ -1,7 +1,11 @@
+ 
+-- name: Set variables for the CLI installation
++- name: Set variables for the CLI installation (part1)
+   set_fact:
+     ansible_controller_awscli_dir: "{{ ansible_controller_home }}/awscli"
++
++- name: Set variables for the CLI installation
++  set_fact:
++    #ansible_controller_awscli_dir: "{{ ansible_controller_home }}/awscli"
+     awscli_url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+     awscli_zip_dest: "{{ ansible_controller_awscli_dir }}/awscli-exe-linux-x86_64.zip"
+     awscli_pub_key_path: "{{ ansible_controller_awscli_dir }}/aws_cli_team_gpg_key.pub"
+diff --git a/src/roles/suite-aws-ec2-create/tasks/main.yml b/src/roles/suite-aws-ec2-create/tasks/main.yml
+index 6c6d2c1..0134d5c 100644
+--- a/src/roles/suite-aws-ec2-create/tasks/main.yml
++++ b/src/roles/suite-aws-ec2-create/tasks/main.yml
+@@ -55,6 +55,7 @@
+     region: '{{ ec2config.aws_region }}'
+     security_group: '{{ ec2config.sg_name }}'
+     vpc_subnet_id: '{{ ec2config.vpc_subnet_id }}'
++    instance_role: EC2WithS3Role
+     wait: no
+     purge_tags: yes
+     network:
