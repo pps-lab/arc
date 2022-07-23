@@ -1,0 +1,29 @@
+#!/bin/bash
+
+export DOES_PROJECT_DIR="$(pwd)"
+export PYTHONPATH="$(pwd)/utils:$(pwd)/script_utils:$(pwd)/mp-spdz/"
+eval "$(ssh-agent -s)"
+
+ssh-add /home/{{controller_user}}/.ssh/{{controller_aws_key_name}}
+ssh-add /home/{{controller_user}}/.ssh/{{controller_github_key_name}}
+
+run_suite() {
+    PREV_DIR="$(pwd)"
+    cd "$DOES_PROJECT_DIR/doe-suite"
+    poetry run ansible-playbook src/experiment-suite.yml -e "suite=$1 id=new $2"
+    cd "$PREV_DIR"
+}
+
+continue_suite() {
+    PREV_DIR="$(pwd)"
+    cd "$DOES_PROJECT_DIR/doe-suite"
+    poetry run ansible-playbook src/experiment-suite.yml -e "suite=$1 id=last $2"
+    cd "$PREV_DIR"
+}
+
+clean_suite() {
+    PREV_DIR="$(pwd)"
+    cd "$DOES_PROJECT_DIR/doe-suite"
+    poetry run ansible-playbook src/clear.yml
+    cd "$PREV_DIR"
+}

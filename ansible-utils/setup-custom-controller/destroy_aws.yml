@@ -1,0 +1,17 @@
+---
+- name: "Destroy aws"
+  hosts: localhost
+  gather_facts: False
+  vars_files:
+    - "{{playbook_dir}}/site2_vars.yml"
+  tasks:
+    - name: "Terminate instance"
+      amazon.aws.ec2_instance:
+        state: absent
+        profile: "{{aws_target_profile}}"
+        name: "{{test_host_name}}"
+
+    - name: "Delete generated inventory"
+      ansible.builtin.file:
+        state: absent
+        path: "inventory/inventory_aws_ec2.yml"
