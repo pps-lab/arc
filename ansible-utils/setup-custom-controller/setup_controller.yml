@@ -198,8 +198,13 @@
           block:
             - name: Reset doe-suite
               ansible.builtin.shell:
-                cmd: "git reset --hard HEAD"
+                cmd: "git apply -R ../doe-suite.patch"
                 chdir: "{{git_repo_dest}}/doe-suite/"
+
+            - name: Reset controller-patch
+              ansible.builtin.shell:
+                cmd: "git apply -R ./setup-controller.local.patch"
+                chdir: "{{git_repo_dest}}"
               
             - name: Retry pulling git repository
               ansible.builtin.git:
@@ -325,6 +330,29 @@
               ansible.builtin.shell:
                 cmd: "git apply ../doe-suite.patch"
                 chdir: "{{git_repo_dest}}/doe-suite"
+
+            - name: template setup-controller.patch
+              ansible.builtin.template:
+                src: resources/setup-controller.patch.j2
+                dest: "{{git_repo_dest}}/setup-controller.local.patch"
+
+            - name: Applying setup-controoler.patch
+              ansible.builtin.shell:
+                cmd: "git apply ./setup-controller.local.patch"
+                chdir: "{{git_repo_dest}}"
+            
+        - name: Setup Development Environment
+          block:
+            - name: Git clone vimrc
+              ansible.builtin.git:
+                repo: https://github.com/amix/vimrc
+                dest: "/home/{{controller_user}}/.vim_runtime"
+                accept_hostkey: yes
+                depth: 1
+            - name: Install vimrc
+              ansible.builtin.shell:
+                cmd: "sh /home/{{controller_user}}/.vim_runtime/install_awesome_vimrc.sh"
+              
 
 
 
