@@ -215,6 +215,7 @@ for i,curr_model in enumerate(models):
 
 # Compute Loss
 loss_multi_array = compute_loss(prediction_holder,prediction_labels)
+loss_multi_array.print_reveal_nested()
 
 
 
