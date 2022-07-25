@@ -115,8 +115,9 @@ def create_model(i):
     current_model = tf.keras.models.Sequential(layers)
     current_optim = tf.keras.optimizers.SGD()
     current_model.compile(optimizer=current_optim)
-    current_model.build(training_samples.sizes)
-    
+    #current_model.build(training_samples.sizes)
+    current_model.build([30,28,28])
+
     for var,var2 in zip(model.trainable_variables,current_model.trainable_variables):
         if isinstance(var, MultiArray):
             copy_container = MultiArray(var.sizes,var.value_type)
@@ -148,8 +149,8 @@ def create_model(i):
     small_training_labels.assign(modified_training_labels.get_part(0,30))
 
     # Now, we train the model
-    current_model.opt.layers[0].X.address = training_samples.address 
-    current_model.opt.layers[-1].Y.address = modified_training_labels.address
+    current_model.opt.layers[0].X.address = small_training_samples.address 
+    current_model.opt.layers[-1].Y.address = small_training_labels.address
     current_model.opt.n_epochs = 1
 
 
