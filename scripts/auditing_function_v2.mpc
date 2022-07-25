@@ -140,6 +140,12 @@ def create_model(i):
     print_ln("Built-Layers: %s", current_model.opt.layers)
 
     
+    # For debug purposes we reduce the number of elements again
+    print_ln("Debug stuff: remove after done")
+    small_training_samples = MultiArray([30,28,28], sfix)
+    small_training_samples.assign(training_samples.get_part(0,30))
+    small_training_labels = MultiArray([30,10], sfix)
+    small_training_labels.assign(modified_training_labels.get_part(0,30))
 
     # Now, we train the model
     current_model.opt.layers[0].X.address = training_samples.address 
@@ -214,6 +220,7 @@ for i,curr_model in enumerate(models):
     transform_predictions(i,current_results,prediction_holder)
 
 # Compute Loss
+print_ln("This executes")
 loss_multi_array = compute_loss(prediction_holder,prediction_labels)
 loss_multi_array.print_reveal_nested()
 
