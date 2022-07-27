@@ -353,23 +353,7 @@
               ansible.builtin.shell:
                 cmd: "sh /home/{{controller_user}}/.vim_runtime/install_awesome_vimrc.sh"
               
-
-
-
-
-            
-
-          
-
-
-
-
-
-
-
-
-
-
-            
-
-
+            - name: update poetry dependencies
+              ansible.builtin.shell:
+                cmd: poetry update
+                chdir: "{{git_repo_dest}}/doe-suite/"
