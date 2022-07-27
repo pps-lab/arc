@@ -94,6 +94,9 @@ print_ln("--------------")
 def _(i):
     print_ln("Prediction %s - %s", i, predictions[i].reveal_list())
 
+unmodified_predictions = predictions
+
+
 # We do not comoute the losses for now
 # Just the predictions
 # Now, we do the actual unlearning
@@ -210,14 +213,22 @@ def compute_loss(X,Y):
             loss_array[sample_id][model_id] = sum_holder.read()
     return loss_array
 
+# Expects an Array()
+def compute_mad_score(X):
+    score_array = Array(X.length, sfix)
+    return None
+    
 
 
 
 
-prediction_holder = MultiArray([n_samples,n_models,10], sfix)
+
+prediction_holder = MultiArray([n_samples,n_models+1,10], sfix)
 for i,curr_model in enumerate(models):
     current_results = do_prediction(cint(i),curr_model)
     transform_predictions(i,current_results,prediction_holder)
+# Last Model is the unmodified model
+transform_predictions(n_models, unmodified_predictions, prediction_holder)
 
 # Compute Loss
 print_ln("This executes")
