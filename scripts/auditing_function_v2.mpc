@@ -33,7 +33,7 @@ prediction_labels.input_from(0)
 prediction_samples.input_from(0)
 
 # Prepare the model
-from Compiler import ml
+from Compiler.script_utils import ml_modified as ml
 tf = ml
 
 tf.set_n_threads(n_thread_num)
@@ -119,16 +119,6 @@ def create_model(i):
     current_optim = tf.keras.optimizers.SGD()
     current_model.compile(optimizer=current_optim)
     current_model.build(training_samples.sizes)
-    
-    for var,var2 in zip(model.trainable_variables,current_model.trainable_variables):
-        if isinstance(var, MultiArray):
-            copy_container = MultiArray(var.sizes,var.value_type)
-            copy_container.assign(var)
-            var2.assign(copy_container)
-        elif isinstance(var, Array):
-            copy_container = Array(var.length, var.value_type)
-            copy_container.assign(var)
-            var2.assign(copy_container)
 
     unlearn_start_region = i * unlearn_size
     
@@ -142,25 +132,38 @@ def create_model(i):
     print_ln("Layers: %s", current_model.layers)
     print_ln("Built-Layers: %s", current_model.opt.layers)
 
-    
-    # For debug purposes we reduce the number of elements again
-    print_ln("Debug stuff: remove after done")
-    small_training_samples = MultiArray([30,28,28], sfix)
-    small_training_samples.assign(training_samples.get_part(0,30))
-    small_training_labels = MultiArray([30,10], sfix)
-    small_training_labels.assign(modified_training_labels.get_part(0,30))
-
     # Now, we train the model
-    current_model.opt.layers[0].X.address = training_samples.address 
-    current_model.opt.layers[-1].Y.address = modified_training_labels.address
-    current_model.opt.n_epochs = 1
+    #current_model.opt.layers[0].X.address = training_samples.address 
+    #current_model.opt.layers[-1].Y.address = modified_training_labels.address
+    #current_model.opt.n_epochs = 1
 
 
-    current_model.opt.gamma.write(cfix(learning_rate))
-    current_model.opt.layers[-1].approx = False
-    current_model.opt.print_losses = True
+    #current_model.opt.gamma.write(cfix(learning_rate))
+    #current_model.opt.layers[-1].approx = False
+    #current_model.opt.print_losses = True
     
-    current_model.opt.run(batch_size=64,stop_on_loss=0)
+    # We define the new learning rate
+    program.args.append("rate{}".format(learning_rate))
+
+    def variable_loader(the_obj):
+        for var,var2 in zip(model.trainable_variables,current_model.trainable_variables):
+            if isinstance(var, MultiArray):
+                copy_container = MultiArray(var.sizes,var.value_type)
+                copy_container.assign(var)
+                var2.assign(copy_container)
+            elif isinstance(var, Array):
+                copy_container = Array(var.length, var.value_type)
+                copy_container.assign(var)
+                var2.assign(copy_container)
+
+
+    current_model.fit(x=training_samples, y=modified_training_labels, batch_size=64,
+        epochs=1, variable_loader=variable_loader)
+    
+    # Now, we remove the appended arguments
+    program.args.pop(-1)
+
+
     return current_model
 
 models = list(map(create_model,range(n_models)))
