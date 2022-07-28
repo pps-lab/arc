@@ -160,7 +160,7 @@ def create_model(i):
     current_model.opt.layers[-1].approx = False
     current_model.opt.print_losses = True
     
-    current_model.opt.run(batch_size=10,stop_on_loss=0)
+    current_model.opt.run(batch_size=64,stop_on_loss=0)
     return current_model
 
 models = list(map(create_model,range(n_models)))
