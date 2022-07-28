@@ -2351,6 +2351,7 @@ class Optimizer:
                 print_ln('train_acc: %s (%s/%s)',
                          cfix(self.n_correct, k=63, f=31) / n_trained,
                          self.n_correct, n_trained)
+            n_test = 0
             if test_X and test_Y:
                 print('use test set')
                 n_test = len(test_Y)
