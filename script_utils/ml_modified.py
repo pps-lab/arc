@@ -2338,6 +2338,8 @@ class Optimizer:
             return
         @for_range(n_runs)
         def _(i):
+            n_correct = 0
+            n_test = 0
             if not acc_first:
                 start_timer(1)
                 self.run(batch_size,
@@ -2351,7 +2353,6 @@ class Optimizer:
                 print_ln('train_acc: %s (%s/%s)',
                          cfix(self.n_correct, k=63, f=31) / n_trained,
                          self.n_correct, n_trained)
-            n_test = 0
             if test_X and test_Y:
                 print('use test set')
                 n_test = len(test_Y)
@@ -2366,7 +2367,7 @@ class Optimizer:
                 self.run(batch_size)
                 stop_timer(1)
             else:
-                @if_(util.or_op(self.stopped_on_loss, self.n_correct <
+                @if_(util.or_op(self.stopped_on_loss, n_correct <
                                 int(n_test // self.layers[-1].n_outputs * 1.2)))
                 def _():
                     self.gamma.imul(.5)
