@@ -2365,7 +2365,7 @@ class Optimizer:
                 self.run(batch_size)
                 stop_timer(1)
             else:
-                @if_(util.or_op(self.stopped_on_loss, n_correct <
+                @if_(util.or_op(self.stopped_on_loss, self.n_correct <
                                 int(n_test // self.layers[-1].n_outputs * 1.2)))
                 def _():
                     self.gamma.imul(.5)
