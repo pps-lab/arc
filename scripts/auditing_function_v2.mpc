@@ -217,10 +217,40 @@ def compute_loss(X,Y):
             loss_array[sample_id][model_id] = sum_holder.read()
     return loss_array
 
-# Expects an Array()
+# Expects an Array(num_models, sfix)
 def compute_mad_score(X):
-    score_array = Array(X.length, sfix)
-    return None
+    score_array = Array(X.length, X.value_type)
+    X_copy = Array(X.length,X.value_type)
+    X_copy.assign(X)
+    X_copy.sort()
+    X_median = X_copy[X_copy.length//2]
+    
+    # Compute |X - median(X)|
+    X_abs_diff = Array(X.length, X.value_type)
+    @for_range(start=0,stop=X.length,step=1)
+    def _(i):
+        X_abs_diff[i] = abs((X[i] - X_median))
+    
+    # Compute Median of X_abs_diff
+    X_copy.assign(X_abs_diff)
+    X_copy.sort()
+    X_abs_diff_median = X_copy[X.length//2]
+    
+    # Compute scores
+    @for_range(start=0,stop=X.length,step=1)
+    def _(i):
+        score_array[i] = (X[i] - X_median)/(X_abs_diff_median)
+    return score_array
+
+
+def compute_MAD_matrix(loss_matrix):
+    MAD_Array = MultiArray(list(loss_matrix.sizes), sfix)
+    @for_range(start=0,stop=loss_matrix.sizes[0],step=1)
+    def _(i):
+        loss_array = loss_matrix.get_part(i,1)[0]
+        score_array = compute_mad_score(loss_array)
+        MAD_Array.get_part(i,1).assign(score_array)
+    return MAD_Array
     
 
 
@@ -238,6 +268,11 @@ transform_predictions(n_models, unmodified_predictions, prediction_holder)
 print_ln("This executes")
 loss_multi_array = compute_loss(prediction_holder,prediction_labels)
 loss_multi_array.print_reveal_nested()
+
+# Compute MAD Scores
+print_ln("Computing MAD Scores")
+MAD_score_multiarray = compute_MAD_matrix(loss_multi_array)
+MAD_score_multiarray.print_reveal_nested()
 
 
 
