@@ -34,6 +34,7 @@ prediction_samples.input_from(0)
 
 # Prepare the model
 from Compiler.script_utils import ml_modified as ml
+from Compiler.script_utils import output_utils as out_util
 #from Compiler import ml 
 tf = ml
 
@@ -273,6 +274,9 @@ loss_multi_array.print_reveal_nested()
 print_ln("Computing MAD Scores")
 MAD_score_multiarray = compute_MAD_matrix(loss_multi_array)
 MAD_score_multiarray.print_reveal_nested()
+
+out_util.output_value("loss_array", loss_multi_array.reveal_nested())
+out_util.output_value("mad_array", MAD_score_multiarray.reveal_nested())
 
 
 
