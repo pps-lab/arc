@@ -36,24 +36,10 @@ class MpSpdzStderrExtractor(Extractor):
             return []
 
 
-class MpSpdzStdoutExtractor(Extractor):
+class MpSpdzResultExtractor(Extractor):
     def file_regex_default(self):
-        return ["^result-[0-9]+\.txt$"]
-
+        return ["^result-P[0-9]+-[0-9]\\.txt$"]
+    
     def extract(self, path: str, options: Dict) -> List[Dict]:
-        with open(path, "r") as f:
-            content = f.read()
-        
-        split_results = re.split(r'-----RESULTS-----',content)
-        if len(split_results) > 1:
-            new_content = split_results[1]
-            result_list = re.findall(r'([0-9a-zA-Z_]+) = ([0-9a-zA-Z_.]+)', new_content)
-            
-            new_dict = {}
-            for result in result_list:
-                new_dict[result[0]] = result[1]
-            return [new_dict]
-        else:
-            return []
-
+        return []
         

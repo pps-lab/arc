@@ -1,0 +1,22 @@
+from Compiler.script_utils import output_utils as out_util
+
+salary_A = sint(int(program.args[1]))
+salary_B = sint(int(program.args[2]))
+
+# 1 - salary a is greater
+# 2 - salary b is greater
+# 3 - both salaries are equal
+def decide_larger_salary(salary_a, salary_b):
+    comparison_result = salary_a.greater_than(salary_b)
+    comparison_result_2 = salary_b.greater_than(salary_a)
+    end_result = comparison_result.if_else(
+        1,
+        comparison_result_2.if_else(
+            2,
+            3
+        )
+    )
+    return end_result
+
+result = decide_larger_salary(salary_A, salary_B)
+out_util.output_value("decision",result.reveal())
