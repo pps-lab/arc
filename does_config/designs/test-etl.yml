@@ -29,6 +29,7 @@ $ETL$:
     extractors:
       MpSpdzStderrExtractor:  {}
       MpSpdzResultExtractor: {}
+      IgnoreExtractor: {}
     transformers: []
     loaders:
       CsvSummaryLoader:
