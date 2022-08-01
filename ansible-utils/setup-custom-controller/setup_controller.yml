@@ -355,5 +355,5 @@
               
             - name: update poetry dependencies
               ansible.builtin.shell:
-                cmd: poetry update
+                cmd: "{{poetry_exec}} update"
                 chdir: "{{git_repo_dest}}/doe-suite/"
