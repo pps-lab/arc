@@ -4,6 +4,7 @@ from typing import Dict, List
 import matplotlib.pyplot as plt
 import re
 import pathlib
+import json
 
 class MpSpdzStderrExtractor(Extractor):
     
@@ -42,7 +43,11 @@ class MpSpdzResultExtractor(Extractor):
         return ["^result-P[0-9]+-[0-9]\\.txt$"]
     
     def _process(self, path: str, options: Dict, line: str) -> Dict:
-        pass
+        raw_content = line[10:-3]
+        json_decoder = json.JSONDecoder()
+        json_dict: Dict = json_decoder.decode(raw_content)
+        return json_dict
+
 
     def extract(self, path: str, options: Dict) -> List[Dict]:
         dicts = []
