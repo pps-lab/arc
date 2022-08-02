@@ -1,4 +1,3 @@
-from pydantic import PathNotAFileError
 from etl_base import Extractor, Loader, PlotLoader
 import pandas as pd
 from typing import Dict, List
