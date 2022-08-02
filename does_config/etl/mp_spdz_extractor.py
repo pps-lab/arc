@@ -1,8 +1,10 @@
+from pydantic import PathNotAFileError
 from etl_base import Extractor, Loader, PlotLoader
 import pandas as pd
 from typing import Dict, List
 import matplotlib.pyplot as plt
 import re
+import pathlib
 
 class MpSpdzStderrExtractor(Extractor):
     
@@ -40,6 +42,33 @@ class MpSpdzResultExtractor(Extractor):
     def file_regex_default(self):
         return ["^result-P[0-9]+-[0-9]\\.txt$"]
     
+    def _process(self, path: str, options: Dict, line: str) -> Dict:
+        pass
+
     def extract(self, path: str, options: Dict) -> List[Dict]:
-        return []
+        dicts = []
+        with open(path, 'r') as the_file:
+            for line in the_file:
+                if line.startswith("###OUTPUT:") and line.endswith("###"):
+                    the_dict = self._process(path=path, options=options, line=line)
+                else:
+                    the_dict = None
+                if the_dict is not None:
+                    dicts.append(the_dict)
+        
+        # Finally, we combine all dicts to a super dicts
+        final_dicts = {}
+        for curr_dict in dicts:
+            final_dicts[curr_dict['name']] = curr_dict['value']
+
+        file_path_obj = pathlib.PurePath(path)
+        result_info_regex = re.compile('result-P([0-9]+)-([0-9]+)')
+        result_match = result_info_regex.match(file_path_obj.name)
+        player_num = result_match.group(1)
+        thread_num = result_match.group(2)
+        final_dicts['player_number'] = int(player_num)
+        final_dicts['thread_number'] = int(thread_num)
+        return [final_dicts]
+
+
         
