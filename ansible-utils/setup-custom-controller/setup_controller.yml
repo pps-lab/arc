@@ -2,12 +2,16 @@
 - name: Create AWS instance
   ansible.builtin.import_playbook: create_aws.yml
 
-- name: Pause for setup
-  hosts: localhost
+- name: Wait for Usability of Controller
+  gather_facts: no
+  hosts: "{{test_host_name}}"
+  vars_files:
+    - "site2_vars.yml"
   tasks:
-    - name: Pause
-      ansible.builtin.pause:
-        seconds: 10
+    - name: Wait for Connection
+      ansible.builtin.wait_for_connection:
+        delay: 60
+        timeout: 600
 
 - name: Prepare Controller User
   vars_files:
@@ -196,15 +200,15 @@
         - name: Remove modifications from the repo and try again
           when: (clone_project_results.msg is defined) and ('Local modifications exist' in clone_project_results.msg)
           block:
-            - name: Reset doe-suite
-              ansible.builtin.shell:
-                cmd: "git apply -R ../doe-suite.patch"
-                chdir: "{{git_repo_dest}}/doe-suite/"
+            # - name: Reset doe-suite
+            #   ansible.builtin.shell:
+            #     cmd: "git apply -R ../doe-suite.patch"
+            #     chdir: "{{git_repo_dest}}/doe-suite/"
 
-            - name: Reset controller-patch
-              ansible.builtin.shell:
-                cmd: "git apply -R ./setup-controller.local.patch"
-                chdir: "{{git_repo_dest}}"
+            # - name: Reset controller-patch
+            #   ansible.builtin.shell:
+            #     cmd: "git apply -R ./setup-controller.local.patch"
+            #     chdir: "{{git_repo_dest}}"
               
             - name: Retry pulling git repository
               ansible.builtin.git:
@@ -212,7 +216,7 @@
                 dest: "{{git_repo_dest}}"
                 accept_hostkey: yes
                 ssh_opts: "-o StrictHostKeyChecking=no -i \"/home/{{controller_user}}/.ssh/{{controller_github_key_name}}\""
-                force: no
+                force: yes
 
         
         - name: Setup poetry

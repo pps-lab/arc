@@ -27,3 +27,20 @@ clean_suite() {
     poetry run ansible-playbook src/clear.yml
     cd "$PREV_DIR"
 }
+
+init_project() {
+    PREV_DIR="$(pwd)"
+    cd "$DOES_PROJECT_DIR/doe-suite"
+    poetry update
+    cd "$PREV_DIR"
+}
+
+prepare_results() {
+    PREV_DIR="$(pwd)"
+    cd "$DOES_PROJECT_DIR"
+    CUR_DATE_STR="$(date +'%0Y%0m%0d')"
+    zip -r results-${CUR_DATE_STR}.zip does_results/
+    mv results-${CUR_DATE_STR}.zip ~/
+    echo "Result file path: ~/results-${CUR_DATE_STR}.zip"
+    cd "$PREV_DIR"
+}
