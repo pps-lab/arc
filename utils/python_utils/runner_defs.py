@@ -50,6 +50,7 @@ class CompilerArguments(enum.Enum):
     REPLICATED_BIN_PARTY_X = ['-B', '64']
     PS_REP_BIN_PARTY_X = ['-B', '64']
     SHAMIR_PARTY_X = ["-F", "64"]
+    MALICIOUS_SHAMIR_PARTY_X = ["-F", "64"]
 
 class CompilerRunner(BaseRunner):
 
@@ -167,6 +168,19 @@ class ShamirPartyRunner(ScriptBaseRunner):
             f"{self.player_id}",
             f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
 
+class MaliciousShamirPartyRunner(ScriptBaseRunner):
+    def _program(self):
+        return "./malicious-shamir-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+            "-h", f"{self.player_0_host}",
+            "-pn", "12300",
+            "-N", f"{self.player_count}",
+            f"{self.player_id}",
+            f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"
+        ]
+
 class ProtocolRunners(enum.Enum): 
     EMULATE_X = EmulatorRunner
     REPLICATED_RING_PARTY_X = ReplicatedRingPartyRunner
@@ -174,6 +188,7 @@ class ProtocolRunners(enum.Enum):
     REPLICATED_BIN_PARTY_X=ReplicatedBinPartyRunner
     PS_REP_BIN_PARTY_X=PsReplicatedBinPartyRunner
     SHAMIR_PARTY_X=ShamirPartyRunner
+    MALICIOUS_SHAMIR_PARTY_X=MaliciousShamirPartyRunner
 
 
     
