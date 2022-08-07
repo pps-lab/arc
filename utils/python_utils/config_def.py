@@ -4,7 +4,8 @@ import typing
 
 class ProtocolChoices(enum.Enum):
     EMULATE_X = "emulate_env"
-    REPLICATED_RING_PARTY_X = "semi_honest_3"
+    REPLICATED_RING_PARTY_X = "semi_honest_3",
+    BRAIN_PARTY_X = "malicious_3_party"
 
 class TaskConfig(pydantic.BaseModel):
     player_id: int
