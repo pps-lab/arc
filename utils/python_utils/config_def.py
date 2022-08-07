@@ -8,6 +8,7 @@ class ProtocolChoices(enum.Enum):
     BRAIN_PARTY_X = "malicious_3_party"
     REPLICATED_BIN_PARTY_X = "semi_honest_bin_3"
     PS_REP_BIN_PARTY_X = "malicious_bin_3"
+    SHAMIR_PARTY_X = "shamir_semi_honest_n"
 
 class TaskConfig(pydantic.BaseModel):
     player_id: int

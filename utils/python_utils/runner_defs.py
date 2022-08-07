@@ -49,6 +49,7 @@ class CompilerArguments(enum.Enum):
     BRAIN_PARTY_X = ['-R', '64']
     REPLICATED_BIN_PARTY_X = ['-B', '64']
     PS_REP_BIN_PARTY_X = ['-B', '64']
+    SHAMIR_PARTY_X = ["-F", "64"]
 
 class CompilerRunner(BaseRunner):
 
@@ -78,12 +79,13 @@ class CompilerRunner(BaseRunner):
 
 
 class ScriptBaseRunner(BaseRunner):
-    def __init__(self, output_prefix, script_name, args, player_0_host, player_id):
+    def __init__(self, output_prefix, script_name, args, player_0_host, player_id, player_count):
         self.output_prefix = output_prefix
         self.script_name = script_name
         self.script_args = args
         self.player_0_host = player_0_host
         self.player_id = player_id
+        self.player_count = player_count
     
     def _env(self):
         my_env = os.environ.copy()
@@ -153,13 +155,25 @@ class PsReplicatedBinPartyRunner(ScriptBaseRunner):
             f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"
         ]
 
+class ShamirPartyRunner(ScriptBaseRunner):
+    def _program(self):
+        return "./shamir-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+            "-h", f"{self.player_0_host}",
+            "-pn", "12300",
+            "-N", f"{self.player_count}",
+            f"{self.player_id}",
+            f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
+
 class ProtocolRunners(enum.Enum): 
     EMULATE_X = EmulatorRunner
     REPLICATED_RING_PARTY_X = ReplicatedRingPartyRunner
     BRAIN_PARTY_X=BrainPartyRunner
     REPLICATED_BIN_PARTY_X=ReplicatedBinPartyRunner
     PS_REP_BIN_PARTY_X=PsReplicatedBinPartyRunner
-
+    SHAMIR_PARTY_X=ShamirPartyRunner
 
 
     
