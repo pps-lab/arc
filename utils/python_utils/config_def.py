@@ -6,6 +6,7 @@ class ProtocolChoices(enum.Enum):
     EMULATE_X = "emulate_env"
     REPLICATED_RING_PARTY_X = "semi_honest_3"
     BRAIN_PARTY_X = "malicious_3_party"
+    REPLICATED_BIN_PARTY_X = "semi_honest_bin_3"
 
 class TaskConfig(pydantic.BaseModel):
     player_id: int

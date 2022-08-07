@@ -47,6 +47,7 @@ class CompilerArguments(enum.Enum):
     EMULATE_X = ['-R', '64']
     REPLICATED_RING_PARTY_X = ['-R', "64"]
     BRAIN_PARTY_X = ['-R', '64']
+    REPLICATED_BIN_PARTY_X = ['-B', '64']
 
 class CompilerRunner(BaseRunner):
 
@@ -126,11 +127,23 @@ class BrainPartyRunner(ScriptBaseRunner):
             f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
 
 
+class ReplicatedBinPartyRunner(ScriptBaseRunner):
+    def _program(self):
+        print("Run ReplicatedBinPartyRunner")
+        return "./replicated-bin-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+            "-h", f"{self.player_0_host}",
+            "-pn", "12300",
+            f"{self.player_id}",
+            f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
+
 class ProtocolRunners(enum.Enum): 
     EMULATE_X = EmulatorRunner
     REPLICATED_RING_PARTY_X = ReplicatedRingPartyRunner
     BRAIN_PARTY_X=BrainPartyRunner
-
+    REPLICATED_BIN_PARTY_X=ReplicatedBinPartyRunner
 
 
 
