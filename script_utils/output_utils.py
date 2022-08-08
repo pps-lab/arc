@@ -28,7 +28,13 @@ def output_value(name, value, repeat=False):
     the_input = "{ \"name\": \"%s\", \"repeat\": %s, \"value\": %s }"
     format_str = prefix + the_input + postfix
     format_value = _transform_value_to_str(value)
-    library.print_ln(format_str, name, repeat,format_value)
+    repeat_val = None
+    if repeat:
+        repeat_val = "true"
+    else:
+        repeat_val = "false"
+
+    library.print_ln(format_str, name, repeat_val, format_value)
 
 
         
