@@ -33,5 +33,5 @@ column_names = ["colA","colB","colC"]
 def _(row_idx):
     @for_range(start=0,stop=len(column_names),step=1)
     def _(col_idx):
-        out_util.output_value(column_names[col_idx],row_idx*5 + col_idx, repeat=True)
+        out_util.output_value(column_names[int(col_idx)],row_idx*5 + col_idx, repeat=True)
 
