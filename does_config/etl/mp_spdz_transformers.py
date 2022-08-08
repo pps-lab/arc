@@ -80,7 +80,7 @@ class MpSpdzDataFrameBuilderTransformer(Transformer):
         renamed_df = selected_df.rename(columns=rename_mapping)
         try:
             exploded_df = renamed_df.explode(list(renamed_df.columns)).dropna()
-            return pd.concat(df, exploded_df)
+            return pd.concat([df, exploded_df])
         except ValueError as e:
             print(f"MpSpdzDataFameBuilderTransformer: {e}. Stopped transforming")
             return df        
