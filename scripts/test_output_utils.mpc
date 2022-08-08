@@ -31,7 +31,6 @@ def _(i):
 column_names = ["colA","colB","colC"]
 @for_range(start=0,stop=5,step=1)
 def _(row_idx):
-    @for_range(start=0,stop=len(column_names),step=1)
-    def _(col_idx):
-        out_util.output_value(column_names[int(col_idx)],row_idx*5 + col_idx, repeat=True)
+    for i,col_name in enumerate(column_names):
+        out_util.output_value(col_name, row_idx*5 + i, repeat=True)
 
