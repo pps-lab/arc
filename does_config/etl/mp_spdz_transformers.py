@@ -31,7 +31,15 @@ DEFAULT_AGGREGATE_FUNCTION = SUPPORTED_AGGREGATE_FUNCTIONS['first']
 
 class MpSpdzRowMergerTransformer(Transformer):
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+        df2 = df
         group_by_columns: list[str] = options['groupby_colums']
+        
+        def check_if_column_in_df(x):
+            return x in df.columns    
+        if not(all(map(check_if_column_in_df, group_by_columns))):
+            # Fail fast and early
+            return df
+
         df_groupby_obj = df.groupby(group_by_columns)
 
         # Now we construct the apply dictionary
