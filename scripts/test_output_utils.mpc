@@ -20,3 +20,7 @@ def decide_larger_salary(salary_a, salary_b):
 
 result = decide_larger_salary(salary_A, salary_B)
 out_util.output_value("decision",result.reveal())
+
+@for_range(start=0,stop=5,step=1)
+def _(i):
+    out_util.output_value("repeat_decision", result.reveal() + i, repeat=True)

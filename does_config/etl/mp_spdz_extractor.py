@@ -66,8 +66,15 @@ class MpSpdzResultExtractor(Extractor):
         # Finally, we combine all dicts to a super dicts
         final_dicts = {}
         for curr_dict in dicts:
-            final_dicts[curr_dict['name']] = curr_dict['value']
-
+            repeat_val = curr_dict['repeat']
+            if not repeat_val:
+                final_dicts[curr_dict['name']] = curr_dict['value']
+            else:
+                curr_value = final_dicts.get(curr_dict['name'], None)
+                if curr_value is None:
+                    final_dicts[curr_dict['name']] = curr_dict['value']
+                else:
+                    final_dicts[curr_dict['name']] = curr_value + [curr_dict['value']]
         file_path_obj = pathlib.PurePath(path)
         result_info_regex = re.compile('result-P([0-9]+)-([0-9]+)')
         result_match = result_info_regex.match(file_path_obj.name)
@@ -77,5 +84,3 @@ class MpSpdzResultExtractor(Extractor):
         final_dicts['thread_number'] = int(thread_num)
         return [final_dicts]
 
-
-        

@@ -22,11 +22,14 @@ def _transform_value_to_str(value):
         return value
         
 
-def output_value(name, value):
+def output_value(name, value, repeat=False):
     prefix = "###OUTPUT:"
     postfix = "###"
-    the_input = "{ \"name\": \"%s\", \"value\": %s }"
+    the_input = "{ \"name\": \"%s\", \"repeat\": %s, \"value\": %s }"
     format_str = prefix + the_input + postfix
     format_value = _transform_value_to_str(value)
-    library.print_ln(format_str, name, format_value)
+    library.print_ln(format_str, name, repeat,format_value)
+
+
+        
 

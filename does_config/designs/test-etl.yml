@@ -122,7 +122,22 @@ $ETL$:
           decision2:
             column_name: 'decision'
             func: 'set_f'
-
     loaders:
       CsvSummaryLoader:
         output_dir: etl_results/first_exp_results
+  
+  test_etl_results_2:
+    experiments: [
+      first_exp,
+      test_protocol_integrations,
+      test_protocol_integrations_2
+    ]
+    extractors:
+      MpSpdzStderrExtractor:  {}
+      MpSpdzResultExtractor: {}
+      IgnoreExtractor: {}
+    transformers: []
+    loaders:
+      CsvSummaryLoader:
+        output_dir: etl_results/total_experiment_results
+
