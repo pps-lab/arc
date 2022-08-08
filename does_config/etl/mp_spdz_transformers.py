@@ -1,3 +1,4 @@
+from multiprocessing.sharedctypes import Value
 from etl_base import Extractor, Loader, PlotLoader, Transformer
 import pandas as pd
 from typing import Dict, List
@@ -61,3 +62,25 @@ class MpSpdzRowMergerTransformer(Transformer):
 
         return df2
 
+
+class MpSpdzDataFrameBuilderTransformer(Transformer):
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+        target_column_names = options['target_columns']
+        # Check if target columes are contained
+        def check_if_column_contained(x):
+            return x in df.columns
+        if not(all(check_if_column_contained, target_column_names)):
+            print("Not all target columns exist. Aborting trasformation")
+            return df
+
+        rename_mapping = {
+            k:  f"{k}_expanded" for k in target_column_names
+        }
+        selected_df = df[target_column_names]
+        renamed_df = selected_df.rename(columns=rename_mapping)
+        try:
+            exploded_df = renamed_df.explode(list(renamed_df.columns)).dropna()
+            return pd.concat(df, exploded_df)
+        except ValueError as e:
+            print(f"MpSpdzDataFameBuilderTransformer: {e}. Stopped transforming")
+            return df        
