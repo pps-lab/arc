@@ -72,7 +72,7 @@ class MpSpdzResultExtractor(Extractor):
             else:
                 curr_value = final_dicts.get(curr_dict['name'], None)
                 if curr_value is None:
-                    final_dicts[curr_dict['name']] = curr_dict['value']
+                    final_dicts[curr_dict['name']] = [curr_dict['value']]
                 else:
                     final_dicts[curr_dict['name']] = curr_value + [curr_dict['value']]
         file_path_obj = pathlib.PurePath(path)
