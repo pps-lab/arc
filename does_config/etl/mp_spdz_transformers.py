@@ -69,7 +69,7 @@ class MpSpdzDataFrameBuilderTransformer(Transformer):
         # Check if target columes are contained
         def check_if_column_contained(x):
             return x in df.columns
-        if not(all(check_if_column_contained, target_column_names)):
+        if not(all(map(check_if_column_contained, target_column_names))):
             print("Not all target columns exist. Aborting trasformation")
             return df
 
