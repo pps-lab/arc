@@ -33,7 +33,7 @@ class MpSpdzStderrExtractor(Extractor):
                 player_num = int(results.group(3))
             except:
                 player_num = -1
-            return [dict(player_num=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number)]
+            return [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number)]
         else:
             return []
 
@@ -43,7 +43,7 @@ class MpSpdzResultExtractor(Extractor):
         return ["^result-P[0-9]+-[0-9]\\.txt$"]
     
     def _process(self, path: str, options: Dict, line: str) -> Dict:
-        raw_content = line[10:-3]
+        raw_content = line
         json_decoder = json.JSONDecoder()
         json_dict: Dict = json_decoder.decode(raw_content)
         return json_dict
@@ -51,10 +51,13 @@ class MpSpdzResultExtractor(Extractor):
 
     def extract(self, path: str, options: Dict) -> List[Dict]:
         dicts = []
+        pattern_matcher = re.compile("###OUTPUT:(.*)###")
         with open(path, 'r') as the_file:
             for line in the_file:
-                if line.startswith("###OUTPUT:") and line.endswith("###"):
-                    the_dict = self._process(path=path, options=options, line=line)
+                match_result = pattern_matcher.match(line)
+                if match_result:
+                    print(f"Processing line {line}")
+                    the_dict = self._process(path=path, options=options, line=match_result.group(1))
                 else:
                     the_dict = None
                 if the_dict is not None:
