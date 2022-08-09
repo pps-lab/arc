@@ -27,3 +27,15 @@ small_experiment:
       script_args: ["1e-4", 4, 4, 100]
       protocol_setup: "emulate_env"
       input_file_name: "mnist-audit-conv-10epoch.zip"
+
+$ETL$:
+  small_experiment_results:
+    experiments: [small_experiment]
+    extractors:
+      MpSpdzStderrExtractor:  {}
+      MpSpdzResultExtractor: {}
+      IgnoreExtractor: {}
+    transformers: []
+    loaders:
+      CsvSummaryLoader:
+        output_dir: etl_results/small_experiment_results
