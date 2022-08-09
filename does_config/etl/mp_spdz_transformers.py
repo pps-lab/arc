@@ -83,4 +83,4 @@ class MpSpdzDataFrameBuilderTransformer(Transformer):
             return pd.concat([df, exploded_df])
         except ValueError as e:
             print(f"MpSpdzDataFameBuilderTransformer: {e}. Stopped transforming")
-            return df        
+            return df 
