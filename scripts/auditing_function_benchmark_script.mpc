@@ -6,12 +6,11 @@ import math
 
 program.options_from_args()
 
-#sfix.set_precision(f=16,k=43)
-#cfix.set_precision(f=16,k=43)
 
 learning_rate = float(program.args[1])
 n_thread_num = int(program.args[2])
 n_data_owners = int(program.args[3])
+sample_cutoff_size = int(program.args[4])
 
 # training_sample_size = sint.input_from(0)
 
@@ -43,7 +42,18 @@ tf.set_n_threads(n_thread_num)
 
 # Note: Number of models
 # For debug purposes we only look at one model for now
-n_models = 2
+n_models = n_data_owners
+
+# We introduce a simple cutoff, namely we cutoff the samples for testing purposes
+if sample_cutoff_size != -1:
+    small_training_samples = MultiArray([sample_cutoff_size,28,28], sfix)
+    small_training_labels = MultiArray([sample_cutoff_size,10],sint)
+    small_training_samples.assign(training_samples.get_part(0,sample_cutoff_size))
+    small_training_labels.assign(training_labels.get_part(0,sample_cutoff_size))
+    training_labels = small_training_labels
+    training_samples = small_training_samples
+    
+
 
 layers = [
     tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
@@ -82,8 +92,6 @@ for i,var in enumerate(model.trainable_variables):
 
 print(variable_holders)
 
-# Now, since we hold a copy of the trained variables, we can start with doing the actual training
-# We first assume a split 5 datasets
 
 
 
@@ -99,14 +107,26 @@ def _(i):
 
 unmodified_predictions = predictions
 
+# Now, we compute the unlearn_sizes for each data owner
+# Note: If we cannot cleanly divide the whole dataset for each data_owner, then the last data_owner will obtain 
+# the excess elements
+# First, we compute if the we can cleanly divide the dataset size 
+unlearn_size = training_labels.sizes[0]//n_data_owners
+unlearn_size_2 = 0
+if unlearn_size * n_data_owners < training_labels.sizes[0]:
+    excess_size = training_labels.sizes[0] - (unlearn_size * n_data_owners)
+    unlearn_size_2 = unlearn_size + excess_size
+    del excess_size
+else:
+    unlearn_size_2 = unlearn_size
 
-# We do not comoute the losses for now
-# Just the predictions
-# Now, we do the actual unlearning
 
-unlearn_size = training_labels.sizes[0]//n_models
+
 unlearn_labels = MultiArray([unlearn_size,10],sfix)
 unlearn_labels.assign_all(sfix(1/10))
+
+unlearn_labels_2 = MultiArray([unlearn_size_2,10],sfix)
+unlearn_labels_2.assign_all(sfix(1/10))
 
 print_ln("Value of 1/10: %s", sfix(1/10).reveal())
 
@@ -124,26 +144,19 @@ def create_model(i):
     current_model.build(training_samples.sizes)
 
     unlearn_start_region = i * unlearn_size
-    
-    modified_training_labels = MultiArray([60_000, 10], sfix)
+
+    modified_training_labels = MultiArray([training_labels.sizes[0], 10], sfix)
     modified_training_labels.assign(training_labels)
-    modified_training_labels.get_part(unlearn_start_region,unlearn_size).assign(unlearn_labels)
+    if i == n_data_owners-1:
+        modified_training_labels.get_part(unlearn_start_region,unlearn_size_2).assign(unlearn_labels_2)
+    else:
+        modified_training_labels.get_part(unlearn_start_region,unlearn_size).assign(unlearn_labels)
 
 
     # Models 
     print_ln("Model %s", i)
     print_ln("Layers: %s", current_model.layers)
     print_ln("Built-Layers: %s", current_model.opt.layers)
-
-    # Now, we train the model
-    #current_model.opt.layers[0].X.address = training_samples.address 
-    #current_model.opt.layers[-1].Y.address = modified_training_labels.address
-    #current_model.opt.n_epochs = 1
-
-
-    #current_model.opt.gamma.write(cfix(learning_rate))
-    #current_model.opt.layers[-1].approx = False
-    #current_model.opt.print_losses = True
     
     # We define the new learning rate
     program.args.append("rate{}".format(learning_rate))
@@ -161,8 +174,9 @@ def create_model(i):
 
 
     current_model.fit(x=training_samples, y=modified_training_labels, batch_size=64,
-        epochs=1,variable_loader=variable_loader)
-    
+        #epochs=1,variable_loader=variable_loader)
+        epochs=1)
+
     # Now, we remove the appended arguments
     program.args.pop(-1)
 
@@ -260,7 +274,7 @@ def compute_MAD_matrix(loss_matrix):
 
 
 prediction_holder = MultiArray([n_samples,n_models+1,10], sfix)
-modified_prediction_holder = MultiArray([n_samples,n_model,10],sfix)
+modified_prediction_holder = MultiArray([n_samples,n_models,10],sfix)
 for i,curr_model in enumerate(models):
     current_results = do_prediction(cint(i),curr_model)
     transform_predictions(i,current_results,prediction_holder)
@@ -271,7 +285,7 @@ transform_predictions(n_models, unmodified_predictions, prediction_holder)
 # Compute Loss
 print_ln("This executes")
 loss_multi_array_with_unaltered = compute_loss(prediction_holder,prediction_labels)
-loss_multi_array_no_unaltered = compute_loss(modified_prediction_holder)
+loss_multi_array_no_unaltered = compute_loss(modified_prediction_holder,prediction_labels)
 
 
 
@@ -280,7 +294,7 @@ print_ln("Computing MAD Scores")
 MAD_score_multiarray = compute_MAD_matrix(loss_multi_array_with_unaltered)
 MAD_score_multiarray.print_reveal_nested()
 
- MAD_scores_multiarray_no_unaltered = compute_MAD_matrix(loss_multi_array_no_unaltered)
+MAD_scores_multiarray_no_unaltered = compute_MAD_matrix(loss_multi_array_no_unaltered)
 
 out_util.output_value("loss_array_with_unaltered_model", loss_multi_array_with_unaltered)
 out_util.output_value("mad_array_with_unaltered_model", MAD_score_multiarray)
@@ -288,4 +302,16 @@ out_util.output_value("loss_array_no_unaltered_model", loss_multi_array_no_unalt
 out_util.output_value("mad_array_no_unaltered_model", MAD_scores_multiarray_no_unaltered)
 
 
+
+
+loss_column_names = [f"model_{i}_loss" for i in range(n_data_owners)]
+mad_column_names = [f"model_{i}_mad_score" for i in range(n_data_owners)]
+
+@for_range(start=0,stop=n_samples,step=1)
+def _(sample_idx):
+    for i,col_name in enumerate(loss_column_names):
+        out_util.output_value(col_name, loss_multi_array_no_unaltered[sample_idx][i],repeat=True)
+    for i,col_name in enumerate(mad_column_names):
+        out_util.output_value(col_name, MAD_scores_multiarray_no_unaltered[sample_idx][i],repeat=True)
+    
 
