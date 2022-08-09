@@ -43,7 +43,7 @@ $ETL$:
     experiments: [first_exp]
     extractors:
       MpSpdzStderrExtractor: {}
-      MpSpdzStdoutExtractor: {}
+      MpSpdzResultExtractor: {}
       IgnoreExtractor: {}
     transformers:
       - name: MpSpdzDataFrameBuilderTransformer
