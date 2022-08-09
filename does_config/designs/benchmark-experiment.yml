@@ -38,4 +38,16 @@ $ETL$:
     transformers: []
     loaders:
       CsvSummaryLoader:
-        output_dir: etl_results/small_experiment_results
+        output_dir: etl_results
+  first_exp_results_2:
+    experiments: [first_exp]
+    extractors:
+      MpSpdzStderrExtractor: {}
+      MpSpdzStdoutExtractor: {}
+      IgnoreExtractor: {}
+    transformers:
+      - name: MpSpdzDataFrameBuilderTransformer
+        target_columns: ['model_0_loss', 'model_1_loss', 'model_2_loss', 'model_3_loss','model_0_mad_score', 'model_1_mad_score', 'model_2_mad_score', 'model_3_mad_score']
+    loaders:
+      CsvSummaryLoader:
+        output_dir: etl_results
