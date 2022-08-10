@@ -1,4 +1,4 @@
-small_experiment:
+small_experiment_1:
   n_repetitions: 1
   host_types:
     hserv1:
@@ -24,13 +24,24 @@ small_experiment:
       player_0_hostname: "[% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %]"
       abs_path_to_code_dir: "{{exp_code_dir}}"
       script_name: "auditing_function_benchmark_script"
-      script_args: ["1e-4", 4, 4, 100]
-      protocol_setup: "emulate_env"
+      script_args: 
+        $FACTOR$: [
+          ["1e-4", 38, 2, -1],
+          ["1e-4", 38, 3, -1],
+          ["1e-4", 38, 4, -1],
+          ["1e-4", 38, 5, -1],
+          ["1e-4", 38, 6, -1], 
+          ["1e-4", 38, 7, -1],
+          ["1e-4", 38, 8, -1],
+          ["1e-4", 38, 9, -1],
+          ["1e-4", 38, 10, -1]
+        ]
+      protocol_setup: "semi_honest_3"
       input_file_name: "mnist-audit-conv-10epoch.zip"
 
 $ETL$:
-  small_experiment_results:
-    experiments: [small_experiment]
+  small_experiment_1_raw:
+    experiments: [small_experiment_1]
     extractors:
       MpSpdzStderrExtractor:  {}
       MpSpdzResultExtractor: {}
@@ -39,8 +50,8 @@ $ETL$:
     loaders:
       CsvSummaryLoader:
         output_dir: etl_results
-  first_exp_results_2:
-    experiments: [first_exp]
+  small_experiment_1_dataframe:
+    experiments: [small_experiment_1]
     extractors:
       MpSpdzStderrExtractor: {}
       MpSpdzResultExtractor: {}
