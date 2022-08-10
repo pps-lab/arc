@@ -1,3 +1,5 @@
 *.local.sh
 *.local.patch
 poetry.lock
+# Personal Launch config
+.vscode/launch.json
