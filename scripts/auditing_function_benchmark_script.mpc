@@ -1,4 +1,5 @@
 import math
+import json
 
 # Given is a trained model and possible malicious data
 
@@ -10,7 +11,7 @@ program.options_from_args()
 learning_rate = float(program.args[1])
 n_thread_num = int(program.args[2])
 n_data_owners = int(program.args[3])
-sample_cutoff_size = int(program.args[4])
+sample_cutoff_size = int(json.dumps(program.args[4]))
 
 # training_sample_size = sint.input_from(0)
 
