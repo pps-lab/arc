@@ -77,7 +77,7 @@ class CompilerRunner(BaseRunner):
     def _args(self):
         return self._compiler_args + \
             [os.path.join(self._code_dir,"scripts",f"{self._script_name}.mpc")] + \
-            [f"\"{shlex.quote(s)}\"" for s in self._script_args]
+            self._script_args
 
 
 class ScriptBaseRunner(BaseRunner):
