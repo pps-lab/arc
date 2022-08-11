@@ -11,7 +11,7 @@ program.options_from_args()
 learning_rate = float(program.args[1])
 n_thread_num = int(program.args[2])
 n_data_owners = int(program.args[3])
-sample_cutoff_size = int(json.dumps(program.args[4]))
+sample_cutoff_size = int(json.dumps(program.args[4])[0])
 
 # training_sample_size = sint.input_from(0)
 
