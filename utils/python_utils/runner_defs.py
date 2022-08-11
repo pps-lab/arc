@@ -2,6 +2,7 @@ import abc
 import subprocess
 import enum
 import os
+import shlex
 
 
 # This class expects that each Runner is executed 
@@ -76,7 +77,7 @@ class CompilerRunner(BaseRunner):
     def _args(self):
         return self._compiler_args + \
             [os.path.join(self._code_dir,"scripts",f"{self._script_name}.mpc")] + \
-            self._script_args
+            [f"\"{shlex.quote(s)}\"" for s in self._script_args]
 
 
 class ScriptBaseRunner(BaseRunner):
