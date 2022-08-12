@@ -40,7 +40,7 @@ class MpSpdzStderrExtractor(Extractor):
 
 class MpSpdzResultExtractor(Extractor):
     def file_regex_default(self):
-        return ["^result-P[0-9]+-[0-9]\\.txt$"]
+        return ["^result-P[0-9]+-[0-9]+\\.txt$"]
     
     def _process(self, path: str, options: Dict, line: str) -> Dict:
         raw_content = line
