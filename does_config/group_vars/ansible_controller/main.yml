@@ -6,8 +6,8 @@
 instance_type: t2.small # change if you feel the controller is a bottleneck
 ec2_volume_size: 64 # choose large enough to store results (at least until they are downloaded)
 
-ec2_image_id: ami-09e5cb3ecefcdff19
-ec2_volume_snapshot: snap-0e0b85b2979e1d47d
+ec2_image_id: ami-05334fd6e6598fadd
+ec2_volume_snapshot: snap-05ebc475c58079b7e
 
 ansible_controller_user: controller
 ansible_controller_group: controller
@@ -17,7 +17,6 @@ ansible_controller_home: "/home/{{ ansible_controller_user }}"
 ansible_exp_suite_git_repo: git@github.com:pps-lab/cryptographic-auditing-mpc.git # TODO: change to the URL of your clone of the ansible experiment suite
 ansible_exp_suite_private_repo: yes # Set to true if the repo is public. In that case we don't need to setup SSH keys for the repo.
 ansible_controller_does_dir: "{{ ansible_controller_home }}/aws_ansible_experiment_suite" # Path to where AWS Ansible Experiment Suite is cloned to
-ansible_controller_git_username: git
 
 # SSH options
 ansible_controller_ssh_key_dir: "{{ ansible_controller_home }}/.ssh"
