@@ -23,7 +23,7 @@ small_experiment_1:
       player_count: 3
       player_0_hostname: "[% exp_host_lst | json_query(\"[?host_type=='hserv1'].private_dns_name\") | first %]"
       abs_path_to_code_dir: "{{exp_code_dir}}"
-      script_name: "auditing_function_benchmark_script"
+      script_name: "auditing_function_benchmark_script_v2"
       script_args: 
         $FACTOR$: [
           ["1e-4", 38, 2, "[-1]"],
@@ -47,18 +47,6 @@ $ETL$:
       MpSpdzResultExtractor: {}
       IgnoreExtractor: {}
     transformers: []
-    loaders:
-      CsvSummaryLoader:
-        output_dir: etl_results
-  small_experiment_1_dataframe:
-    experiments: [small_experiment_1]
-    extractors:
-      MpSpdzStderrExtractor: {}
-      MpSpdzResultExtractor: {}
-      IgnoreExtractor: {}
-    transformers:
-      - name: MpSpdzDataFrameBuilderTransformer
-        target_columns: ['model_0_loss', 'model_1_loss', 'model_2_loss', 'model_3_loss','model_0_mad_score', 'model_1_mad_score', 'model_2_mad_score', 'model_3_mad_score']
     loaders:
       CsvSummaryLoader:
         output_dir: etl_results
