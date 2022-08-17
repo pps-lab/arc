@@ -31,6 +31,7 @@ prediction_samples.input_from(0)
 from Compiler.script_utils import ml_modified as ml
 from Compiler.script_utils import output_utils as out_util
 from Compiler.script_utils import audit_function_utils as aut_func_utils
+from Compiler import library 
 tf = ml
 
 tf.set_n_threads(n_thread_num)
@@ -72,6 +73,8 @@ for i,var in enumerate(model.trainable_variables):
 
 
 unmodified_prediction_results = model.opt.eval(prediction_samples,batch_size=128)
+
+library.start_timer(timer_id=100)
 
 # Now, we compute the unlearn_sizes for each data owner
 # Note: If we cannot cleanly divide the whole dataset for each data_owner, then the last data_owner will obtain 
@@ -209,8 +212,10 @@ loss_matrix = compute_loss(prediction_holder, unmodified_prediction_results)
 # Compute MAD Scores
 mad_score_matrix = compute_MAD_matrix(loss_matrix)
 
-out_util.output_value(name="loss_matrix", loss_matrix, repeat=False)
-out_util.output_value(name="mad_score_matrix", mad_score_matrix, repeat=False)
-out_util.output_value(name="unmodified_pedrictions", unmodified_pedrictions)
+library.stop_timer(timer_id=100)
+
+out_util.output_value(name="loss_matrix", value=loss_matrix, repeat=False)
+out_util.output_value(name="mad_score_matrix", value=mad_score_matrix, repeat=False)
+out_util.output_value(name="unmodified_prediction_results", value=unmodified_prediction_results,repeat=False)
     
 
