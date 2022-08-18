@@ -131,7 +131,7 @@ def create_model(i):
 
 
     current_model.fit(x=training_samples, y=modified_training_labels, batch_size=64,
-        epochs=1,variable_loader=variable_loader)
+        epochs=2,variable_loader=variable_loader)
 
     # Now, we remove the appended arguments
     program.args.pop(-1)
