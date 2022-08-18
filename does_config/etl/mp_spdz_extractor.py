@@ -16,26 +16,36 @@ class MpSpdzStderrExtractor(Extractor):
             content = f.read()
         
         # Extract transfered data, round number and host
-        matcher = re.compile(r'Data sent = ([0-9.]+) MB in ~([0-9]+) rounds \(party ([0-9]+)\)')
-        results = matcher.search(content)
-        if results:
+        regex = r"Data sent = ([0-9]+\.[0-9]+) MB in ~([0-9]+) rounds \(party ([0-9]+); rounds counted double due to multi-threading\)"
+        matcher = re.compile(regex)
+        results = matcher.finditer(content)
+        regex2 = r"Global data sent = ([0-9]+\.[0-9]+|[0-9]+) MB (all parties)"
+        matcher2 = re.compile(regex2)
+        results2 = list(matcher.finditer(content))
+        dicts = []
+        for result in results:
             try:
-                party_data_sent = float(results.group(1))
+                party_data_sent = float(result.group(1))
             except:
                 party_data_sent = 0.0
             
             try:
-                party_round_number = int(results.group(2))
+                party_round_number = int(result.group(2))
             except:
                 party_round_number = -1
             
             try:
-                player_num = int(results.group(3))
+                player_num = int(result.group(3))
             except:
                 player_num = -1
-            return [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number)]
-        else:
-            return []
+
+            if len(results2) == 1:
+                global_data_sent = float(results2[0].group(1))
+            else:
+                global_data_sent = -1
+            
+            dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
+        return dicts
 
 
 class MpSpdzResultExtractor(Extractor):
