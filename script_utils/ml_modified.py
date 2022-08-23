@@ -2340,7 +2340,7 @@ class Optimizer:
         def _(i):
             n_correct = 0
             n_test = 0
-            if (not acc_first) or (not acc_first_2):
+            if not acc_first:
                 start_timer(1)
                 self.run(batch_size,
                          stop_on_loss=0 if 'no_loss' in program.args else 100)
