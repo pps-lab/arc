@@ -2300,7 +2300,7 @@ class Optimizer:
         if 'full_cisc' in program.args:
             program.options.keep_cisc = 'FPDiv,exp2_fx,log2_fx'
         model_input = 'model_input' in program.args
-        acc_first = model_input and not 'train_first' in program.args
+        acc_first = (model_input or variable_loader is not None) and not 'train_first' in program.args
         if model_input:
             for layer in self.layers:
                 layer.input_from(0)
@@ -2340,7 +2340,7 @@ class Optimizer:
         def _(i):
             n_correct = 0
             n_test = 0
-            if not acc_first:
+            if (not acc_first) or (not acc_first_2):
                 start_timer(1)
                 self.run(batch_size,
                          stop_on_loss=0 if 'no_loss' in program.args else 100)
