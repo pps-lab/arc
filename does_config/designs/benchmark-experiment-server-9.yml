@@ -33,7 +33,7 @@ server_experiment_9:
       script_name: "auditing_function_benchmark_script_v2"
       script_args: 
         $FACTOR$: [
-          ["1e-4", 38, 5, "[-1]"],
+          ["1e-3", 38, 5, "[-1]"],
         ]
       protocol_setup: "shamir_semi_honest_n"
       input_file_name: "mnist-audit-conv-10epoch.zip"
