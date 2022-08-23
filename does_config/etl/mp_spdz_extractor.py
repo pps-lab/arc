@@ -16,12 +16,15 @@ class MpSpdzStderrExtractor(Extractor):
             content = f.read()
         
         # Extract transfered data, round number and host
-        regex = r"Data sent = ([0-9]+\.[0-9]+) MB in ~([0-9]+) rounds \(party ([0-9]+); rounds counted double due to multi-threading\)"
+        regex = r"Data sent = ([0-9]+\.[0-9]+|[0-9]+) MB in ~([0-9]+) rounds \(party ([0-9]+); rounds counted double due to multi-threading\)"
         matcher = re.compile(regex)
         results = matcher.finditer(content)
         regex2 = r"Global data sent = ([0-9]+\.[0-9]+|[0-9]+) MB (all parties)"
         matcher2 = re.compile(regex2)
         results2 = list(matcher.finditer(content))
+        time_regex = r"^Time([0-9]+)? = ([0-9]+\.[0-9]+|[0-9]+) seconds.*$"
+        time_matcher = re.compile(time_regex, re.MULTILINE)
+        time_results = list(time_matcher.finditer(content)) 
         dicts = []
         for result in results:
             try:
@@ -44,6 +47,20 @@ class MpSpdzStderrExtractor(Extractor):
             else:
                 global_data_sent = -1
             
+            if 'timers' in options.keys():
+                print("Timers processing")
+                def map_timer(x):
+                    timer_number = x.group(1)
+                    timer_value = float(x.group(2))
+                    if timer_number is None:
+                        timer_number = -1
+                    else:
+                        timer_number = int(timer_number)
+                    return (timer_number,timer_value)
+                mapped_timer_results = list(filter(lambda x: (x[0] in options['timers']), map(map_timer, time_results)))
+                dicts += [{'timer_number': t_num, 'timer_value': t_val, 'player_number': player_num} for (t_num,t_val) in mapped_timer_results]
+                print(dicts) 
+
             dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
         return dicts
 
