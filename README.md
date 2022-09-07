@@ -51,7 +51,7 @@ In this section, we will go through all steps to setup the evaluation framework 
 1. Ensure that Python 3.9 and Git is installed on the local machine
 2. Checkout this Github repository into a Folder of your liking: (For this section, we checkout into the `mpc-audit` folder)
    ```
-   git checkout --recursive git@github.com:pps-lab/cryptographic-auditing-mpc.git mpc-audit
+   git clone --recursive git@github.com:pps-lab/cryptographic-auditing-mpc.git mpc-audit
    ```
    The `--recursive` option ensures that all submodules in the folder are checked out together with the evaluation framework.
 
