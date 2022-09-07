@@ -71,7 +71,7 @@ In this section, we will go through all steps to setup the evaluation framework 
       ```
    5. Now within the  *Designs of Experiments Suite* root, we install all requirements:
       ```
-      poetry install
+      poetry install # or poetry update if the previous command fails
       ```
    6. Configure `ssh` and `ssh-agent`:
       
