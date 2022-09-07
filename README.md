@@ -17,7 +17,7 @@ Python-DSL for developing auditing functions. Please see  [the MP-SPDZ documenta
 for more information about the DSL.
 
 Please note that MP-SPDZ and the DoE suite are integrated as submodules of this git repository and the 
-commits referenced `mp-spdz` and `doe-suite` define the version of MP-SPDZ and the DoE suite currently used by the evaluation framework
+submodules `mp-spdz` and `doe-suite` define the version of MP-SPDZ and the DoE suite currently used by the evaluation framework
 respectively.
 
 ## Requirements
