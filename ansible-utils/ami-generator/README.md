@@ -54,6 +54,10 @@ following steps need to be completed:
    ```
    The obtained image id must be noted down, since it will be needed during the re-configuration of the evaluation framework. 
 
+6. After we are done with the AMI generator, we can leave the *Design of Experiments Suite* virtual python environment by:
+   ```
+   exit
+   ```
 
 ## `site2_var.yml` Variables
 
