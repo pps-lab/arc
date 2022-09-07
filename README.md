@@ -148,9 +148,9 @@ In this section, we will go through all steps to setup the evaluation framework 
       poetry install 
       poetry update # if poetry install fails
       ```
-   2. Generate the initial base Image with the AMI generator [(See instructions under the Usage Section)](./ansible-utils/ami-generator/README.md) and note the image id of the generated base image.
 
-   3. Prepare the `setup-env.local.sh` environment setup script:
+
+   2. Prepare the `setup-env.local.sh` environment setup script:
 
       This script must be loaded into the terminal before using the evaluation framework. 
       It sets all the needed environment variables, prepares the `ssh-agent` and provides convenience commands to run the
@@ -167,6 +167,9 @@ In this section, we will go through all steps to setup the evaluation framework 
          ```
          source setup-env.local.sh
          ```
+   3. Generate the initial base Image with the AMI generator [(See instructions under the Usage Section)](./ansible-utils/ami-generator/README.md) and note the image id of the generated base image.
+
+   
 
    4. Configure the evaluation framework
          
