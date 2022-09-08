@@ -1,8 +1,31 @@
+"""This module defines the Configuration model. 
+It uses pydantic to parse the config.json file.
+
+The module defines the following functionality:
+
+- enum ProtocolChoices:
+    Defines the name mapping between the Protocol type and the string representation in the config.json
+- class TaskConfig:
+    Defines the Configuration for a single Experiment Run
+- class ArgumentLineConfig:
+    Defines the model for the configuration received via the command line
+- class JsonMpcConfing:
+    Defines the model for the MPC-specific configuration received via the config.json file 
+- class JsonConfigModel:
+    Defines the relevant model for the configuration received via the config.json file
+
+- function parse_json_config(config_path):
+    Parses the config.json file found under the given config_path and returns a JsonConfigModel object
+
+- function build_task_config(json_cofig_obj, player_number, sleep_time, result_dir):#
+    Builds the TaskConfig object that contains all configuration information. It builds this object from the JsonConfigModel stored in json_config_obj, the player_number, the sleep_time and the result_dir arguments.
+"""
 import pydantic
 import enum
 import typing
 
 class ProtocolChoices(enum.Enum):
+    """Defines the name mapping between the Protocol type and the string representation in the config.json"""
     EMULATE_X = "emulate_env"
     REPLICATED_RING_PARTY_X = "semi_honest_3"
     BRAIN_PARTY_X = "malicious_3_party"
@@ -12,6 +35,31 @@ class ProtocolChoices(enum.Enum):
     MALICIOUS_SHAMIR_PARTY_X = "shamir_malicious_n"
 
 class TaskConfig(pydantic.BaseModel):
+    """Defines the Configuration for a single Experiment Run
+    
+    Attributes
+    ----------
+    - player_id : int
+        The id of the player
+    - sleep_time : float
+        The number of seconds to sleep between the compilation step and running step (Not used)
+    - player_count : int
+        The number of players involved in the experiment
+    - player_0_hostname : str
+        The hostname of player 0 to which all MPC protocol virtual machines should connect to
+    - abs_path_to_code_dir : str
+        The absolute path to the experiment code directory where the code for the evaluation framework is stored
+    - script_name : str
+        The name of the script that will be executed as part of the experiment
+    - script_args : list[str]
+        The list of 0-based positional arguments under which the given script should be compiled with
+    - protocol_setup : ProtocolChoices
+        The kind of MPC protocol that should be used in the Experiment
+    - input_file_name : str
+        The name of the input file container that contains the input files for the given experiment.
+    - result_dir : str
+        The path to the directory which contains the results folder
+    """
     player_id: int
     sleep_time: float
     player_count: int
@@ -25,10 +73,38 @@ class TaskConfig(pydantic.BaseModel):
     result_dir: str
 
 class ArgumentLineConfig(pydantic.BaseModel):
+    """Defines the model for the configuration received via the command line
+    
+    Attributes
+    ----------
+    - player_id : int
+        The id of the player
+    - sleep_time : float
+        The number of seconds to sleep between the compilation step and running step (Not used)
+    """
     player_id: int
     sleep_time: float
 
 class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
+    """Defines the model for the MPC-specific configuration received via the config.json file
+    
+    Attributes
+    ----------
+    - player_count : int
+        The number of players involved in the experiment
+    - player_0_hostname : str
+        The hostname of player 0 to which all MPC protocol virtual machines should connect to
+    - abs_path_to_code_dir : str
+        The absolute path to the experiment code directory where the code for the evaluation framework is stored
+    - script_name : str
+        The name of the script that will be executed as part of the experiment
+    - script_args : list[str]
+        The list of 0-based positional arguments under which the given script should be compiled with
+    - protocol_setup : ProtocolChoices
+        The kind of MPC protocol that should be used in the Experiment
+    - input_file_name : str
+        The name of the input file container that contains the input files for the given experiment.
+    """
     player_count: int
     player_0_hostname: str
     abs_path_to_code_dir: str
@@ -39,16 +115,37 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
 
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
+    """Defines the relevant model for the configuration received via the config.json file"""
     mpc: JsoncMpcConfig
 
 
 
 def parse_json_config(config_path):
+    """Parses the config.json file found under the given config_path and returns a JsonConfigModel object
+    
+    Parameters
+    ----------
+    - config_path : str
+        The path to the config.json file
+    """
     config_obj = JsonConfigModel.parse_file(config_path)
     return config_obj
 
 def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int, 
     sleep_time: float, result_dir: str):
+    """Builds the TaskConfig object that contains all configuration information. It builds this object from the JsonConfigModel stored in json_config_obj, the player_number, the sleep_time and the result_dir arguments.
+    
+    Parameters
+    ----------
+    - json_cofig_obj : JsonConfigModel
+        The model containing all the content of the parsed config.json file
+    - player_number : int
+        The id of the player
+    - sleep_time : float
+        The number of seconds to sleep between the compilation step and running step (Not used)
+    - result_dir : str
+        The path to the directory which contains the results folder
+    """
     conf_obj = TaskConfig(
         player_id=player_number,
         sleep_time=sleep_time,
