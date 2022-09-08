@@ -263,7 +263,8 @@ after each step, ensure that any changes done to files belonging to the evaluati
       
 7. After this step, the evaluation framework should be usable. You can test the usability by running the `toy-example` experiment.
    Please note that for the `toy-example` experiment, we need to run the  `utils/python_utils/create_toy_input.py` script to generate
-   the input file container for the input files needed for the `toy-example` experiment.
+   the input file container for the input files needed for the `toy-example` experiment. Also, this input file container must
+   be placed into the AWS Input file bucket before the experiment can be run.
 
 
 ## Usage
