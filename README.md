@@ -46,7 +46,8 @@ of the currently used MP-SPDZ version if in doubt):
 
 ## Getting Started
 
-In this section, we will go through all steps to setup the evaluation framework for use.
+In this section, we will go through all steps to setup the evaluation framework for use. Please note that
+after each step, ensure that any changes done to files belonging to the evaluation framework (all files not under the `mp-spdz` and `doe-suite` subfolders) are pushed to the repository, or else, the changes will not take effect.
 
 1. Ensure that Python 3.9 and Git is installed on the local machine
 2. Checkout this Github repository into a Folder of your liking: (For this section, we checkout into the `mpc-audit` folder)
@@ -171,7 +172,107 @@ In this section, we will go through all steps to setup the evaluation framework 
 
    
 
-   4. Configure the evaluation framework
+   4. Reseed the server types with the new image:
+      1. We start the configuration by running the repotemplate script as follows (from the evaluation framework root):
+         ```
+         cd doe-suite
+         poetry run python src/scripts/repotemplate.py
+         ```
+
+      2. Next, we need to define the list of server types to generate.
+
+         + The evaluation framework has 4 default server types that must be generated:
+           + *hserv1*: A `c5.9xlarge` instance and the type of the server that executes the main MPC virtual machine
+           + *hserv2*: A `c5.9xlarge` instance and the type of the server(s) that execute the additional MPC virtual machines
+           + *server*: A `t2.2xlarge` instance and the type of the server that executes the main MPC virtual machine
+           + *server2*: A `t2.2xlarge` instance and the type of the server(s) that execute the additonal MPC virtual machines
+         
+         + During the repo reconfiguration, the following must be done:
+           + For the initial configuration, we need to regenerate the `all` group vars. But for later configuration,
+             you can skip the regeneration of the `all` group vars.
+
+             The following values must be set during the `all` group vars configuration:
+             ```
+             Unique Project ID: <A unique project id> # This is the name of the project
+             Git Remote Repository: <The SSH address of the Git repository containing the evaluation framework code> # This variable defines the location where the Git repository is located, that contains the experiment code (here the evaluation framework)
+             Playbook number of tries to check for experiment finished: <A number up to 1000, 300 is recommended>
+             Time to wait between checking in seconds: <A number, 10 is recommended>
+             AWS Key name: <Name of the Private key pair that you created for AWS>
+             ```
+           + Do not generate the default host types, but generate the above 4 host types in the given order. You can also
+             generate additional host types. We will describe how to add additonal host types in a later section.
+           + For the given host types, the following settings must be honored:
+             + **hserv1, hserv2**: 
+               ```
+               EC2 Instance type: c5.9xlarge
+               EC2 Volume size in GB: <your choice, but at least 40 GB>
+               EC2 image AMI: <The image id you noted down before>
+               Snapshot ID for this instance: <Leave empty, choose the default given by the script>
+               ```
+             + **server,server2**:
+               ```
+               EC2 Instance type: t2.2xlarge
+               EC2 Volume size in GB: <your choice, but at least 40 GB>
+               EC2 image AMI: <The image id you noted down before>
+               Snapshot ID for this instance: <Leave empty, choose the default given by the script>
+               ```
+   5. Prepare the Input AWS Bucket:
+      + We need to create an AWS S3 bucket in which all input data will be stored for the evaluation framework.
+        [(See Instructions here)](https://docs.aws.amazon.com/AmazonS3/latest/userguide/create-bucket-overview.html).
+        
+      + Once the AWS Input Bucket was created, we need to give the name of the bucket to the evaluation framework.
+        We do this by adapting the preparation step of the evaluation framework that downloads the data from the input bucket.
+        To achieve this, we need to modify the `mlexample_bucket_name` variable in the `does_config/roles/ml-example-setup-1/vars/main.yml`
+        ```
+        ---
+        mlexample_bucket_name: <The name of your AWS input bucket>
+        mlexample_object_name: ...
+        mlexample_tmp_storage: ...
+        mlexample_input_dest: ...
+        ...
+        ```
+      
+      + Please note that AWS instances need to have permissions to access the input buckets. For the evaluation framework, it is
+        recommended to create an instance role (like 'EC2WithS3') and grant that role the necessary permissions to access the AWS 
+        input bucket. Then, please add the following line to the particular section outlined below in the file 
+        `doe-suite/src/roles/suite-aws-ec2-create/tasks/main.yml`:
+        
+        ```
+        ...
+        #######################################################################
+        # Create EC2 Instances for all host_types
+        ######################################################################
+        
+        - name: Create EC2 Instances (only assign subset of tags yet)
+          community.aws.ec2_instance:
+            instance_type: '{{ ec2config.instance_type }}'
+            key_name: '{{ ec2config.key_name }}'
+            image_id: '{{ ec2config.ec2_image_id }}'
+            region: '{{ ec2config.aws_region }}'
+            security_group: '{{ ec2config.sg_name }}'
+            vpc_subnet_id: '{{ ec2config.vpc_subnet_id }}'
+            instance_role: EC2WithS3Role # <-- This line must be added to the presented section
+            wait: no
+            purge_tags: yes
+            network:
+         ...
+        ```
+        This change will make the *Designs of Experiments Suite* create instances with the defined instance role, thereby granting
+        each experiment host the permissions needed to work.
+        
+      
+7. After this step, the evaluation framework should be usable. You can test the usability by running the `toy-example` experiment.
+   Please note that for the `toy-example` experiment, we need to run the  `utils/python_utils/create_toy_input.py` script to generate
+   the input file container for the input files needed for the `toy-example` experiment.
+
+
+
+
+
+
+
+            
+           
          
 
       
