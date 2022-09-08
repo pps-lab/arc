@@ -55,7 +55,7 @@
     
     - name: Download Mnist dataset
       ansible.builtin.shell:
-        cmd: "aws s3 sync {{mlexample_bucket_name}} {{exp_code_dir}}/custom-data"
+        cmd: "aws s3 sync s3://{{mlexample_bucket_name}} {{exp_code_dir}}/custom-data"
 
 - name: Make ml-example script executable
   ansible.builtin.file:
