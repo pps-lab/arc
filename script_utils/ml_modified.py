@@ -56,6 +56,14 @@ looks as follows::
 
 See the `readme <https://github.com/data61/MP-SPDZ/#tensorflow-inference>`_ for
 an example of how to run MP-SPDZ on TensorFlow graphs.
+
+Notes of the extension:
+The fit() function of the Sequential class has been extended with a variable_loader keywoard argument.
+This argument accepts a function that takes a single argument. This single argument is the reference
+to the optimizer instance. The variable_loader function should load the model weights stored in memory. This
+extension is ment to allow the loading of the same set of weights multipe times without requiring to store the 
+weights multiple times in the player input files.
+
 """
 
 import math
