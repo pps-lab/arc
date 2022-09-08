@@ -8,7 +8,7 @@ import zipfile
 import shutil
 import click
 
-def generate_player_input(zipfile_name='toy-example-intput.zip'):
+def generate_player_input(zipfile_name='toy-example-input.zip'):
     with tempfile.TemporaryDirectory() as tmp_dir_name:
         input_file_names = [f'Input-P{i}-0' for i in range(0,2,1)]
 
