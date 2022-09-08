@@ -266,6 +266,165 @@ after each step, ensure that any changes done to files belonging to the evaluati
    the input file container for the input files needed for the `toy-example` experiment.
 
 
+## Usage
+
+The evaluation framework itself is in essence a pre-configured *Design of Experiments Suite* experiment repository that provides a pre-defined experiment flow that integrates MP-SPDZ. 
+This section will describe how to make use of this preconfigured experiment flow to ease the evaluation of cryptographic auditing function.
+
+
+### Experiment Definition
+
+To define an MPC experiment, we need to do the following steps:
+
+1. Create a copy of the `does_config/designs/experiment-runner-template.yml` and rename the copy to a unique experiment name.
+   For example, rename the copy to `toy-example.yml`.
+
+2. Now, customize the template to your liking, the template contains comments that will explain all the settings.
+
+3. Once you are done, you can start the MPC experiment as you would start an *Design of Experiments Suite* experiment suite.
+
+### Additional Configuration steps
+
+The evaluation framework provides two preconfiguration roles:
+
++ `ml-example-setup-1` - This role does the last-step configurations for the evaluation framework. This includes downloading all input data containers in the AWS Input file bucket and connecting the evaluation framework to the pre-compiled MP-SPDZ framework of the base image. 
++ `setup-poetry` - This role install poetry on the experiment host and initalizes the evaluation framework.
+
+If you want to add additional configuration steps, you can create a role as described in the *Design of Experiments Suite*'s documentation.
+However, please ensure that any additional configuration steps are executed after `ml-example-setup-1` and `setup-poetry` roles.
+
+### Writing MPC scripts
+
+When using the evaluation framework, you want to evaluate your own function implementations.
+To do this, please create a new script file with a file name ending in `.mpc` in the `scripts` folder.
+The evaluation framework expects all MPC scripts to be stored there. 
+
+Also, the evaluation framework provides functionality to import additional code into the MPC script files.
+To do this, please create a new Python module in the `script_utils` folder. Your own modules can then be found under the 
+`Compiler.script_utils` module as a submodule. Please note that MP-SPDZ uses a Python-based DSL to implement high-level programs.
+Please consult the MP-SPDZ documentation to the available DSL functionality. 
+
+The evaluation framework also comes with some additional utility modules. Please look at the `README.md` in the `script_utils` folder
+for documentation on these modules.
+
+### Defining additional Host types
+
+The evaluation framework provides two sets of default host types (as described in the Getting Started section).
+If you want to generate additional host types, you can define additonal host types during the execution of the
+`repotemplate.py` script, by specifying additional host types in during the server generation. However, please note
+that you always need two host types with the same settings. This is because one host type must exclusively provide the server
+that executes the main MPC protocol VM process. This is because MP-SPDZ's protocol VMs communicate via first establishing a connection
+to Party 0 in the MPC protocol run and then doing a more direct communication. And due to how the *Design of Experiments Suite* stores
+its data, it is not possible to name hosts directly. Therefore, we need at least one host type that contains only one server,
+so that we can uniquely name the primary MPC protocol VM process server and query the server's DNS name. This name 
+must be given to all MPC protocol VM processes, so that they can connect to the main MPC protocol VM process.
+
+Also, the servers should have at least 40 GB of space, as the base image requires at least 30GB and there is some additional free-space.
+
+
+### Defining additional ETL steps
+
+The experiment template file `does_config/designs/experiment-runner-template.yml` provides a sample ETL pipeline 
+that integrates the MP-SDPZ specific Extractor classes `MpSpdzStderrExtractor` and `MpSpdzResultExtractor` into a pipeline. 
+These extractors are essential to utilize the output processing facilities of the evaluation framework. 
+For more documentation on the MP-SPDZ-specific Extractors and Transformers, see the `README.md` in the `does_config/etl` folder.
+[(The README.md)](./does_config/etl/README.md) 
+
+
+
+## Troubleshooting
+
+In this section, we discuss common problems that may be encountered during the usage of the evaluation framework and how they can be
+dealt with. 
+
+### Common Tips
+
++ Should the evaluation framework not work properly and the output of the evaluation framework makes no sense,
+  consider turning off the pretty printing. To do this, please comment out the following setting:
+  ```
+  [defaults]
+  INVENTORY = src/inventory
+  roles_path = ${PWD}/src/roles:${DOES_PROJECT_DIR}/does_config/roles
+  ANSIBLE_CALLBACKS_ENABLED = community.general.selective
+  inventory_ignore_extensions = ~, .orig, .bak, .ini, .cfg, .retry, .pyc, .pyo, .j2
+  
+  ansible_ssh_common_args = '-o StrictHostKeyChecking=no -o ForwardAgent=yes'
+  
+  # TODO: activate / deactivate to only show the pretty log output
+  stdout_callback = community.general.selective # <- Comment this setting out to disable pretty printing and receive the full output
+
+  ```
+  in the file `doe-suite/ansible.cfg`
+
+### `poetry install` failed - lock file is not in sync with `pyproject.toml`
+
+This error results from the *Design of Experiments Suite* having a `poetry.lock` file where the installed dependencies are not in sync with 
+the project dependencies declared in `pyproject.toml` in the *Design of Experiments Suite* root folder. 
+If you use Poetry v1.2 and onwards, you can execute the command `poetry lock` to resolve this issue. For earlier Poetry versions,
+`poetry update` can also solve this problem. 
+
+
+### The evaluation framework tries to resolve internal AWS DNS names, and fails to do so & Experiment fails in the middle of the run because of DNS resolution failure of a `*.compute.internal` address
+
+This happens because the *Design of Experiments Suite* might load an AWS server instance under 2 names, both under its publicly
+reachable DNS name and its internal DNS name. However, the *Design of Experiments Suite* will not be able to reach an
+instance through its internal DNS name. This can lead to a failure of an experiment run. This failure can be fixed 
+by adding the following entry to the `doe-suite/src/resources/inventory/aws_ec2.yml.j2` file:
+```
+---
+plugin: aws_ec2
+regions:
+  - eu-central-1
+filters:
+{% if is_ansible_controller %} # for the ansible controller, we only filter for controllers but not projects
+  tag:Name: ansible_controller
+{% else %}
+  tag:prj_id: {{ prj_id }}
+{% if not prj_clear %}
+  instance-state-name: ["running"]
+  tag:suite: {{ suite }}
+{% endif %}
+{% endif %}
+
+# keyed_groups may be used to create custom groups
+#leading_separator: False
+strict: False
+hostnames:                # <- Adding these lines will force the AWS inventory plugin to only name instances via their public DNS names
+  - dns-name              # <- 
+keyed_groups:
+  - prefix: ""
+    separator: ""
+    key: tags.prj_id
+
+  - prefix: ""
+    separator: ""
+    key: tags.suite
+
+  - prefix: ""
+    separator: ""
+    key: tags.exp_name
+
+  - prefix: ""
+    separator: ""
+    key: tags.host_type
+
+  - prefix: "is_controller"
+    separator: "_"
+    key: tags.is_controller
+
+  - prefix: "check_status"
+    separator: "_"
+    key: tags.check_status
+
+  - prefix: ""
+    separator: ""
+    key: tags.Name
+
+```
+
+
+
+
 
 
 
