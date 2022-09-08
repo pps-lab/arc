@@ -7,3 +7,5 @@ scripts together with MP-SPDZ and doe-suite.
 
 The package requires that the PYTHONPATH is set to contain the parent folder `utils`. The python code in this project expects this to be
 the case.
+
+For more documentation, please look into each Python Module.
