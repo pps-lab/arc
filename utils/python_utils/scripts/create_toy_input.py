@@ -30,6 +30,7 @@ def generate_player_input(zipfile_name='toy-example-input.zip'):
 @click.command()
 @click.option('-f','--filename', help='The name of the input file container that should be generated for the toy-example experiment', default='toy-example-intput.zip')
 def cli(filename):
+    """Generate the player input files required by the 'toy-example' experiment"""
     generate_player_input(zipfile_name=filename)
 
 if __name__ == '__main__':
