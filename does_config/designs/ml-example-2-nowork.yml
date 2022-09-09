@@ -1,9 +1,0 @@
-first_exp:
-  n_repetitions: 1
-  host_types:
-    server:
-      n: 1
-      check_status: True
-      init_roles: ml-example-setup-1
-      $CMD$:
-        - "echo [% exp_host_lst | json_query(\"[?host_type=='server']\") | first %]"
