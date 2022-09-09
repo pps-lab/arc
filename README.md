@@ -272,7 +272,12 @@ after each step, ensure that any changes done to files belonging to the evaluati
 The evaluation framework itself is in essence a pre-configured *Design of Experiments Suite* experiment repository that provides a pre-defined experiment flow that integrates MP-SPDZ. 
 This section will describe how to make use of this preconfigured experiment flow to ease the evaluation of cryptographic auditing function.
 
-
+Before the evaluation framework can be used, please load the `setup-env.local.sh` script into your Terminal, so that all the necessary environment flags are set.
+This is done as follows:
+```
+# From the evaluation framework root
+source setup-env.local.sh
+```
 ### Experiment Definition
 
 To define an MPC experiment, we need to do the following steps:
