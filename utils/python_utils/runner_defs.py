@@ -1,3 +1,81 @@
+"""This module defines the code that executes the MP-SPDZ facilities such as the MPC protocol virtual machines and the 
+MPC program compiler. It defines abstractions to ease the integration of MPC protocol virtual machines.
+
+The main abstraction is the BaseRunner class. It defines a standarized way to execute a program using the subprocessing module
+without having to directly interact with the subprocessing module. It povides methods that must be implemented so that a program
+can be run.
+
+The CompilerArguments enum class holds the default compiler arguments that need to be applied to MPC scripts at compile-time
+for each MPC protocol vm backend supported by the evaluation framework. These flags are important because the MP-SPDZ compiler 
+must know in advance, in which computational domain the MPC script will be compiled under. And since different MPC 
+VMs might have different computational domains. So, the CompilerArguments enum class holds for each Protocol Choice the 
+appropriate Compiler arguments. Please note that  these argumenets must be kept in sync with the values provided in the 
+ProtocolChoices enum class in the config_def.py module.
+
+The CompilerRunner class acts as the high-level interface to the MP-SPDZ compiler. It executes the 'compile.py' compiler and 
+compiles the provided script with given arguments and compiler flags.
+
+The ScriptBaseRunner class is a more specific abstract class that builds on the BaseRunner abstract class and
+provides the base abstraction for any class that implements the interface to an MP-SPDZ protocol virtual machine. 
+The ScriptBaseRunner provides base parameters and a base implementation of the environment hook for Script Runners to
+avoid duplicate code.
+
+
+The EmulatorRunner, ReplicatedRingPartyRunner, BrainPartyRunner, ReplicatedBinPartyRunner, PsReplicatedBinPartyRunner,
+ShamirPartyRunner, MaliciousShamirPartyRunner are the concrete high-level interfaces to the MP-SPDZ-specific protocol virtual machines 
+'./emulate.x', './replicated-ring-party.x', './brain-party.x', './replicated-bin-party.x', './ps-rep-bin-party.x', './shamir-party.x',
+'./malicious-shamir-party.x'.
+
+The ProtocolRunners enum maps each ProtocolChoices enum entry to the corresponding Runner class.
+
+To implement additional protocols, the following steps need to be followed:
+
+1. Extend the ProtocolChoices and CompilerArguments enums with a uniquely named enum entry. Please ensure that both enums are kept in sync during this extension. The ProtocolChoices enum will define how the protocol choice will be named for the protocol choice parameter in the experiment template. The CompilerArguments enum entry will decide which compiler arguments will be given to the protocol choice. Note that argument spacing is done by separating list entries
+
+2. Implement the ScriptBaseRunner, ensuring that the class follows the following naming convention to keep the look of the classes similar: <Name of ProtocolChoicesEntry>Runner. It is important that the _program() and _args() arguments are implemented. More information can be found in the documentation of each respective class.
+
+3. Extend the ProtocolRunners enum to include the new implementation of the ScriptBaseRunner. Please ensure that the ProtoclRunners enum is synced with the ProtocolChoices and CompilerArguments enums
+
+
+The module provides the following functionalities:
+
+- class BaseRunner:
+    The main abstraction to implement the execution of MP-SPDZ facilities via a standardizes interface to the subprocessing module.
+
+- enum CompilerArguments:
+    Provides a named mapping between the concrete MPC protocol VM runners and required compiler flags for MPC script compilation for the given MPC protocol.
+
+- class CompilerRunner:
+    Provides the high-level interface to interact with the MP-SPDZ compiler.
+
+- class ScriptBaseRunner:
+    Provides the more specific interface abstraction to the MP-SPDZ protocol VMs.
+
+- class EmulatorRunner:
+    Is the high-level interface to './emulate.x'
+
+- class ReplicatedRingPartyRunner:
+    Is the high-level interface to './replicated-ring-party.x'
+
+- class BrainPartyRunner:
+    Is the high-level interface to './brain-party.x'
+
+- class ReplicatedBinPartyRunner:
+    Is the high-level interface to './replicated-bin-party.x'
+
+- class PsReplicatedBinPartyRunner
+    Is the high-level interface to './ps-rep-bin-party.x'
+
+- class ShamirPartyRunner:
+    Is the high-level interface to './shamir-party.x'
+
+- class MaliciousShamirPartyRunner:
+    Is the high-level interface to './malicious-shamir-party.x'
+
+- enum ProtocolRunners:
+    Provides a named mapping between the concrete MPC protocol VM runners and the interface implementations for each of the concrete MPC protocol VMs.
+
+"""
 import abc
 import subprocess
 import enum
@@ -8,6 +86,22 @@ import shlex
 # This class expects that each Runner is executed 
 
 class BaseRunner(abc.ABC):
+    """The main abstraction to implement the execution of MP-SPDZ facilities via a standardizes interface to the subprocessing module.
+    
+    To extend the base runner, the _program(), _args() and the _env() arguments need to be implemented. These methods provide the path to the program that should be run, the arguments that the specific program should run under, and the environment variables that the program should be started with. More can be found in the documentation of each method.
+
+    Methods
+    -------
+    - _program(): 
+        Returns the path to the program that should be executed.
+    - _args():
+        Returns a list of arguments that should be provided to the program under the path returned by _program()
+    - _env():
+        Returns the set of environment variables under which the program with path provided by _program() should be run under
+    
+    - run():
+        Execute the program with path provided by _program() with arguments provided by _args() and with environment provided by _env()
+    """
 
     @property
     def program(self):
@@ -45,6 +139,7 @@ class BaseRunner(abc.ABC):
 
 
 class CompilerArguments(enum.Enum):
+    """Provides a named mapping between the concrete MPC protocol VM runners and required compiler flags for MPC script compilation for the given MPC protocol."""
     EMULATE_X = ['-R', '64']
     REPLICATED_RING_PARTY_X = ['-R', "64"]
     BRAIN_PARTY_X = ['-R', '64']
@@ -54,8 +149,21 @@ class CompilerArguments(enum.Enum):
     MALICIOUS_SHAMIR_PARTY_X = ["-F", "64"]
 
 class CompilerRunner(BaseRunner):
+    """Provides the high-level interface to interact with the MP-SPDZ compiler."""
 
     def __init__(self, script_name, script_args, compiler_args, code_dir):
+        """
+        Parameters
+        ----------
+        - script_name : str
+            Name of the script that should be compiled
+        - script_args : list[str]
+            List of space-separated arguments under which the given script should be compiled under
+        - compiler_args : list[str]
+            List of space-separated  compiler arguments with which the given script should be compiled with
+        - code_dir : str
+            The absolute path to the directory containing the root of the evaluation framework code 
+        """
         self._script_name = script_name
         self._script_args = script_args
         self._compiler_args = compiler_args
@@ -81,7 +189,45 @@ class CompilerRunner(BaseRunner):
 
 
 class ScriptBaseRunner(BaseRunner):
+    """Provides the more specific interface abstraction to the MP-SPDZ protocol VMs.
+    
+    To extend this class, only the _program() and _args() methods need to be implemented, as a default _env() implementation is 
+    already provided with this class. This is because the MP-SPDZ protocol VMs do not require the setting of environment variables.
+    Please also note that this class provides the set of all attributes that may be needed by any of the given MPC protocol VMs. However,
+    not every MPC protocol VM will need every attribute. Please consult the documentation of each MPC protocol VM to see which attributes
+    are needed.
+
+    Attributes
+    ----------
+    - output_prefix : str
+        The output prefix of the raw text output files of the MPC protocol VM
+    - script_name : str
+        The name of the script that should be executed
+    - script_args : list[str]
+        The list of arguments under which the given script was compiled under
+    - playere_0_host : str
+        The hostname of the machine that hosts the player 0 MPC protocol VM proccess
+    - player_id : int
+        The id of the MPC protocol VM process
+    - player_count : int
+        The number of MPC protocol VM processes that will be part of the experiment execution
+    """
     def __init__(self, output_prefix, script_name, args, player_0_host, player_id, player_count):
+        """
+        Parameters:
+        - output_prefix : str
+            The output prefix of the raw text output files of the MPC protocol VM
+        - script_name : str
+            The name of the script that should be executed
+        - args : list[str]
+            The list of arguments under which the given script was compiled under
+        - playere_0_host : str
+            The hostname of the machine that hosts the player 0 MPC protocol VM proccess
+        - player_id : int
+            The id of the MPC protocol VM process
+        - player_count : int
+            The number of MPC protocol VM processes that will be part of the experiment execution
+        """
         self.output_prefix = output_prefix
         self.script_name = script_name
         self.script_args = args
@@ -95,7 +241,7 @@ class ScriptBaseRunner(BaseRunner):
 
 
 class EmulatorRunner(ScriptBaseRunner):
-    
+    """Is the high-level interface to './emulate.x'"""
     def _program(self):
         return "./emulate.x"
     
@@ -106,7 +252,7 @@ class EmulatorRunner(ScriptBaseRunner):
 
 
 class ReplicatedRingPartyRunner(ScriptBaseRunner):
-    
+    """Is the high-level interface to './replicated-ring-party.x'"""
     def _program(self):
         print("Run ReplicatedRingPartyRunner")
         return "./replicated-ring-party.x"
@@ -120,6 +266,7 @@ class ReplicatedRingPartyRunner(ScriptBaseRunner):
 
 
 class BrainPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './brain-party.x'"""
     def _program(self):
         print("Run  BrainPartyRunner")
         return "./brain-party.x"
@@ -133,6 +280,7 @@ class BrainPartyRunner(ScriptBaseRunner):
 
 
 class ReplicatedBinPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './replicated-bin-party.x'"""
     def _program(self):
         print("Run ReplicatedBinPartyRunner")
         return "./replicated-bin-party.x"
@@ -145,6 +293,7 @@ class ReplicatedBinPartyRunner(ScriptBaseRunner):
             f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
 
 class PsReplicatedBinPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './ps-rep-bin-party.x'"""
     def _program(self):
         print("Run PsReplicatedBinPartyRunner")
         return "./ps-rep-bin-party.x"
@@ -158,6 +307,7 @@ class PsReplicatedBinPartyRunner(ScriptBaseRunner):
         ]
 
 class ShamirPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './shamir-party.x'"""
     def _program(self):
         return "./shamir-party.x"
 
@@ -170,6 +320,7 @@ class ShamirPartyRunner(ScriptBaseRunner):
             f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"]
 
 class MaliciousShamirPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './malicious-shamir-party.x'"""
     def _program(self):
         return "./malicious-shamir-party.x"
 
@@ -182,7 +333,8 @@ class MaliciousShamirPartyRunner(ScriptBaseRunner):
             f"{self.script_name}-{'-'.join([str(s) for s in self.script_args])}"
         ]
 
-class ProtocolRunners(enum.Enum): 
+class ProtocolRunners(enum.Enum):
+    """Provides a named mapping between the concrete MPC protocol VM runners and the interface implementations for each of the concrete MPC protocol VMs.""" 
     EMULATE_X = EmulatorRunner
     REPLICATED_RING_PARTY_X = ReplicatedRingPartyRunner
     BRAIN_PARTY_X=BrainPartyRunner
