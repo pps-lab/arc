@@ -1,3 +1,37 @@
+"""This module acts as the core implementation of the Experiment Runner. This modules is executed as a script and
+executes an MPC experiment on a given experiment host and orchestrates the MPC experiment.
+
+This module provides the following functionalities:
+
+- function generate_random_prefix() : str
+    Generates a random output prefix for use with the MPC protocol VMs to make the raw textual output of MPC protocol VM processes uniquely identifiable
+
+- function prepare_config(player_number,sleep_time) : TaskConfigModel
+    Exceutes the config model construction step.
+
+- function move_to_experiment_dir(task_config : config_def.TaskConfig):
+    Change the current working directory to the directory containing the code of the evaluation framework
+
+- function process_input(task_config: config_def.TaskConfig):
+    Executes the Input processing phase using the InputProcessor in the input_file_processor.py module
+
+- function compile_script_with_args(task_connfig: config_def.TaskConfig):
+    Executes the Script compilation phase of the experiment. 
+
+- function run_script_with_args(task_config: config_def.TaskConfig, output_prefix: str):
+    Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output
+
+- function capture_output(task_config: config_def.TaskConfig, output_prefix: str): 
+    Captures the raw textual output using the OutputCapture class in the 'output_capture.py' module with output_prefix and moves the results to the results folders given in the task configuration.
+
+- function clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
+    Cleans the workspace from the output files with the prefix output_prefix and the data 
+    stored in the Player-Data and Player-Prep-Data folders.
+
+- function cli(player_number,sleep_time):
+    This is the entrypoint of the Experiment Runner
+
+"""
 import python_utils.config_def as config_def
 import python_utils.runner_defs as runner_defs
 import python_utils.input_file_processor as ifp
@@ -13,9 +47,11 @@ DEFAULT_CONFIG_NAME="config.json"
 DEFAULT_RESULT_FOLDER="results/"
 
 def generate_random_prefix() -> str :
+    """Generates a random output prefix for use with the MPC protocol VMs to make the raw textual output of MPC protocol VM processes uniquely identifiable"""
     return ''.join([random.choice(string.ascii_lowercase + string.digits) for _ in range(20)])
 
 def prepare_config(player_number,sleep_time):
+    """Exceutes the config model construction step."""
     result_dir = os.getcwd()
     json_config_path = os.path.join(result_dir,DEFAULT_CONFIG_NAME) 
     json_config_obj = config_def.parse_json_config(config_path=json_config_path)
@@ -28,9 +64,11 @@ def prepare_config(player_number,sleep_time):
     return task_config
 
 def move_to_experiment_dir(task_config: config_def.TaskConfig):
+    """Change the current working directory to the directory containing the code of the evaluation framework"""
     os.chdir(task_config.abs_path_to_code_dir)
 
 def process_input(task_config: config_def.TaskConfig):
+    """Change the current working directory to the directory containing the code of the evaluation framework"""
     file_processor = ifp.InputFileProcessor(task_config.input_file_name)
     file_processor.process_input()
 
@@ -42,6 +80,7 @@ def copy_script_to_sources(task_config: config_def.TaskConfig):
     pass
 
 def compile_script_with_args(task_connfig: config_def.TaskConfig):
+    """Executes the Script compilation phase of the experiment."""
     copy_script_to_sources(task_config=task_connfig)
     comp_runner = runner_defs.CompilerRunner(
         script_name=task_connfig.script_name,
@@ -52,6 +91,7 @@ def compile_script_with_args(task_connfig: config_def.TaskConfig):
     comp_runner.run()
 
 def run_script_with_args(task_config: config_def.TaskConfig, output_prefix: str):
+    """Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output"""
     script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[task_config.protocol_setup.name].value
     script_runner_obj = script_runner_constr(
         output_prefix=output_prefix,
@@ -65,6 +105,7 @@ def run_script_with_args(task_config: config_def.TaskConfig, output_prefix: str)
 
 def capture_output(task_config: config_def.TaskConfig, 
     output_prefix: str):
+    """Captures the raw textual output using the OutputCapture class in the 'output_capture.py' module with output_prefix and moves the results to the results folders given in the task configuration."""
     result_dir_path = os.path.join(task_config.result_dir,DEFAULT_RESULT_FOLDER)
     out_cap_obj = out_cap.OutputCapture(output_prefix=output_prefix,
         result_dir=result_dir_path,
@@ -72,6 +113,8 @@ def capture_output(task_config: config_def.TaskConfig,
     out_cap_obj.capture_output()
 
 def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
+    """Cleans the workspace from the output files with the prefix output_prefix and the data 
+    stored in the Player-Data and Player-Prep-Data folders."""
     cleaner_obj = clr.Cleaner(code_dir=task_config.abs_path_to_code_dir,
         output_prefix=output_prefix)
     cleaner_obj.clean()
