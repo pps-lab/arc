@@ -1,10 +1,10 @@
 test_host_name: "alexmandt_mpspdz_test"
 aws_target_profile: "default"
 aws_security_group: "alexmandt-sg1"
-aws_key_name: "alexmandt-aws-keys-1"
+aws_key_name: "aws_ppl"
 aws_instance_type: "t2.2xlarge"
 target_repo: "git@github.com:pps-lab/cryptographic-auditing-mpc.git"
 git_repo_dest: "/home/{{ansible_user_id}}/ami-defaults/cryptographic-auditing-mpc"
 git_repo_mpspdz_location: "{{git_repo_dest}}/mp-spdz"
 make_job_nums: 7
-aws_ami_name: "alexmadnt_mpspdz_test_ami_2"
+aws_ami_name: "mpspdz_test_ami_toy_example"

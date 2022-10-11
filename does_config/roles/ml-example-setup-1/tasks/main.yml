@@ -59,7 +59,7 @@
 
 - name: Make ml-example script executable
   ansible.builtin.file:
-    path: "{{exp_code_dir}}/utils/ml-stuff/ml-example.sh"
+    path: "{{exp_code_dir}}/utils/toy-example.sh"
     mode: "777"
     state: file
 

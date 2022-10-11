@@ -1,7 +1,7 @@
 test_host_name: "alexmandt_ansible_controller"
 aws_target_profile: "default"
 aws_security_group: "alexmandt-sg1"
-aws_key_name: "alexmandt-aws-keys-1"
+aws_key_name: "aws_ppl"
 aws_instance_type: "t2.small"
 target_repo: "git@github.com:pps-lab/cryptographic-auditing-mpc.git"
 git_repo_dest: "/home/{{controller_user}}/cryptographic-auditing-mpc"

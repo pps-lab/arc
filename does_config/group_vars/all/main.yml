@@ -23,7 +23,7 @@ local:
   designs_dir: "{{ does_config_dir }}/designs"
 
 exp_base:
-  key_name: alexmandt-aws-keys-1 # TODO: add key pair name
+  key_name: aws_ppl # TODO: add key pair name
   aws_region: eu-central-1
   name: frankfurt
   vpc_name: "{{ prj_id }}_vpc_base"

@@ -5,6 +5,6 @@ all:
             test-{{loop.index}}:
                 ansible_connection: ssh
                 ansible_user: ubuntu
-                ansible_host: {{i.public_ip_address}}
+                ansible_host: {{i.public_hostname}}
                 my_host_instance_id: {{i.instance_id}}
         {% endfor %}
