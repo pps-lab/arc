@@ -11,7 +11,6 @@ import os
 import tempfile
 
 
-DEFAULT_INPUT_FILE_PATH = "custom-data/"
 DEFAULT_OUTPUT_FILE_PATH = os.path.join("mp-spdz","Player-Data")
 
 class InputFileProcessor:
@@ -43,8 +42,7 @@ class InputFileProcessor:
         Then, each input file in the temporary folder is moved to the Player-Data folder of the local MP-SPDZ installation.
         """
         # Open Zip file
-        zip_file_path = os.path.join(DEFAULT_INPUT_FILE_PATH,self.input_file)
-        with zipfile.ZipFile(zip_file_path,"r") as input_zip:
+        with zipfile.ZipFile(self.input_file,"r") as input_zip:
             with tempfile.TemporaryDirectory() as tmp_dir:
                 input_zip.extractall(path=tmp_dir)
                 tmp_content = os.listdir(tmp_dir)

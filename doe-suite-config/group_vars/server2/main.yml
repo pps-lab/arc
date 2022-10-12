@@ -5,7 +5,6 @@ ec2_volume_size: 100
 
 ec2_image_id:  ami-0419cab1fa37ab915
 ec2_volume_snapshot: snap-0b47b340fc299a25b
-instance_role: EC2WithS3Role
 
 euler_job_minutes: 120 # individual job time
 euler_cpu_cores: 4

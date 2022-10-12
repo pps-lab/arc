@@ -66,16 +66,16 @@
   ansible.builtin.replace:
     path: "{{ mpspdz_dir }}/CONFIG"
     regexp: '-DPREP_DIR="Player-Data\/"'
-    replace: '-DPREP_DIR="Player-Prep-Data\/"'
+    replace: '-DPREP_DIR="Player-Prep-Data/"'
 - name: Update CONFIG to customize player-ssl dir
   ansible.builtin.replace:
     path: "{{ mpspdz_dir }}/CONFIG"
     regexp: '-DSSL_DIR="Player-Data\/"'
-    replace: '-DSSL_DIR="Player-SSL-Data\/"'
+    replace: '-DSSL_DIR="Player-SSL-Data/"'
 
 - name: "Create Player-SSL-Data/ folder"
   ansible.builtin.file:
-    path: "{{ mpspdz_dir }/Player-SSL-Data"
+    path: "{{ mpspdz_dir }}/Player-SSL-Data"
     state: directory
 
 - name: "Create Player-Prep-Data/ folder"
@@ -83,19 +83,26 @@
     path: "{{ mpspdz_dir }}/Player-Prep-Data"
     state: directory
 
-- name: "Compile MP-SPDZ first mpir to get all libraries"
-  community.general.make:
-    chdir: "{{ mpspdz_dir }}"
-    jobs: "8"
-    target: "tldr"
-#  when: have_compiled_res.stat.exists == False
+- name: "Check if MP-SPDZ is compiled"
+  ansible.builtin.stat:
+    path: "{{ mpspdz_dir }}/semi2k-party.x"
+  register: mpspdz_compiled
+- name: "Compile MP-SPDZ"
+  when: mpspdz_compiled.stat.exists == False
+  block:
+    - name: "Compile MP-SPDZ first mpir to get all libraries"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "8"
+        target: "tldr"
+    #  when: have_compiled_res.stat.exists == False
 
-- name: "Compile MP-SPDZ fully"
-  community.general.make:
-    chdir: "{{ mpspdz_dir }}"
-    jobs: "8"
-    target: "all"
-#  when: have_compiled_res.stat.exists == False
+    - name: "Compile MP-SPDZ fully"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "8"
+        target: "all"
+    #  when: have_compiled_res.stat.exists == False
 
 #- name: "Create Player-Data Folder"
 #  ansible.builtin.file:
@@ -151,16 +158,10 @@
         cmd: ./aws/install
         creates: /usr/local/bin/aws
 
-- name: Download Input for MNIST-Dataset
-  block:
-    - name: Setup Folder
-      ansible.builtin.file:
-        path: "{{exp_code_dir}}/custom-data"
-        state: directory
-
-    - name: Download Mnist dataset
-      ansible.builtin.shell:
-        cmd: "aws s3 sync s3://{{mlexample_bucket_name}} {{exp_code_dir}}/custom-data"
+- name: Setup Input Folder
+  ansible.builtin.file:
+    path: "{{ dataset_dir }}"
+    state: directory
 
 - name: Make ml-example script executable
   ansible.builtin.file:
@@ -185,7 +186,6 @@
           - python3.9-venv
         update_cache: yes
 
-
     - name: Download get-pip.py
       ansible.builtin.get_url:
         url: https://bootstrap.pypa.io/get-pip.py
@@ -204,9 +204,9 @@
       ansible.builtin.shell:
         cmd: python3.9 /tmp/install-poetry.py
 
-    - name: make path to poetry available in variable
-      set_fact:
-        poetry: /home/ubuntu/.local/bin/poetry
+- name: make path to poetry available in variable
+  set_fact:
+    poetry: /home/ubuntu/.local/bin/poetry
 
 - name: Set config to create .venv folder in project directory
   ansible.builtin.shell:
@@ -215,4 +215,4 @@
 - name: Install poetry project if project exists
   ansible.builtin.shell:
     cmd: "{{poetry}} install"
-    chdir: "{{exp_code_dir}}"
+    chdir: "{{ exp_code_dir }}"

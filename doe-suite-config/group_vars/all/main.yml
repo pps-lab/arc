@@ -2,7 +2,7 @@
 
 
 # TODO: set remote repository (code will be cloned on each remote host)
-git_remote_repository: "git@github.com/pps-lab/cryptographic-auditing-mpc.git"
+git_remote_repository: "git@github.com:pps-lab/cryptographic-auditing-mpc.git"
 # Can also get multiple repos and with a specific branch / commit
 #git_remote_repository:
 #- repo: git@github.com:nicolas-kuechler/doe-suite.git
@@ -35,6 +35,8 @@ remote:
 
 exp_code_dir: "{{ remote.dir }}/code"
 mpspdz_dir: "{{ exp_code_dir }}/mp-spdz"
+
+dataset_dir: "{{ exp_code_dir }}/input_data"
 
 local:
   results_dir: "{{ does_project_dir }}/doe-suite-results"
