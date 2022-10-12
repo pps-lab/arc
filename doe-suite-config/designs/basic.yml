@@ -1,0 +1,34 @@
+---
+# TODO [nku] could add default skeleton for design
+
+first_exp:
+  n_repetitions: 1
+  host_types:
+    server:
+      n: 1
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-poetry
+      $CMD$:
+        - "bash {{exp_code_dir}}/utils/experiment-runner.sh \"{{exp_code_dir}}\" 0 2.0"
+
+    server2:
+      n: 2
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-poetry
+
+      $CMD$:
+        - "bash {{exp_code_dir}}/utils/experiment-runner.sh \"{{exp_code_dir}}\" 1 2.0"
+        - "bash {{exp_code_dir}}/utils/experiment-runner.sh \"{{exp_code_dir}}\" 2 2.0"
+  base_experiment:
+    mpc:
+      player_0_hostname: "[% exp_host_lst | json_query(\"[?host_type=='server'].private_dns_name\") | first %]"
+      abs_path_to_code_dir: "{{exp_code_dir}}"
+      player_count: 3
+      script_name: "toy-example"
+      script_args: []
+      protocol_setup: "semi_honest_3"
+      input_file_name: "toy-example-input.zip"

@@ -1,0 +1,218 @@
+---
+
+
+- debug:
+    msg: "-> base only"
+  tags: [print_action]
+
+- name: "Remove autoupdater from ubuntu"
+  become: True
+  ansible.builtin.apt:
+    pkg:
+      - unattended-upgrades
+    state: absent
+    update_cache: yes
+
+- name: "Install prerequisites for MP-SPDZ"
+  become: True
+  ansible.builtin.apt:
+    pkg:
+      - automake
+      - build-essential
+      - git
+      - libboost-dev
+      - libboost-thread-dev
+      - libntl-dev
+      - libsodium-dev
+      - libssl-dev
+      - libtool
+      - m4
+      - python3
+      - texinfo
+      - yasm
+    update_cache: yes
+    state: present
+
+#- name: "Check if MP-SPDZ is already cloned"
+#  ansible.builtin.stat:
+#    path: "{{git_repo_mpspdz_location}}/CONFIG"
+#  register: mp_spdz_res
+#
+#- name: "Clone MP-SPDZ via custom repo"
+#  ansible.builtin.git:
+#    repo: "{{target_repo}}"
+#    dest: "{{git_repo_dest}}"
+#    accept_hostkey: yes
+#    ssh_opts: "-o StrictHostKeyChecking=no"
+#  when: mp_spdz_res.stat.exists == False
+
+#- name: "Skip \"Clone MP-SPDZ\""
+#  ansible.builtin.debug:
+#    msg: "MP-SPDZ already cloned, skipping"
+#  when: mp_spdz_res.stat.exists == True
+#
+#- name: "Check if MP-SPDZ libraries were compiled"
+#  ansible.builtin.stat:
+#    path: "{{git_repo_mpspdz_location}}/semi2k-party.x"
+#  register: have_compiled_res
+#
+#- name: "Copy CONFIG (modified) file into compile dir"
+#  ansible.builtin.copy:
+#    src: resources/CONFIG
+#    dest: "{{git_repo_mpspdz_location}}/CONFIG"
+#  when: have_compiled_res.stat.exists == False
+
+- name: Update CONFIG to customize player-data dir
+  ansible.builtin.replace:
+    path: "{{ mpspdz_dir }}/CONFIG"
+    regexp: '-DPREP_DIR="Player-Data\/"'
+    replace: '-DPREP_DIR="Player-Prep-Data\/"'
+- name: Update CONFIG to customize player-ssl dir
+  ansible.builtin.replace:
+    path: "{{ mpspdz_dir }}/CONFIG"
+    regexp: '-DSSL_DIR="Player-Data\/"'
+    replace: '-DSSL_DIR="Player-SSL-Data\/"'
+
+- name: "Create Player-SSL-Data/ folder"
+  ansible.builtin.file:
+    path: "{{ mpspdz_dir }/Player-SSL-Data"
+    state: directory
+
+- name: "Create Player-Prep-Data/ folder"
+  ansible.builtin.file:
+    path: "{{ mpspdz_dir }}/Player-Prep-Data"
+    state: directory
+
+- name: "Compile MP-SPDZ first mpir to get all libraries"
+  community.general.make:
+    chdir: "{{ mpspdz_dir }}"
+    jobs: "8"
+    target: "tldr"
+#  when: have_compiled_res.stat.exists == False
+
+- name: "Compile MP-SPDZ fully"
+  community.general.make:
+    chdir: "{{ mpspdz_dir }}"
+    jobs: "8"
+    target: "all"
+#  when: have_compiled_res.stat.exists == False
+
+#- name: "Create Player-Data Folder"
+#  ansible.builtin.file:
+#    path: "{{git_repo_mpspdz_location}}/Player-Data"
+#    state: directory
+#- name: "Create Player-SSL-Data/ folder"
+#  ansible.builtin.file:
+#    path: "{{git_repo_mpspdz_location}}/Player-SSL-Data"
+#    state: directory
+#
+#- name: "Create Player-Prep-Data/ folder"
+#  ansible.builtin.file:
+#    path: "{{git_repo_mpspdz_location}}/Player-Prep-Data"
+#    state: directory
+
+- name: Generate SSL Certificates for 20 players
+  ansible.builtin.shell:
+    chdir: "{{ mpspdz_dir }}"
+    cmd: "{{ mpspdz_dir }}/Scripts/setup-ssl.sh 20 Player-SSL-Data/"
+    creates: "{{ mpspdz_dir }}/Player-SSL-Data/P0.key"
+
+
+## MP_SPDZ SETUP AT THIS POINT!
+- name: "Check if AWS CLI is installed"
+  ansible.builtin.stat:
+    path: "/usr/local/bin/aws"
+  register: aws_cli_stat
+- name: Setup awscli
+  when: aws_cli_stat.stat.exists == False
+  block:
+    - name: Install packages
+      become: yes
+      apt:
+        pkg:
+          - zip
+        update_cache: yes
+
+    - name: Download awscli
+      ansible.builtin.get_url:
+        url: https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip
+        dest: /tmp/awscliv2.zip
+
+    - name: Unpack awscli
+      ansible.builtin.unarchive:
+        src: /tmp/awscliv2.zip
+        dest: /tmp
+        remote_src: yes
+
+    - name: Install awscli via shell
+      become: yes
+      ansible.builtin.shell:
+        chdir: /tmp
+        cmd: ./aws/install
+        creates: /usr/local/bin/aws
+
+- name: Download Input for MNIST-Dataset
+  block:
+    - name: Setup Folder
+      ansible.builtin.file:
+        path: "{{exp_code_dir}}/custom-data"
+        state: directory
+
+    - name: Download Mnist dataset
+      ansible.builtin.shell:
+        cmd: "aws s3 sync s3://{{mlexample_bucket_name}} {{exp_code_dir}}/custom-data"
+
+- name: Make ml-example script executable
+  ansible.builtin.file:
+    path: "{{ exp_code_dir }}/utils/toy-example.sh"
+    mode: "777"
+    state: file
+
+### SETTING UP POETRY
+- name: "Check if poetry is installed"
+  ansible.builtin.stat:
+    path: "/home/ubuntu/.local/bin/poetry"
+  register: poetry_stat
+
+- name: Install Poetry
+  when: poetry_stat.stat.exists == False
+  block:
+    - name: Update repositories cache and install required packages
+      become: True
+      apt:
+        pkg:
+          - python3.9
+          - python3.9-venv
+        update_cache: yes
+
+
+    - name: Download get-pip.py
+      ansible.builtin.get_url:
+        url: https://bootstrap.pypa.io/get-pip.py
+        dest: /tmp/get-pip.py
+
+    - name: Install pip for python (via script)
+      ansible.builtin.shell:
+        cmd: python3.9 /tmp/get-pip.py
+
+    - name: Download install-poetry.py
+      ansible.builtin.get_url:
+        url: https://install.python-poetry.org/install-poetry.py
+        dest: /tmp/install-poetry.py
+
+    - name: Install poetry with script install-poetry.py
+      ansible.builtin.shell:
+        cmd: python3.9 /tmp/install-poetry.py
+
+    - name: make path to poetry available in variable
+      set_fact:
+        poetry: /home/ubuntu/.local/bin/poetry
+
+- name: Set config to create .venv folder in project directory
+  ansible.builtin.shell:
+    cmd: "{{ poetry }} config virtualenvs.in-project true"
+
+- name: Install poetry project if project exists
+  ansible.builtin.shell:
+    cmd: "{{poetry}} install"
+    chdir: "{{exp_code_dir}}"
