@@ -73,6 +73,11 @@
     regexp: '-DSSL_DIR="Player-Data\/"'
     replace: '-DSSL_DIR="Player-SSL-Data/"'
 
+- name: "Create Player-Data/ folder"
+  ansible.builtin.file:
+    path: "{{ mpspdz_dir }}/Player-Data"
+    state: directory
+
 - name: "Create Player-SSL-Data/ folder"
   ansible.builtin.file:
     path: "{{ mpspdz_dir }}/Player-SSL-Data"

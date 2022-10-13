@@ -4,7 +4,7 @@
 first_exp:
   n_repetitions: 1
   host_types:
-    base:
+    compute:
       n: 3
       check_status: True
       init_roles:
@@ -20,8 +20,22 @@ first_exp:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`base`].private_dns_name') | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
       player_count: 3
-      script_name: "toy-example"
-      script_args: []
+      script_name: "auditing_function_benchmark_script_v2"
+      script_args:
+        $FACTOR$: [
+          [ "1e-3", 38, 2, "[-1]" ]
+        ]
       protocol_setup: "semi_honest_3"
-      input_file_name: "{{ dataset_dir }}/toy-example-input.zip"
+      input_file_name: "{{ dataset_dir }}/mnist-audit-conv-10epoch.zip"
 
+$ETL$:
+  extract_mpspdz:
+    experiments: [first_exp]
+    extractors:
+      MpSpdzStderrExtractor:  {}
+      MpSpdzResultExtractor: {}
+      IgnoreExtractor: {}
+    transformers: []
+    loaders:
+      CsvSummaryLoader:
+        output_dir: etl_results

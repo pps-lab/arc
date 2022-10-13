@@ -1,6 +1,6 @@
 ---
 
-instance_type: t2.2xlarge
+instance_type: c5.9xlarge
 ec2_volume_size: 100
 
 #ec2_image_id:  ami-0419cab1fa37ab915 # original ami
