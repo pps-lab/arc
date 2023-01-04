@@ -1,5 +1,5 @@
 ---
-input_bucket_name: alexmandt-mpspdz-mlexample-input
+input_bucket_name: pps-mpspdz-data
 #mlexample_object_name: mnist-input.tar.gz
 #mlexample_tmp_storage: /tmp/mnist-input.tar.gz
 #mlexample_input_dest: "{{exp_code_dir}}/ml-example"

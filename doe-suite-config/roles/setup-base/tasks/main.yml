@@ -221,3 +221,10 @@
   ansible.builtin.shell:
     cmd: "{{poetry}} install"
     chdir: "{{ exp_code_dir }}"
+
+- name: Make symbolic link from exp_code_dir/script_utils to Compiler folder of mp-spdz
+  ansible.builtin.file:
+    state: link
+    path: "{{ mpspdz_dir }}/Compiler/script_utils"
+    src: "{{ exp_code_dir }}/script_utils"
+

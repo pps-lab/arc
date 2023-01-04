@@ -5,7 +5,7 @@ first_exp:
   n_repetitions: 1
   host_types:
     compute:
-      n: 3
+      n: 4
       check_status: True
       init_roles:
         - setup-base
@@ -14,19 +14,20 @@ first_exp:
         - main: bash {{ exp_code_dir }}/utils/experiment-runner.sh "{{ exp_code_dir }}" 0 2.0
         - main: bash {{ exp_code_dir }}/utils/experiment-runner.sh "{{ exp_code_dir }}" 1 2.0
         - main: bash {{ exp_code_dir }}/utils/experiment-runner.sh "{{ exp_code_dir }}" 2 2.0
+        - main: bash {{ exp_code_dir }}/utils/experiment-runner.sh "{{ exp_code_dir }}" 3 2.0
 
   base_experiment:
     mpc:
-      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`base`].private_dns_name') | first %]"
+      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`compute`].private_dns_name') | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
-      player_count: 3
-      script_name: "auditing_function_benchmark_script_v2"
+      player_count: 4
+      script_name: "audit_mnist"
       script_args:
         $FACTOR$: [
           [ "1e-3", 38, 2, "[-1]" ]
         ]
-      protocol_setup: "semi_honest_3"
-      input_file_name: "{{ dataset_dir }}/mnist-audit-conv-10epoch.zip"
+      protocol_setup: "rep4-ring-party"
+      input_file_name: "{{ dataset_dir }}/mnist_small.zip"
 
 $ETL$:
   extract_mpspdz:

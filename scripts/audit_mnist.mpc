@@ -1,0 +1,340 @@
+import math
+import json
+
+from Compiler.library import print_ln
+from Compiler.types import MultiArray, sfix, sint, cfix, MemValue, Array
+from Compiler.script_utils.output_utils import parse_kv_args
+
+# program.args is a list
+program.options_from_args()
+
+kv_args = parse_kv_args(program.args)
+
+learning_rate = float(kv_args.get('learning_rate', 0.0001))
+n_thread_num = int(kv_args.get('n_num_threads', 16))
+n_data_owners = int(kv_args.get('n_data_owners', 2))
+sample_cutoff_size = int(kv_args.get('sample_cutoff_size', -1))
+
+# print(learning_rate)
+
+training_samples = MultiArray([6000, 28, 28], sfix)
+training_labels = MultiArray([6000, 10], sint)
+
+test_samples = MultiArray([10000, 28, 28], sfix)
+test_labels = MultiArray([10000, 10], sint)
+
+n_samples = 100
+prediction_samples = sfix.Tensor([n_samples, 28, 28])
+prediction_labels = sint.Tensor([n_samples, 10])  # No idea what this data does
+
+# Load the actual data
+training_labels.input_from(0)
+training_samples.input_from(0)
+test_labels.input_from(0)
+test_samples.input_from(0)
+prediction_labels.input_from(0)
+prediction_samples.input_from(0)
+
+# Prepare the model
+from Compiler import ml # suspect ?
+from Compiler.script_utils import output_utils as out_util
+from Compiler.script_utils import audit_function_utils as aut_func_utils
+from Compiler import library
+tf = ml
+
+tf.set_n_threads(n_thread_num) # suspect ?
+
+batch_size = 128
+prediction_batch_size = min(batch_size, n_samples)
+
+# We introduce a simple cutoff, namely we cutoff the samples for testing purposes
+if sample_cutoff_size != -1:
+    small_training_samples = MultiArray([sample_cutoff_size,28,28], sfix)
+    small_training_labels = MultiArray([sample_cutoff_size,10],sint)
+    small_training_samples.assign(training_samples.get_part(0,sample_cutoff_size))
+    small_training_labels.assign(training_labels.get_part(0,sample_cutoff_size))
+    training_labels = small_training_labels
+    training_samples = small_training_samples
+
+
+
+layers = [
+    tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Conv2D(50,5,1,'valid', activation='relu'),
+    tf.keras.layers.MaxPooling2D(2),
+    tf.keras.layers.Flatten(),
+    # tf.keras.layers.Dropout(0.5),
+    tf.keras.layers.Dense(500, activation='relu'),
+    tf.keras.layers.Dense(10, activation='softmax')
+]
+
+model = tf.keras.models.Sequential(layers)
+optim = tf.keras.optimizers.SGD()
+model.compile(optimizer=optim)
+model.build(training_samples.sizes)
+
+# we backup trainable vars
+# I think we only have to copy once and after that we can just assign the address ?
+# Maybe not because it would be overwritten
+vars_copy = list()
+
+for i,var in enumerate(model.trainable_variables):
+    print_ln("Loading trainable_variable %s", i)
+    var.input_from(0)
+
+    if isinstance(var, MultiArray):
+        copy_container = MultiArray(var.sizes,var.value_type)
+        copy_container.assign(var)
+        vars_copy.append(copy_container)
+    elif isinstance(var, Array):
+        copy_container = Array(var.length, var.value_type)
+        copy_container.assign(var)
+        vars_copy.append(copy_container)
+    else:
+        print("error not supported")
+        assert False, "Error, var %s not supported!" % var
+
+graph = model.opt
+graph.n_epochs = 1
+graph.report_losses = True
+graph.print_losses = True
+graph.gamma = MemValue(cfix(0.0001))
+
+# Load labels
+graph.layers[-1].Y.address = training_labels.address
+graph.layers[0].X.address = training_samples.address
+
+# original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, batch_size,
+#                                                                            test_samples, test_labels)
+
+# labels_nonprivate = training_labels.reveal_nested()
+# labels = list(map(ml.argmax, labels_nonprivate))
+# library.print_ln('first three train labels %s', labels)
+
+# Run epochs
+# graph.run(batch_size=128)
+
+# Test set eval
+# original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, batch_size,
+#                                                                            test_samples, test_labels)
+
+# Prediction set eval
+original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
+                                                                           prediction_samples, prediction_labels)
+#
+# unmodified_prediction_results = model.predict(prediction_samples, batch_size=128)
+# library.start_timer(timer_id=100)
+#
+# Compute the unlearn_sizes for each data owner
+# Note: If we cannot cleanly divide the whole dataset for each data_owner, then the last data_owner will obtain
+# the excess elements
+# First, we compute if the we can cleanly divide the dataset size
+unlearn_size = training_labels.sizes[0] // n_data_owners
+assert training_labels.sizes[0] % n_data_owners == 0, "Must be cleanly divisible"
+
+unlearn_labels = MultiArray([unlearn_size, 10], sfix)
+unlearn_labels.assign_all(sfix(1/10))
+
+unlearned_predictions = MultiArray([n_data_owners, n_samples, 10], sfix)
+
+library.start_timer(timer_id=100)
+
+@for_range_opt(n_data_owners)
+def unlearn_party(party_id):
+    # first step, "dumb" unlearning
+    print_ln("Unlearning party %s", party_id)
+    modified_samples, modified_labels = aut_func_utils.get_unlearn_data_for_party(party_id, training_samples, training_labels,
+                                                                                  unlearn_labels, unlearn_size)
+    # Set weights
+    for i, var in enumerate(model.trainable_variables):
+        print_ln("Setting trainable_variable %s", i)
+        if isinstance(var, MultiArray):
+            copy_container = MultiArray(var.sizes, var.value_type)
+            copy_container.assign(vars_copy[i])
+            model.trainable_variables[i] = copy_container
+        elif isinstance(var, Array):
+            copy_container = Array(var.length, var.value_type)
+            copy_container.assign(vars_copy[i])
+            model.trainable_variables[i] = copy_container
+        else:
+            print("error not supported")
+            assert False, "Error, var %s not supported!" % var
+
+    graph.layers[-1].Y.address = modified_labels.address
+    graph.layers[0].X.address = modified_samples.address
+    graph.run(batch_size=128)
+
+    # aut_func_utils.print_predict_accuracy_layers(layers, model, 128, test_samples, test_labels)
+    guesses = aut_func_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
+                                                           prediction_samples, prediction_labels)
+    # guesses = MultiArray([n_samples, 10], sfix)
+    print_ln("guesses %s", guesses.reveal())
+    unlearned_predictions[party_id] = guesses
+
+
+# res = unlearned_predictions.reveal_nested()
+# print_ln("Results %s", res)
+
+# compute losses now
+def compute_loss(X, Y):
+    n_classes = 10
+    loss_array = MultiArray([n_samples, n_data_owners], sfix)
+    @for_range(start=0,stop=n_samples,step=1)
+    def _(sample_id):
+        @for_range(start=0,stop=n_data_owners,step=1)
+        def _(model_id):
+            sum_holder = MemValue(sfix(0))
+            @for_range(start=0,stop=n_classes,step=1)
+            def _(out_class_id):
+                tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
+                sum_holder.write(sum_holder.read() + tmp)
+                sum_holder.write(-(sum_holder.read()))
+                loss_array[sample_id][model_id] = sum_holder.read()
+    return loss_array
+
+
+loss_array = compute_loss(unlearned_predictions, original_prediction_results)
+print_ln("Losses %s", loss_array.reveal_nested())
+
+def compute_MAD_matrix(loss_matrix):
+    MAD_array = MultiArray(list(loss_matrix.sizes), sfix)
+
+    @for_range(start=0, stop=loss_matrix.sizes[0], step=1)
+    def _(i):
+        loss_array = loss_matrix.get_part(i, 1)[0]
+        score_array = aut_func_utils.MAD_Score(loss_array)
+        MAD_array.get_part(i, 1).assign(score_array)
+    return MAD_array
+
+# Compute MAD Scores
+mad_score_matrix = compute_MAD_matrix(loss_array)
+
+library.stop_timer(timer_id=100)
+
+out_util.output_value(name="loss_matrix", value=loss_array, repeat=False)
+out_util.output_value(name="mad_score_matrix", value=mad_score_matrix, repeat=False)
+out_util.output_value(name="unmodified_prediction_results", value=original_prediction_results,repeat=False)
+
+##### END #####
+
+# res_trans = unlearned_predictions.transpose()
+
+#
+#
+# models = []
+#
+# def create_model(i):
+#   current_model = tf.keras.models.Sequential(layers)
+#   current_optim = tf.keras.optimizers.SGD()
+#   current_model.compile(optimizer=current_optim)
+#   current_model.build(training_samples.sizes)
+#
+#   unlearn_start_region = i * unlearn_size
+#
+#   modified_training_labels = MultiArray([training_labels.sizes[0], 10], sfix)
+#   modified_training_labels.assign(training_labels)
+#   if i == n_data_owners-1:
+#     modified_training_labels.get_part(unlearn_start_region,unlearn_size_2).assign(unlearn_labels_2)
+#   else:
+#     modified_training_labels.get_part(unlearn_start_region,unlearn_size).assign(unlearn_labels)
+#
+#
+#   # We define the new learning rate
+#   program.args.append("rate{}".format(learning_rate))
+#
+#   def variable_loader(the_obj):
+#     for var,var2 in zip(model.trainable_variables,current_model.trainable_variables):
+#       if isinstance(var, MultiArray):
+#         copy_container = MultiArray(var.sizes,var.value_type)
+#         copy_container.assign(var)
+#         var2.assign(copy_container)
+#       elif isinstance(var, Array):
+#         copy_container = Array(var.length, var.value_type)
+#         copy_container.assign(var)
+#         var2.assign(copy_container)
+#
+#
+#   current_model.fit(x=training_samples, y=modified_training_labels, batch_size=64,
+#                     epochs=2,variable_loader=variable_loader)
+#
+#   # Now, we remove the appended arguments
+#   program.args.pop(-1)
+#
+#
+#   return current_model
+#
+# unlearned_models = list(map(create_model,range(n_data_owners)))
+#
+# def do_prediction(i,the_model): # We also output the predictions now as a MultiArray([n_samples,10],sfix)
+#   # We want to get the predictions for each model
+#
+#   current_predictions = the_model.predict(prediction_samples,batch_size=n_samples)
+#
+#   # MultiArray([8,10],sfix)
+#   return current_predictions
+#
+#
+# def transform_predictions(model_id, result_matrix, dest_holder):
+#   @for_range(start=0,stop=result_matrix.sizes[0],step=1)
+#   def _(sample_id):
+#     @for_range(start=0,stop=result_matrix.sizes[1],step=1)
+#     def _(output_class_id):
+#       dest_holder[sample_id][model_id][output_class_id] = result_matrix[sample_id][output_class_id]
+#
+#
+# # Expects X = MultiArray([n_samples,n_data_owners,n_output_classes], sfix)
+# # Expects Y = MultiArray([n_samples,n_output_classes],sint)
+# def compute_loss(X,Y):
+#   sample_num = X.sizes[0]
+#   model_num = X.sizes[1]
+#   output_class_num = X.sizes[2]
+#   loss_array = MultiArray([sample_num,model_num], sfix)
+#   @for_range(start=0,stop=sample_num,step=1)
+#   def _(sample_id):
+#     @for_range(start=0,stop=model_num,step=1)
+#     def _(model_id):
+#       sum_holder = MemValue(sfix(0))
+#       @for_range(start=0,stop=output_class_num,step=1)
+#       def _(out_class_id):
+#         tmp = Y[sample_id][out_class_id] * ml.log_e(X[sample_id][model_id][out_class_id])
+#         sum_holder.write(sum_holder.read() + tmp)
+#       sum_holder.write(-(sum_holder.read()))
+#       loss_array[sample_id][model_id] = sum_holder.read()
+#   return loss_array
+#
+# # Expects an Array(num_models, sfix)
+# def compute_mad_score(X):
+#   return aut_func_utils.MAD_Score(X)
+#
+#
+# def compute_MAD_matrix(loss_matrix):
+#   MAD_Array = MultiArray(list(loss_matrix.sizes), sfix)
+#   @for_range(start=0,stop=loss_matrix.sizes[0],step=1)
+#   def _(i):
+#     loss_array = loss_matrix.get_part(i,1)[0]
+#     score_array = compute_mad_score(loss_array)
+#     MAD_Array.get_part(i,1).assign(score_array)
+#   return MAD_Array
+#
+#
+#
+# prediction_holder = MultiArray([n_samples,n_data_owners,10], sfix)
+# for i,curr_model in enumerate(unlearned_models):
+#   current_results = do_prediction(cint(i), curr_model)
+#   transform_predictions(i,current_results,prediction_holder)
+#
+# # Compute Loss
+# loss_matrix = compute_loss(prediction_holder, unmodified_prediction_results)
+#
+#
+# # Compute MAD Scores
+# mad_score_matrix = compute_MAD_matrix(loss_matrix)
+#
+# library.stop_timer(timer_id=100)
+#
+# out_util.output_value(name="loss_matrix", value=loss_matrix, repeat=False)
+# out_util.output_value(name="mad_score_matrix", value=mad_score_matrix, repeat=False)
+# out_util.output_value(name="unmodified_prediction_results", value=unmodified_prediction_results,repeat=False)
+
+
