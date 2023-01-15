@@ -28,11 +28,13 @@ class ProtocolChoices(enum.Enum):
     """Defines the name mapping between the Protocol type and the string representation in the config.json"""
     EMULATE_X = "emulate_env"
     REPLICATED_RING_PARTY_X = "semi_honest_3"
+    REP4_RING_PARTY_X = "rep4-ring-party"
     BRAIN_PARTY_X = "malicious_3_party"
     REPLICATED_BIN_PARTY_X = "semi_honest_bin_3"
     PS_REP_BIN_PARTY_X = "malicious_bin_3"
     SHAMIR_PARTY_X = "shamir_semi_honest_n"
     MALICIOUS_SHAMIR_PARTY_X = "shamir_malicious_n"
+
 
 class TaskConfig(pydantic.BaseModel):
     """Defines the Configuration for a single Experiment Run

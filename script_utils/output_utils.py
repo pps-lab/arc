@@ -2,6 +2,23 @@ from sre_compile import isstring
 from Compiler import library
 from Compiler import types
 
+
+def parse_kv_args(args: list) -> dict:
+    """Parses list args as kv pairs as dict.
+
+    Keys and values are separated by __
+    """
+
+    tuples = [arg.split("__") for arg in args]
+    d = {}
+    for t in tuples[1:]:
+        assert len(t) == 2
+        d[t[0]] = t[1]
+    return d
+
+
+
+
 def _is_secret_value_type(value):
     return isinstance(value, types.sint) or \
         isinstance(value, types.sfix) or \

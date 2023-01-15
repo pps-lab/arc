@@ -1,6 +1,10 @@
 import Compiler.types as types
 import Compiler.library as library
 
+from Compiler import ml
+from Compiler.types import sint, cfix, sfix, MultiArray
+
+tf = ml
 
 def compute_median(X_arr):
     """Compute the median of an Array.
@@ -49,6 +53,57 @@ def MAD_Score(X_array):
     return score_array
 
     
+def print_predict_accuracy_model(model, test_samples, test_labels):
+    guesses = model.predict(test_samples, batch_size=128)
+    library.print_ln('guess %s', guesses.reveal_nested()[:3])
+    library.print_ln('truth %s', test_labels.reveal_nested()[:3])
+
+    @library.map_sum_opt(28, 10000, [sint])
+    def accuracy(i):
+      correct = sint((ml.argmax(guesses[i].reveal()) == ml.argmax(test_labels[i].reveal())))
+      return correct
+
+    acc = accuracy().reveal()
+    library.print_ln("correct %s %s", acc, acc * cfix(0.0001))
 
 
-        
+def print_predict_accuracy_opt(opt, batch_size, test_samples, test_labels):
+    guesses = opt.eval(test_samples, batch_size)
+    library.print_ln('guess %s', guesses.reveal_nested()[:3])
+    library.print_ln('truth %s', test_labels.reveal_nested()[:3])
+
+    @library.map_sum_opt(28, test_labels.sizes[0], [sint])
+    def accuracy(i):
+        correct = sint((ml.argmax(guesses[i].reveal()) == ml.argmax(test_labels[i].reveal())))
+        return correct
+
+    acc = accuracy().reveal()
+    library.print_ln("correct %s %s", acc, acc * cfix(0.0001))
+
+    return guesses
+
+
+def print_predict_accuracy_layers(layers, original_model_to_copy_weights_from, batch_size, test_samples, test_labels):
+    evaluation_model = tf.keras.models.Sequential(layers)
+    optim = tf.keras.optimizers.SGD()
+    evaluation_model.compile(optimizer=optim)
+    evaluation_model.build(test_samples.sizes, batch_size=batch_size)
+
+    for orig_var, eval_var in zip(original_model_to_copy_weights_from.trainable_variables, evaluation_model.trainable_variables):
+        eval_var.address = orig_var.address
+
+    evaluation_graph = evaluation_model.opt
+    evaluation_graph.layers[0].X.address = test_samples.address
+    evaluation_graph.layers[-1].Y.address = test_labels.address
+    return print_predict_accuracy_opt(evaluation_graph, batch_size, test_samples, test_labels)
+
+
+def get_unlearn_data_for_party(data_owner, train_samples, train_labels, null_label, unlearn_size):
+    unlearn_start_region = data_owner * unlearn_size
+
+    modified_training_labels = MultiArray([train_labels.sizes[0], 10], sfix)
+    modified_training_labels.assign(train_labels)
+    modified_training_labels.get_part(unlearn_start_region, unlearn_size).assign(null_label)
+
+    return train_samples, modified_training_labels
+

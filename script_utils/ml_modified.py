@@ -380,7 +380,7 @@ class Output(NoVariableLayer):
                 to_print = (1 - correct) * (n_printed < 10)
                 n_printed.iadd(to_print)
                 print_ln_if(to_print, '%s: %s %s %s %s',
-	                    i, truth, guess, b, nabla)
+                            i, truth, guess, b, nabla)
         return n_correct
 
 class MultiOutputBase(NoVariableLayer):
@@ -428,7 +428,7 @@ class MultiOutputBase(NoVariableLayer):
                 to_print = (1 - correct) * (n_printed < 10)
                 n_printed.iadd(to_print)
                 print_ln_if(to_print, '%s: %s %s %s %s %s %s',
-	                    i, truth, guess, loss, b, exp, nabla)
+                            i, truth, guess, loss, b, exp, nabla)
             return correct
         return _()
 
@@ -473,7 +473,7 @@ class MultiOutput(MultiOutputBase):
 
     def __repr__(self):
         return '%s(%s, %s, approx=%s)' % \
-            (type(self).__name__, self.N, self.d_out, self.approx)
+               (type(self).__name__, self.N, self.d_out, self.approx)
 
     def _forward(self, batch):
         N = len(batch)
@@ -749,8 +749,8 @@ class Dense(DenseBase):
 
     def __repr__(self):
         return '%s(%s, %s, %s, activation=%s)' % \
-            (type(self).__name__, self.N, self.d_in,
-             self.d_out, repr(self.activation))
+               (type(self).__name__, self.N, self.d_in,
+                self.d_out, repr(self.activation))
 
     def reset(self):
         d_in = self.d_in
@@ -929,7 +929,7 @@ class Dropout(NoVariableLayer):
 
     def __repr__(self):
         return '%s(%s, %s, alpha=%s)' % \
-            (type(self).__name__, self.N, self.d1, self.alpha)
+               (type(self).__name__, self.N, self.d1, self.alpha)
 
     def forward(self, batch, training=False):
         if training:
@@ -945,7 +945,7 @@ class Dropout(NoVariableLayer):
             @for_range_opt_multithread(self.n_threads, len(batch))
             def _(i):
                 self.Y[i].assign_vector(1 / (1 - self.alpha) *
-                    self.X[batch[i]].get_vector() * self.B[i].get_vector())
+                                        self.X[batch[i]].get_vector() * self.B[i].get_vector())
         else:
             @for_range(len(batch))
             def _(i):
@@ -1084,8 +1084,8 @@ class MaxPool(NoVariableLayer):
 
     def __repr__(self):
         return '%s(%s, strides=%s, ksize=%s, padding=%s)' % \
-            (type(self).__name__, self.X.sizes, self.strides,
-             self.ksize, self.padding)
+               (type(self).__name__, self.X.sizes, self.strides,
+                self.ksize, self.padding)
 
     def forward(self, batch=None, training=False):
         if batch is None:
@@ -1144,7 +1144,7 @@ class MaxPool(NoVariableLayer):
                                 w_in = True
                             if not is_zero(h_in * w_in):
                                 pool.append([h_in * w_in * self.X[bi][h_in * h]
-                                             [w_in * w][k], h_in, w_in, h, w])
+                                [w_in * w][k], h_in, w_in, h, w])
                     process(pool, bi, k, i, j)
 
 
@@ -1279,7 +1279,7 @@ class BatchNorm(Layer):
 
     def __repr__(self):
         return '%s(%s, approx=%s)' % \
-            (type(self).__name__, self.X.sizes, self.approx)
+               (type(self).__name__, self.X.sizes, self.approx)
 
     def reset(self):
         self.bias.assign_all(0)
@@ -1350,7 +1350,7 @@ class BatchNorm(Layer):
             gamnYd[i][j] = tmp * (self.X[i][j][:] - self.mu[:])
             mynYf[i][j] = tmp * factor[:]
             nYdf[i][j] = self.nabla_Y[i][j][:] * \
-                    (self.X[i][j][:] - self.mu[:]) * factor[:]
+                         (self.X[i][j][:] - self.mu[:]) * factor[:]
         @map_sum_simple(self.n_threads, [len(batch), d], sfix, d_in)
         def _(i, j):
             return (self.nabla_Y[i][j][:])
@@ -1362,7 +1362,7 @@ class BatchNorm(Layer):
         factor3 = Array.create_from(factor[:] ** 3)
         @map_sum_simple(self.n_threads, [len(batch), d], sfix, d_in)
         def _(i, j):
-                return (mynYf[i][j])
+            return (mynYf[i][j])
         s1 = Array.create_from(_())
         @multithread(self.n_threads, len(s1))
         def _(base, size):
@@ -1378,7 +1378,7 @@ class BatchNorm(Layer):
         @for_range_opt_multithread(self.n_threads, [len(batch), d])
         def _(i, j):
             self.nabla_X[i][j][:] = mynYf[i][j][:] \
-                - s1[:] - (self.X[i][j][:] - self.mu[:]) * s2[:]
+                                    - s1[:] - (self.X[i][j][:] - self.mu[:]) * s2[:]
         if self.print_random_update:
             print_ln('backward %s', self)
             i = regint.get_random(64) % len(batch)
@@ -1525,9 +1525,9 @@ class ConvBase(BaseLayer):
 
     def __repr__(self):
         return '%s(%s, %s, %s, %s, %s, padding=%s, tf_weight_format=%s)' % \
-            (type(self).__name__, self.X.sizes, self.weight_shape,
-             self.bias_shape, self.Y.sizes, self.stride, repr(self.padding),
-             self.tf_weight_format)
+               (type(self).__name__, self.X.sizes, self.weight_shape,
+                self.bias_shape, self.Y.sizes, self.stride, repr(self.padding),
+                self.tf_weight_format)
 
     def input_from(self, player, raw=False):
         self.input_params_from(player)
@@ -1619,7 +1619,7 @@ class Conv2d(ConvBase):
                     res += self.bias.expand_to_vector(j, res.size).v
                 else:
                     res += self.bias.expand_to_vector(j, res.size).v << \
-                        self.input_squant.f
+                           self.input_squant.f
                 addresses = regint.inc(res.size,
                                        self.unreduced[i * part_size].address + j,
                                        n_channels_out)
@@ -1641,29 +1641,29 @@ class Conv2d(ConvBase):
         @for_range_opt_multithread(self.n_threads,
                                    [output_h, output_w, n_channels_out])
         def _(out_y, out_x, out_c):
-                    in_x_origin = (out_x * stride_w) - padding_w
-                    in_y_origin = (out_y * stride_h) - padding_h
-                    iv = []
-                    wv = []
-                    for filter_y in range(weights_h):
-                        in_y = in_y_origin + filter_y
-                        inside_y = (0 <= in_y) * (in_y < inputs_h)
-                        for filter_x in range(weights_w):
-                            in_x = in_x_origin + filter_x
-                            inside_x = (0 <= in_x) * (in_x < inputs_w)
-                            inside = inside_y * inside_x
-                            if is_zero(inside):
-                                continue
-                            for in_c in range(n_channels_in):
-                                iv += [self.X[0][in_y * inside_y]
-                                       [in_x * inside_x][in_c]]
-                                wv += [self.weights[out_c][filter_y][filter_x][in_c]]
-                                wv[-1] *= inside
-                    if self.fewer_rounds:
-                        inputs[out_y][out_x][out_c].assign(iv)
-                        weights[out_y][out_x][out_c].assign(wv)
-                    else:
-                        self.dot_product(iv, wv, out_y, out_x, out_c)
+            in_x_origin = (out_x * stride_w) - padding_w
+            in_y_origin = (out_y * stride_h) - padding_h
+            iv = []
+            wv = []
+            for filter_y in range(weights_h):
+                in_y = in_y_origin + filter_y
+                inside_y = (0 <= in_y) * (in_y < inputs_h)
+                for filter_x in range(weights_w):
+                    in_x = in_x_origin + filter_x
+                    inside_x = (0 <= in_x) * (in_x < inputs_w)
+                    inside = inside_y * inside_x
+                    if is_zero(inside):
+                        continue
+                    for in_c in range(n_channels_in):
+                        iv += [self.X[0][in_y * inside_y]
+                               [in_x * inside_x][in_c]]
+                        wv += [self.weights[out_c][filter_y][filter_x][in_c]]
+                        wv[-1] *= inside
+            if self.fewer_rounds:
+                inputs[out_y][out_x][out_c].assign(iv)
+                weights[out_y][out_x][out_c].assign(wv)
+            else:
+                self.dot_product(iv, wv, out_y, out_x, out_c)
 
         if self.fewer_rounds:
             @for_range_opt_multithread(self.n_threads,
@@ -1741,7 +1741,7 @@ class FixConv2d(Conv2d, FixBase):
             inputs = sfix.load_mem(batch_repeat.get_vector() + a).pre_mul()
             b = regint.inc(N * output_w * output_h, self.nabla_Y.address + j, n_channels_out, N)
             rep_out = regint.inc(output_h * output_w * N, 0, 1, 1, N) * \
-                reduce(operator.mul, self.output_shape[1:])
+                      reduce(operator.mul, self.output_shape[1:])
             nabla_outputs = sfix.load_mem(rep_out + b).pre_mul()
             res = sint(size = weights_h * weights_w)
             conv2ds(res, inputs, nabla_outputs, weights_h, weights_w, inputs_h,
@@ -1761,8 +1761,8 @@ class FixConv2d(Conv2d, FixBase):
                     @for_range(weights_w)
                     def _(k):
                         addresses = regint.inc(n_channels_out,
-                            self.weights[0][j][weights_w-k-1].get_address(l),
-                            reduce(operator.mul, self.weights.sizes[1:]))
+                                               self.weights[0][j][weights_w-k-1].get_address(l),
+                                               reduce(operator.mul, self.weights.sizes[1:]))
                         reverse_weights[l][weights_h-j-1][k].assign_vector(
                             self.weights.value_type.load_mem(addresses))
             padded_w = inputs_w + 2 * padding_w
@@ -1854,28 +1854,28 @@ class QuantDepthwiseConv2d(QuantConvBase, Conv2d):
         @for_range_opt_multithread(self.n_threads,
                                    [output_h, output_w, n_channels_in])
         def _(out_y, out_x, in_c):
-                    for m in range(depth_multiplier):
-                        oc = m + in_c * depth_multiplier
-                        in_x_origin = (out_x * stride_w) - padding_w
-                        in_y_origin = (out_y * stride_h) - padding_h
-                        iv = []
-                        wv = []
-                        for filter_y in range(weights_h):
-                            for filter_x in range(weights_w):
-                                in_x = in_x_origin + filter_x
-                                in_y = in_y_origin + filter_y
-                                inside = (0 <= in_x) * (in_x < inputs_w) * \
-                                         (0 <= in_y) * (in_y < inputs_h)
-                                if is_zero(inside):
-                                    continue
-                                iv += [self.X[0][in_y][in_x][in_c]]
-                                wv += [self.weights[0][filter_y][filter_x][oc]]
-                                wv[-1] *= inside
-                        if self.fewer_rounds:
-                            inputs[out_y][out_x][oc].assign(iv)
-                            weights[out_y][out_x][oc].assign(wv)
-                        else:
-                            self.dot_product(iv, wv, out_y, out_x, oc)
+            for m in range(depth_multiplier):
+                oc = m + in_c * depth_multiplier
+                in_x_origin = (out_x * stride_w) - padding_w
+                in_y_origin = (out_y * stride_h) - padding_h
+                iv = []
+                wv = []
+                for filter_y in range(weights_h):
+                    for filter_x in range(weights_w):
+                        in_x = in_x_origin + filter_x
+                        in_y = in_y_origin + filter_y
+                        inside = (0 <= in_x) * (in_x < inputs_w) * \
+                                 (0 <= in_y) * (in_y < inputs_h)
+                        if is_zero(inside):
+                            continue
+                        iv += [self.X[0][in_y][in_x][in_c]]
+                        wv += [self.weights[0][filter_y][filter_x][oc]]
+                        wv[-1] *= inside
+                if self.fewer_rounds:
+                    inputs[out_y][out_x][oc].assign(iv)
+                    weights[out_y][out_x][oc].assign(wv)
+                else:
+                    self.dot_product(iv, wv, out_y, out_x, oc)
 
         if self.fewer_rounds:
             @for_range_opt_multithread(self.n_threads,
@@ -2175,6 +2175,7 @@ class Optimizer:
                 self.X_by_label = [[None] * self.layers[0].N]
             assert len(self.X_by_label) in (1, 2)
             assert N % len(self.X_by_label) == 0
+            print('x_by_label %d' % len(self.X_by_label[0]))
             n = N // len(self.X_by_label)
             n_per_epoch = int(math.ceil(1. * max(len(X) for X in
                                                  self.X_by_label) / n))
@@ -2218,8 +2219,8 @@ class Optimizer:
                              before - after, before, after)
                 elif self.print_losses:
                     print_str('\rloss in batch %s: %s/%s', j,
-                             self.layers[-1].average_loss(N),
-                             loss_sum.reveal() / (j + 1))
+                              self.layers[-1].average_loss(N),
+                              loss_sum.reveal() / (j + 1))
                 if self.revealing_correctness:
                     part_truth = self.layers[-1].Y.same_shape()
                     part_truth.assign_vector(
@@ -2601,12 +2602,12 @@ def apply_padding(input_shape, kernel_size, strides, padding):
         padding = 'valid'
     if padding == 'valid':
         res = (input_shape[0] - kernel_size[0] + 1) // strides[0], \
-            (input_shape[1] - kernel_size[1] + 1) // strides[1],
+              (input_shape[1] - kernel_size[1] + 1) // strides[1],
         assert min(res) > 0, (input_shape, kernel_size, strides, padding)
         return res
     elif padding == 'same':
         return (input_shape[0]) // strides[0], \
-            (input_shape[1]) // strides[1],
+               (input_shape[1]) // strides[1],
     else:
         raise Exception('invalid padding: %s' % padding)
 
@@ -2674,9 +2675,9 @@ class keras:
             def build(self, input_shape, batch_size=128):
                 data_input_shape = input_shape
                 if self.opt != None and \
-                   input_shape == self.opt.layers[0].X.sizes and \
-                   batch_size <= self.batch_size and \
-                   type(self.opt).__name__.lower() == self.optimizer[0]:
+                    input_shape == self.opt.layers[0].X.sizes and \
+                    batch_size <= self.batch_size and \
+                    type(self.opt).__name__.lower() == self.optimizer[0]:
                     return
                 if self.optimizer == None:
                     self.optimizer = 'inference', [], {}
@@ -2696,14 +2697,14 @@ class keras:
                                              layers[-1].Y.sizes[1:])
                         if i == len(self.layers) - 1:
                             if layer[2].get('activation', 'softmax') in \
-                               ('softmax', 'sigmoid'):
+                                ('softmax', 'sigmoid'):
                                 layer[2].pop('activation', None)
                         layers.append(Dense(N, n_units, layer[1][0],
                                             **layer[2]))
                         input_shape = layers[-1].Y.sizes
                     elif name == 'conv2d':
                         input_shape = list(input_shape) + \
-                            [1] * (4 - len(input_shape))
+                                      [1] * (4 - len(input_shape))
                         print (layer[1])
                         kernel_size = layer[1]['kernel_size']
                         filters = layer[1]['filters']
@@ -2714,7 +2715,7 @@ class keras:
                         if isinstance(strides, int):
                             strides = (strides, strides)
                         weight_shape = [filters] + list(kernel_size) + \
-                            [input_shape[-1]]
+                                       [input_shape[-1]]
                         output_shape = [batch_size] + list(
                             apply_padding(input_shape[1:3], kernel_size,
                                           strides, padding)) + [filters]

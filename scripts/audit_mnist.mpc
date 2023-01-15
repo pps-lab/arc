@@ -17,6 +17,11 @@ sample_cutoff_size = int(kv_args.get('sample_cutoff_size', -1))
 
 # print(learning_rate)
 
+################
+# Data Loading #
+################
+# Loading the data from party 0
+
 training_samples = MultiArray([6000, 28, 28], sfix)
 training_labels = MultiArray([6000, 10], sint)
 
@@ -35,8 +40,10 @@ test_samples.input_from(0)
 prediction_labels.input_from(0)
 prediction_samples.input_from(0)
 
+
 # Prepare the model
-from Compiler import ml # suspect ?
+from Compiler import ml
+# from Compiler.script_utils import ml_modified as ml
 from Compiler.script_utils import output_utils as out_util
 from Compiler.script_utils import audit_function_utils as aut_func_utils
 from Compiler import library
@@ -47,16 +54,8 @@ tf.set_n_threads(n_thread_num) # suspect ?
 batch_size = 128
 prediction_batch_size = min(batch_size, n_samples)
 
-# We introduce a simple cutoff, namely we cutoff the samples for testing purposes
-if sample_cutoff_size != -1:
-    small_training_samples = MultiArray([sample_cutoff_size,28,28], sfix)
-    small_training_labels = MultiArray([sample_cutoff_size,10],sint)
-    small_training_samples.assign(training_samples.get_part(0,sample_cutoff_size))
-    small_training_labels.assign(training_labels.get_part(0,sample_cutoff_size))
-    training_labels = small_training_labels
-    training_samples = small_training_samples
-
-
+# These layers are an abstract definition of the model, when we call
+# model.build the layers will be constructed into actual classes!
 
 layers = [
     tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
@@ -72,7 +71,7 @@ layers = [
 model = tf.keras.models.Sequential(layers)
 optim = tf.keras.optimizers.SGD()
 model.compile(optimizer=optim)
-model.build(training_samples.sizes)
+model.build(training_samples.sizes, batch_size=batch_size)
 
 # we backup trainable vars
 # I think we only have to copy once and after that we can just assign the address ?
@@ -115,13 +114,17 @@ graph.layers[0].X.address = training_samples.address
 # Run epochs
 # graph.run(batch_size=128)
 
-# Test set eval
+# [Debug] Test set eval
 # original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, batch_size,
 #                                                                            test_samples, test_labels)
 
 # Prediction set eval
 original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                                            prediction_samples, prediction_labels)
+# bugfix?
+# In ml.py on line 2674 build sets a static value, (called by `print_predict_accuracy_layers`)
+# which messes up the batch_batch_size for an already created model.
+tf.Layer.back_batch_size = batch_size
 #
 # unmodified_prediction_results = model.predict(prediction_samples, batch_size=128)
 # library.start_timer(timer_id=100)
@@ -129,7 +132,6 @@ original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layer
 # Compute the unlearn_sizes for each data owner
 # Note: If we cannot cleanly divide the whole dataset for each data_owner, then the last data_owner will obtain
 # the excess elements
-# First, we compute if the we can cleanly divide the dataset size
 unlearn_size = training_labels.sizes[0] // n_data_owners
 assert training_labels.sizes[0] % n_data_owners == 0, "Must be cleanly divisible"
 
@@ -169,7 +171,7 @@ def unlearn_party(party_id):
     guesses = aut_func_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                            prediction_samples, prediction_labels)
     # guesses = MultiArray([n_samples, 10], sfix)
-    print_ln("guesses %s", guesses.reveal())
+    print_ln("guesses %s", guesses.reveal_nested())
     unlearned_predictions[party_id] = guesses
 
 

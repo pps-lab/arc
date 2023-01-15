@@ -3,7 +3,7 @@
 > An evaluation framework to evaluate arbitrary auditing functions.
 
 This repository contains the evaluation framework and the auditing function prototype
-developed by Alexander Mandt as part of his Bachelor Thesis *Cryptographic Auditin in ML*.
+developed by Alexander Mandt as part of his Bachelor Thesis *Cryptographic Auditing in ML*.
 
 ## Background
 
@@ -266,6 +266,21 @@ after each step, ensure that any changes done to files belonging to the evaluati
    the input file container for the input files needed for the `toy-example` experiment. Also, this input file container must
    be placed into the AWS Input file bucket before the experiment can be run.
 
+## Local development
+We aim to keep the git submodule of MP-SPDZ up-to-date with the main branch.
+This means that to execute programs locally in the emulator using MP-SPDZ, 
+you need to link the custom program files that exist in the top level repo to MP-SPDZ.
+
+These commands assume you are in the root of the repo:
+1. Link scripts: `ln -s  $(PWD)/scripts/audit_mnist.mpc $(PWD)/mp-spdz/Programs/Source/audit_mnist.mpc`
+2. Link script_utils `ln -s $(PWD)/script_utils $(PWD)/mp-spdz/Compiler/script_utils`
+
+Then `cd mp-spdz` and use MP-SPDZ as usual:
+```bash
+./compile.py -R 64 audit_mnist
+./emulate.x audit_mnist
+
+```
 
 ## Usage
 

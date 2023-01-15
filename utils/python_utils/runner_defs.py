@@ -164,6 +164,7 @@ class CompilerArguments(enum.Enum):
     """Provides a named mapping between the concrete MPC protocol VM runners and required compiler flags for MPC script compilation for the given MPC protocol."""
     EMULATE_X = ['-R', '64']
     REPLICATED_RING_PARTY_X = ['-R', "64"]
+    REP4_RING_PARTY_X = ['-R', "64"]
     BRAIN_PARTY_X = ['-R', '64']
     REPLICATED_BIN_PARTY_X = ['-B', '64']
     PS_REP_BIN_PARTY_X = ['-B', '64']
@@ -287,6 +288,20 @@ class ReplicatedRingPartyRunner(ScriptBaseRunner):
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
 
+class Replicated4RingPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './rep4-ring-party.x'"""
+    def _program(self):
+        print("Run Replicated4RingPartyRunner")
+        return "./rep4-ring-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+
+
 class BrainPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './brain-party.x'"""
     def _program(self):
@@ -359,6 +374,7 @@ class ProtocolRunners(enum.Enum):
     """Provides a named mapping between the concrete MPC protocol VM runners and the interface implementations for each of the concrete MPC protocol VMs.""" 
     EMULATE_X = EmulatorRunner
     REPLICATED_RING_PARTY_X = ReplicatedRingPartyRunner
+    REP4_RING_PARTY_X = Replicated4RingPartyRunner
     BRAIN_PARTY_X=BrainPartyRunner
     REPLICATED_BIN_PARTY_X=ReplicatedBinPartyRunner
     PS_REP_BIN_PARTY_X=PsReplicatedBinPartyRunner
