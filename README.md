@@ -279,7 +279,14 @@ Then `cd mp-spdz` and use MP-SPDZ as usual:
 ```bash
 ./compile.py -R 64 audit_mnist
 ./emulate.x audit_mnist
-
+```
+To install the emulator, run `make emulate.x`.
+On MacOS, you may have to adapt the `CONFIG` to point to the correct location of openssl (when installed using Homebrew)
+```bash
+MY_CFLAGS += -I/usr/local/opt/openssl/include -I/opt/homebrew/opt/openssl/include -I/opt/homebrew/include
+MY_LDLIBS += -L/usr/local/opt/openssl/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/openssl/lib
+MY_CFLAGS += -I/usr/local/opt/openssl/include -I/opt/homebrew/opt/openssl/include -I/opt/homebrew/include
+MY_LDLIBS += -L/usr/local/opt/openssl/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/openssl/lib
 ```
 
 ## Usage
