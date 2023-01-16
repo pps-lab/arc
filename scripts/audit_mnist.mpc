@@ -1,5 +1,6 @@
 import math
 import json
+from typing import List, Any, Union
 
 from Compiler.library import print_ln
 from Compiler.types import MultiArray, sfix, sint, cfix, MemValue, Array
@@ -40,27 +41,30 @@ test_samples.input_from(0)
 prediction_labels.input_from(0)
 prediction_samples.input_from(0)
 
-
 # Prepare the model
 from Compiler import ml
 # from Compiler.script_utils import ml_modified as ml
 from Compiler.script_utils import output_utils as out_util
-from Compiler.script_utils import audit_function_utils as aut_func_utils
+from Compiler.script_utils import audit_function_utils as audit_utils
 from Compiler import library
+
 tf = ml
 
-tf.set_n_threads(n_thread_num) # suspect ?
+tf.set_n_threads(n_thread_num)  # suspect ?
 
 batch_size = 128
 prediction_batch_size = min(batch_size, n_samples)
 
+##################
+# Model Building #
+##################
 # These layers are an abstract definition of the model, when we call
 # model.build the layers will be constructed into actual classes!
 
 layers = [
-    tf.keras.layers.Conv2D(20,5,1,'valid', activation='relu'),
+    tf.keras.layers.Conv2D(20, 5, 1, 'valid', activation='relu'),
     tf.keras.layers.MaxPooling2D(2),
-    tf.keras.layers.Conv2D(50,5,1,'valid', activation='relu'),
+    tf.keras.layers.Conv2D(50, 5, 1, 'valid', activation='relu'),
     tf.keras.layers.MaxPooling2D(2),
     tf.keras.layers.Flatten(),
     # tf.keras.layers.Dropout(0.5),
@@ -73,38 +77,54 @@ optim = tf.keras.optimizers.SGD()
 model.compile(optimizer=optim)
 model.build(training_samples.sizes, batch_size=batch_size)
 
-# we backup trainable vars
-# I think we only have to copy once and after that we can just assign the address ?
-# Maybe not because it would be overwritten
-vars_copy = list()
-
-for i,var in enumerate(model.trainable_variables):
+##########################################
+# Load pretrained model and save weights #
+##########################################
+# somehow converting this into a function does not work.. maybe the references to model are not working.
+# def load_weights_from_player(model, player_id: int = 0) -> List[Union[MultiArray, Array]]:
+"""
+Loads weights from player `player_id` into `model` and returns a `list` of weights.
+"""
+variables: List[Union[MultiArray, Array]] = list()
+player_id = 0
+for i, var in enumerate(model.trainable_variables):
     print_ln("Loading trainable_variable %s", i)
-    var.input_from(0)
+    # Loads weights from player 0 into
+    var.input_from(player_id)
 
     if isinstance(var, MultiArray):
-        copy_container = MultiArray(var.sizes,var.value_type)
+        copy_container = MultiArray(var.sizes, var.value_type)
         copy_container.assign(var)
-        vars_copy.append(copy_container)
+        variables.append(copy_container)
     elif isinstance(var, Array):
         copy_container = Array(var.length, var.value_type)
         copy_container.assign(var)
-        vars_copy.append(copy_container)
+        variables.append(copy_container)
     else:
         print("error not supported")
         assert False, "Error, var %s not supported!" % var
+    # return variables
 
-graph = model.opt
-graph.n_epochs = 1
-graph.report_losses = True
-graph.print_losses = True
-graph.gamma = MemValue(cfix(0.0001))
+vars_copy = variables
+
+##############################
+# Train (unlearn) parameters #
+##############################
+train_optimizer = model.opt
+train_optimizer.n_epochs = 1
+train_optimizer.report_losses = True
+train_optimizer.print_losses = True
+train_optimizer.gamma = MemValue(cfix(0.0001))
 
 # Load labels
-graph.layers[-1].Y.address = training_labels.address
-graph.layers[0].X.address = training_samples.address
+train_optimizer.layers[-1].Y.address = training_labels.address
+train_optimizer.layers[0].X.address = training_samples.address
 
-# original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, batch_size,
+####################################################################################
+# [Debug] test to see if we can do regular training and check test set performance #
+####################################################################################
+
+# original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, batch_size,
 #                                                                            test_samples, test_labels)
 
 # labels_nonprivate = training_labels.reveal_nested()
@@ -115,16 +135,17 @@ graph.layers[0].X.address = training_samples.address
 # graph.run(batch_size=128)
 
 # [Debug] Test set eval
-# original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, batch_size,
+# original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, batch_size,
 #                                                                            test_samples, test_labels)
 
 # Prediction set eval
-original_prediction_results = aut_func_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
+original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                                            prediction_samples, prediction_labels)
-# bugfix?
+# [bugfix]
 # In ml.py on line 2674 build sets a static value, (called by `print_predict_accuracy_layers`)
 # which messes up the batch_batch_size for an already created model.
 tf.Layer.back_batch_size = batch_size
+
 #
 # unmodified_prediction_results = model.predict(prediction_samples, batch_size=128)
 # library.start_timer(timer_id=100)
@@ -136,17 +157,19 @@ unlearn_size = training_labels.sizes[0] // n_data_owners
 assert training_labels.sizes[0] % n_data_owners == 0, "Must be cleanly divisible"
 
 unlearn_labels = MultiArray([unlearn_size, 10], sfix)
-unlearn_labels.assign_all(sfix(1/10))
+unlearn_labels.assign_all(sfix(1 / 10))
 
 unlearned_predictions = MultiArray([n_data_owners, n_samples, 10], sfix)
 
 library.start_timer(timer_id=100)
 
+
 @for_range_opt(n_data_owners)
 def unlearn_party(party_id):
     # first step, "dumb" unlearning
     print_ln("Unlearning party %s", party_id)
-    modified_samples, modified_labels = aut_func_utils.get_unlearn_data_for_party(party_id, training_samples, training_labels,
+    modified_samples, modified_labels = audit_utils.get_unlearn_data_for_party(party_id, training_samples,
+                                                                                  training_labels,
                                                                                   unlearn_labels, unlearn_size)
     # Set weights
     for i, var in enumerate(model.trainable_variables):
@@ -163,12 +186,12 @@ def unlearn_party(party_id):
             print("error not supported")
             assert False, "Error, var %s not supported!" % var
 
-    graph.layers[-1].Y.address = modified_labels.address
-    graph.layers[0].X.address = modified_samples.address
-    graph.run(batch_size=128)
+    train_optimizer.layers[-1].Y.address = modified_labels.address
+    train_optimizer.layers[0].X.address = modified_samples.address
+    train_optimizer.run(batch_size=128)
 
-    # aut_func_utils.print_predict_accuracy_layers(layers, model, 128, test_samples, test_labels)
-    guesses = aut_func_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
+    # audit_utils.print_predict_accuracy_layers(layers, model, 128, test_samples, test_labels)
+    guesses = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                            prediction_samples, prediction_labels)
     # guesses = MultiArray([n_samples, 10], sfix)
     print_ln("guesses %s", guesses.reveal_nested())
@@ -182,22 +205,26 @@ def unlearn_party(party_id):
 def compute_loss(X, Y):
     n_classes = 10
     loss_array = MultiArray([n_samples, n_data_owners], sfix)
-    @for_range(start=0,stop=n_samples,step=1)
+
+    @for_range(start=0, stop=n_samples, step=1)
     def _(sample_id):
-        @for_range(start=0,stop=n_data_owners,step=1)
+        @for_range(start=0, stop=n_data_owners, step=1)
         def _(model_id):
             sum_holder = MemValue(sfix(0))
-            @for_range(start=0,stop=n_classes,step=1)
+
+            @for_range(start=0, stop=n_classes, step=1)
             def _(out_class_id):
                 tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
                 sum_holder.write(sum_holder.read() + tmp)
                 sum_holder.write(-(sum_holder.read()))
                 loss_array[sample_id][model_id] = sum_holder.read()
+
     return loss_array
 
 
 loss_array = compute_loss(unlearned_predictions, original_prediction_results)
 print_ln("Losses %s", loss_array.reveal_nested())
+
 
 def compute_MAD_matrix(loss_matrix):
     MAD_array = MultiArray(list(loss_matrix.sizes), sfix)
@@ -205,9 +232,11 @@ def compute_MAD_matrix(loss_matrix):
     @for_range(start=0, stop=loss_matrix.sizes[0], step=1)
     def _(i):
         loss_array = loss_matrix.get_part(i, 1)[0]
-        score_array = aut_func_utils.MAD_Score(loss_array)
+        score_array = audit_utils.MAD_Score(loss_array)
         MAD_array.get_part(i, 1).assign(score_array)
+
     return MAD_array
+
 
 # Compute MAD Scores
 mad_score_matrix = compute_MAD_matrix(loss_array)
@@ -216,7 +245,7 @@ library.stop_timer(timer_id=100)
 
 out_util.output_value(name="loss_matrix", value=loss_array, repeat=False)
 out_util.output_value(name="mad_score_matrix", value=mad_score_matrix, repeat=False)
-out_util.output_value(name="unmodified_prediction_results", value=original_prediction_results,repeat=False)
+out_util.output_value(name="unmodified_prediction_results", value=original_prediction_results, repeat=False)
 
 ##### END #####
 
@@ -307,7 +336,7 @@ out_util.output_value(name="unmodified_prediction_results", value=original_predi
 #
 # # Expects an Array(num_models, sfix)
 # def compute_mad_score(X):
-#   return aut_func_utils.MAD_Score(X)
+#   return audit_utils.MAD_Score(X)
 #
 #
 # def compute_MAD_matrix(loss_matrix):
@@ -338,5 +367,3 @@ out_util.output_value(name="unmodified_prediction_results", value=original_predi
 # out_util.output_value(name="loss_matrix", value=loss_matrix, repeat=False)
 # out_util.output_value(name="mad_score_matrix", value=mad_score_matrix, repeat=False)
 # out_util.output_value(name="unmodified_prediction_results", value=unmodified_prediction_results,repeat=False)
-
-

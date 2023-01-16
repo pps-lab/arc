@@ -1,7 +1,6 @@
 ---
-# TODO [nku] could add default skeleton for design
 
-first_exp:
+audit_mnist:
   n_repetitions: 1
   host_types:
     compute:
