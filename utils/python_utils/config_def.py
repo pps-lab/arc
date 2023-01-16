@@ -111,7 +111,7 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     player_0_hostname: str
     abs_path_to_code_dir: str
     script_name: str
-    script_args: list[str]
+    script_args: typing.Dict[str, object]
     protocol_setup: ProtocolChoices
     input_file_name: str
 
