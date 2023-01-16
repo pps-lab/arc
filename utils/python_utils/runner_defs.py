@@ -206,9 +206,10 @@ class CompilerRunner(BaseRunner):
 
     
     def _args(self):
+        serialized_args = [f'{k}__{v}' for k, v in self._script_args.items()]
         return self._compiler_args + \
-            [os.path.join(self._code_dir,"scripts",f"{self._script_name}.mpc")] + \
-            self._script_args
+            [os.path.join(self._code_dir, "scripts", f"{self._script_name}.mpc")] \
+             + serialized_args
 
 
 class ScriptBaseRunner(BaseRunner):
