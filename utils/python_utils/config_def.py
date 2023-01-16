@@ -69,7 +69,7 @@ class TaskConfig(pydantic.BaseModel):
     abs_path_to_code_dir: str
     # MPC specific options
     script_name: str
-    script_args: list[str]
+    script_args: typing.Dict[str, object]
     protocol_setup: ProtocolChoices
     input_file_name: str
     result_dir: str
