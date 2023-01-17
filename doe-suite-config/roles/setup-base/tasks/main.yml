@@ -109,7 +109,7 @@
         target: "tldr"
     #  when: have_compiled_res.stat.exists == False
 
-    - name: "Compile MP-SPDZ fully"
+    - name: "Compile MP-SPDZ"
       community.general.make:
         chdir: "{{ mpspdz_dir }}"
         jobs: "8"

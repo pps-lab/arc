@@ -73,6 +73,7 @@ class TaskConfig(pydantic.BaseModel):
     protocol_setup: ProtocolChoices
     input_file_name: str
     result_dir: str
+    skip_compile: bool = False
 
 class ArgumentLineConfig(pydantic.BaseModel):
     """Defines the model for the configuration received via the command line
@@ -159,6 +160,7 @@ def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
         script_args=json_cofig_obj.mpc.script_args,
         script_name=json_cofig_obj.mpc.script_name,
         input_file_name=json_cofig_obj.mpc.input_file_name,
-        result_dir=result_dir
+        result_dir=result_dir,
+        skip_compile=json_cofig_obj.skip_compile
     )
     return conf_obj
