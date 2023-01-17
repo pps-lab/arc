@@ -203,7 +203,6 @@ class CompilerRunner(BaseRunner):
             my_env["PYTHONPATH"] = f"{os.path.join(self._code_dir,'scripts/')}"
         return my_env
 
-
     
     def _args(self):
         serialized_args = [f'{k}__{v}' for k, v in self._script_args.items()]
