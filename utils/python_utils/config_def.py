@@ -114,6 +114,7 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     script_args: typing.Dict[str, object]
     protocol_setup: ProtocolChoices
     input_file_name: str
+    skip_compile: bool = False
 
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):

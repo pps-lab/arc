@@ -28,6 +28,7 @@ audit_mnist:
         sample_cutoff_size: -1
       protocol_setup: "rep4-ring-party"
       input_file_name: "{{ dataset_dir }}/mnist-small.zip"
+      skip_compile: True
 
 $ETL$:
   extract_mpspdz:

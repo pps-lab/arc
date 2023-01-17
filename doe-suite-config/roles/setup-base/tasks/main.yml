@@ -5,6 +5,13 @@
     msg: "-> base only"
   tags: [print_action]
 
+- name: Generate SSL Certificates for 20 players locally if not exist yet # TODO: Does this expire? does this work in parallel?
+  delegate_to: localhost
+  ansible.builtin.shell:
+    chdir: "{{ does_project_dir }}"
+    cmd: "{{ does_project_dir }}/mp-spdz/Scripts/setup-ssl.sh 20 mp-spdz/Player-SSL-Data/"
+    creates: "{{ does_project_dir }}/mp-spdz/Player-SSL-Data/P0.key"
+
 - name: "Remove autoupdater from ubuntu"
   become: True
   ansible.builtin.apt:
@@ -123,12 +130,10 @@
 #    path: "{{git_repo_mpspdz_location}}/Player-Prep-Data"
 #    state: directory
 
-- name: Generate SSL Certificates for 20 players
-  ansible.builtin.shell:
-    chdir: "{{ mpspdz_dir }}"
-    cmd: "{{ mpspdz_dir }}/Scripts/setup-ssl.sh 20 Player-SSL-Data/"
-    creates: "{{ mpspdz_dir }}/Player-SSL-Data/P0.key"
-
+- name: Copy SSL Certificates
+  ansible.builtin.copy:
+    src: "{{ does_project_dir }}/mp-spdz/Player-SSL-Data/"
+    dest: "{{ mpspdz_dir }}/Player-SSL-Data/"
 
 ## MP_SPDZ SETUP AT THIS POINT!
 - name: "Check if AWS CLI is installed"
