@@ -105,7 +105,6 @@ def script_name_and_args_to_correct_execution_name(script_name, script_args):
     serialized_args = [f'{k}__{v}' for k, v in script_args.items()]
     return f"{'-'.join([script_name] + serialized_args)}"
 
-    # return f"{'-'.join([script_name]+[str(s) for s in script_args])}"
 
 class BaseRunner(abc.ABC):
     """The main abstraction to implement the execution of MP-SPDZ facilities via a standardizes interface to the subprocessing module.

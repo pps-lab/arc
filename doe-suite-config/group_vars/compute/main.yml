@@ -1,14 +1,14 @@
 ---
 
-#instance_type: c5.9xlarge
-instance_type: t2.2xlarge
+instance_type: c5.9xlarge
+#instance_type: t2.2xlarge
 ec2_volume_size: 100
 
 #ec2_image_id:  ami-0419cab1fa37ab915 # original ami
 #ec2_volume_snapshot: snap-0b47b340fc299a25b
 
-ec2_image_id: ami-0de6c8ab74376b6c2 # precompiled ami
-ec2_volume_snapshot: snap-01472b8b3c160c96a
+ec2_image_id: ami-01e56baf86ddd0b13	 # precompiled ami
+ec2_volume_snapshot: snap-02b216094602e4cd7
 
 instance_role: EC2WithS3Role
 

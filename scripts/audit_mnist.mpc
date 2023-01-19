@@ -68,7 +68,7 @@ layers = [
     tf.keras.layers.MaxPooling2D(2),
     tf.keras.layers.Flatten(),
     # tf.keras.layers.Dropout(0.5),
-    tf.keras.layers.Dense(500, activation='relu'),
+    tf.keras.layers.Dense(500, activation='relu'), # in MPC this 500 is 100
     tf.keras.layers.Dense(10, activation='softmax')
 ]
 
@@ -246,6 +246,7 @@ library.stop_timer(timer_id=100)
 out_util.output_value(name="loss_matrix", value=loss_array, repeat=False)
 out_util.output_value(name="mad_score_matrix", value=mad_score_matrix, repeat=False)
 out_util.output_value(name="unmodified_prediction_results", value=original_prediction_results, repeat=False)
+out_util.output_value(name="unlearned_prediction_results", value=unlearned_predictions, repeat=False)
 
 ##### END #####
 

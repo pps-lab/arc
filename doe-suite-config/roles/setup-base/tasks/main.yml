@@ -99,10 +99,20 @@
   ansible.builtin.stat:
     path: "{{ mpspdz_dir }}/semi2k-party.x"
   register: mpspdz_compiled
-- name: "Compile MP-SPDZ"
+- name: "Compile MP-SPDZ (if some files dont exist)"
   when: mpspdz_compiled.stat.exists == False
   block:
-    - name: "Compile MP-SPDZ first mpir to get all libraries"
+    - name: "Make cmake 3.15"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "8"
+        target: "cmake"
+    - name: "Make boost 1.81"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "8"
+        target: "boost"
+    - name: "Compile MP-SPDZ mpir to get all libraries"
       community.general.make:
         chdir: "{{ mpspdz_dir }}"
         jobs: "8"

@@ -32,7 +32,7 @@ audit_mnist:
 
 $ETL$:
   extract_mpspdz:
-    experiments: [first_exp]
+    experiments: [audit_mnist]
     extractors:
       MpSpdzStderrExtractor:  {}
       MpSpdzResultExtractor: {}
