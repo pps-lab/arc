@@ -9,9 +9,11 @@ from Compiler.script_utils.output_utils import parse_kv_args
 # program.args is a list
 program.options_from_args()
 
+# program.use_trunc_pr = True
+
 kv_args = parse_kv_args(program.args)
 
-learning_rate = float(kv_args.get('learning_rate', 0.0001))
+learning_rate = float(kv_args.get('learning_rate', 0.01))
 n_thread_num = int(kv_args.get('n_num_threads', 16))
 n_data_owners = int(kv_args.get('n_data_owners', 2))
 sample_cutoff_size = int(kv_args.get('sample_cutoff_size', -1))
@@ -114,11 +116,11 @@ train_optimizer = model.opt
 train_optimizer.n_epochs = 1
 train_optimizer.report_losses = True
 train_optimizer.print_losses = True
-train_optimizer.gamma = MemValue(cfix(0.0001))
+train_optimizer.gamma = MemValue(cfix(learning_rate))
 
 # Load labels
-train_optimizer.layers[-1].Y.address = training_labels.address
-train_optimizer.layers[0].X.address = training_samples.address
+# train_optimizer.layers[-1].Y.address = training_labels.address
+# train_optimizer.layers[0].X.address = training_samples.address
 
 ####################################################################################
 # [Debug] test to see if we can do regular training and check test set performance #
@@ -132,19 +134,17 @@ train_optimizer.layers[0].X.address = training_samples.address
 # library.print_ln('first three train labels %s', labels)
 
 # Run epochs
-# graph.run(batch_size=128)
+# train_optimizer.reset()
+# train_optimizer.run(batch_size=128)
 
 # [Debug] Test set eval
 # original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, batch_size,
 #                                                                            test_samples, test_labels)
 
 # Prediction set eval
+# print_ln("Prediction set eval")
 original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                                            prediction_samples, prediction_labels)
-# [bugfix]
-# In ml.py on line 2674 build sets a static value, (called by `print_predict_accuracy_layers`)
-# which messes up the batch_batch_size for an already created model.
-tf.Layer.back_batch_size = batch_size
 
 #
 # unmodified_prediction_results = model.predict(prediction_samples, batch_size=128)
@@ -158,19 +158,29 @@ assert training_labels.sizes[0] % n_data_owners == 0, "Must be cleanly divisible
 
 unlearn_labels = MultiArray([unlearn_size, 10], sfix)
 unlearn_labels.assign_all(sfix(1 / 10))
+# @for_range_opt(unlearn_size)
+# def _(i):
+#     lbl = sfix.Array(10)
+#     lbl.assign_all(sfix(0))
+#     lbl[0] = 1
+#     unlearn_labels[i] = lbl
+# # unlearn_labels.assign_all(cfix())
 
 unlearned_predictions = MultiArray([n_data_owners, n_samples, 10], sfix)
 
 library.start_timer(timer_id=100)
 
 
-@for_range_opt(n_data_owners)
-def unlearn_party(party_id):
+# @for_range_opt(n_data_owners)
+# # def unlearn_party(party_id):
+# for party_id in [0]:
+for party_id in range(n_data_owners):
     # first step, "dumb" unlearning
     print_ln("Unlearning party %s", party_id)
     modified_samples, modified_labels = audit_utils.get_unlearn_data_for_party(party_id, training_samples,
                                                                                   training_labels,
                                                                                   unlearn_labels, unlearn_size)
+    # print_ln("modified labels %s", modified_labels.reveal_nested())
     # Set weights
     for i, var in enumerate(model.trainable_variables):
         print_ln("Setting trainable_variable %s", i)
@@ -186,15 +196,23 @@ def unlearn_party(party_id):
             print("error not supported")
             assert False, "Error, var %s not supported!" % var
 
+    # [bugfix]
+    # In ml.py on line 2674 build sets a static value, (called by `print_predict_accuracy_layers`)
+    # which messes up the batch_batch_size for an already created model.
+    tf.Layer.back_batch_size = batch_size
+
     train_optimizer.layers[-1].Y.address = modified_labels.address
     train_optimizer.layers[0].X.address = modified_samples.address
+    # train_optimizer.layers[-1].Y.address = unlearn_labels.address
+    # train_optimizer.layers[0].X.address = training_samples.address
+    # train_optimizer.reset()
     train_optimizer.run(batch_size=128)
 
     # audit_utils.print_predict_accuracy_layers(layers, model, 128, test_samples, test_labels)
     guesses = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                            prediction_samples, prediction_labels)
     # guesses = MultiArray([n_samples, 10], sfix)
-    print_ln("guesses %s", guesses.reveal_nested())
+    # print_ln("guesses %s", guesses.reveal_nested())
     unlearned_predictions[party_id] = guesses
 
 
@@ -216,8 +234,8 @@ def compute_loss(X, Y):
             def _(out_class_id):
                 tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
                 sum_holder.write(sum_holder.read() + tmp)
-                sum_holder.write(-(sum_holder.read()))
-                loss_array[sample_id][model_id] = sum_holder.read()
+            # sum_holder.write(-(sum_holder.read()))
+            loss_array[sample_id][model_id] = -sum_holder.read()
 
     return loss_array
 
