@@ -74,6 +74,7 @@ class TaskConfig(pydantic.BaseModel):
     input_file_name: str
     result_dir: str
     skip_compile: bool = False
+    compiler_args: list = None
 
 class ArgumentLineConfig(pydantic.BaseModel):
     """Defines the model for the configuration received via the command line
