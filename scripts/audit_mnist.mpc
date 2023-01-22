@@ -3,13 +3,14 @@ import json
 from typing import List, Any, Union
 
 from Compiler.library import print_ln
-from Compiler.types import MultiArray, sfix, sint, cfix, MemValue, Array
+from Compiler.types import MultiArray, sfix, sint, cfix, MemValue, Array, cint
 from Compiler.script_utils.output_utils import parse_kv_args
 
 # program.args is a list
 program.options_from_args()
 
-# program.use_trunc_pr = True
+program.use_trunc_pr = True
+program.use_edabits = True
 
 kv_args = parse_kv_args(program.args)
 
@@ -44,8 +45,8 @@ prediction_labels.input_from(0)
 prediction_samples.input_from(0)
 
 # Prepare the model
-from Compiler import ml
-# from Compiler.script_utils import ml_modified as ml
+# from Compiler import ml
+from Compiler.script_utils import ml_modified as ml
 from Compiler.script_utils import output_utils as out_util
 from Compiler.script_utils import audit_function_utils as audit_utils
 from Compiler import library
@@ -129,6 +130,8 @@ train_optimizer.gamma = MemValue(cfix(learning_rate))
 # original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, batch_size,
 #                                                                            test_samples, test_labels)
 
+print_ln("%s", training_labels.reveal_nested())
+
 # labels_nonprivate = training_labels.reveal_nested()
 # labels = list(map(ml.argmax, labels_nonprivate))
 # library.print_ln('first three train labels %s', labels)
@@ -143,8 +146,16 @@ train_optimizer.gamma = MemValue(cfix(learning_rate))
 
 # Prediction set eval
 # print_ln("Prediction set eval")
-original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
-                                                                           prediction_samples, prediction_labels)
+# Assume
+original_prediction_results = prediction_labels
+# original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
+#                                                                            prediction_samples, prediction_labels)
+# # the prediction of the model on the sample is public information,
+# # this is what triggered the audit in the first place.
+# original_prediction_results_argmax = Array(n_samples, cint)
+# @for_range_opt_multithread(n_thread_num, n_samples)
+# def _(i):
+#     original_prediction_results_argmax[i] = ml.argmax(original_prediction_results[i])
 
 #
 # unmodified_prediction_results = model.predict(prediction_samples, batch_size=128)
@@ -171,10 +182,10 @@ unlearned_predictions = MultiArray([n_data_owners, n_samples, 10], sfix)
 library.start_timer(timer_id=100)
 
 
-# @for_range_opt(n_data_owners)
-# # def unlearn_party(party_id):
+@for_range_opt(n_data_owners)
+def unlearn_party(party_id):
 # for party_id in [0]:
-for party_id in range(n_data_owners):
+# for party_id in range(n_data_owners):
     # first step, "dumb" unlearning
     print_ln("Unlearning party %s", party_id)
     modified_samples, modified_labels = audit_utils.get_unlearn_data_for_party(party_id, training_samples,
@@ -212,7 +223,11 @@ for party_id in range(n_data_owners):
     guesses = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                            prediction_samples, prediction_labels)
     # guesses = MultiArray([n_samples, 10], sfix)
-    # print_ln("guesses %s", guesses.reveal_nested())
+    guesses_arg = MultiArray([guesses.sizes[0], 1], sint)
+    @for_range_opt_multithread(n_thread_num, guesses.sizes[0])
+    def _(i):
+        guesses_arg[i] = ml.argmax(guesses[i])
+    print_ln("guesses %s", guesses_arg.reveal_nested())
     unlearned_predictions[party_id] = guesses
 
 
@@ -220,27 +235,8 @@ for party_id in range(n_data_owners):
 # print_ln("Results %s", res)
 
 # compute losses now
-def compute_loss(X, Y):
-    n_classes = 10
-    loss_array = MultiArray([n_samples, n_data_owners], sfix)
 
-    @for_range(start=0, stop=n_samples, step=1)
-    def _(sample_id):
-        @for_range(start=0, stop=n_data_owners, step=1)
-        def _(model_id):
-            sum_holder = MemValue(sfix(0))
-
-            @for_range(start=0, stop=n_classes, step=1)
-            def _(out_class_id):
-                tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
-                sum_holder.write(sum_holder.read() + tmp)
-            # sum_holder.write(-(sum_holder.read()))
-            loss_array[sample_id][model_id] = -sum_holder.read()
-
-    return loss_array
-
-
-loss_array = compute_loss(unlearned_predictions, original_prediction_results)
+loss_array = audit_utils.compute_loss(unlearned_predictions, original_prediction_results)
 print_ln("Losses %s", loss_array.reveal_nested())
 
 

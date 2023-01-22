@@ -2,7 +2,7 @@ import Compiler.types as types
 import Compiler.library as library
 
 from Compiler import ml
-from Compiler.types import sint, cfix, sfix, MultiArray
+from Compiler.types import sint, cfix, sfix, MultiArray, MemValue
 
 tf = ml
 
@@ -107,3 +107,38 @@ def get_unlearn_data_for_party(data_owner, train_samples, train_labels, null_lab
 
     return train_samples, modified_training_labels
 
+
+def compute_loss(X, Y):
+    n_classes = 10
+    n_data_owners = X.sizes[0]
+    n_samples = X.sizes[1]
+    loss_array = MultiArray([n_samples, n_data_owners], sfix)
+
+    # for sample_id in range(n_samples):
+    @library.for_range(start=0, stop=n_samples, step=1)
+    def _(sample_id):
+        for model_id in range(n_data_owners):
+            # sum_holder = MemValue(sfix(0))
+            sum_holder = sfix(0)
+            library.print_ln("%s %s %s", sample_id, model_id, Y[sample_id].reveal_nested())
+            # loss_array[sample_id][model_id] = predicted_class * ml.log_e(X[model_id][sample_id][predicted_class])
+            for out_class_id in range(n_classes):
+                tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
+                sum_holder += tmp
+            # # sum_holder.write(-(sum_holder.read()))
+            loss_array[sample_id][model_id] = -sum_holder
+
+    # @library.for_range(start=0, stop=n_samples, step=1)
+    # def _(sample_id):
+    #     @library.for_range(start=0, stop=n_data_owners, step=1)
+    #     def _(model_id):
+    #         sum_holder = MemValue(sfix(0))
+    #
+    #         @library.for_range(start=0, stop=n_classes, step=1)
+    #         def _(out_class_id):
+    #             tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
+    #             sum_holder.write(sum_holder.read() + tmp)
+    #         # sum_holder.write(-(sum_holder.read()))
+    #         loss_array[sample_id][model_id] = -sum_holder.read()
+
+    return loss_array

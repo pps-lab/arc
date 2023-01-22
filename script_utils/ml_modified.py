@@ -56,14 +56,6 @@ looks as follows::
 
 See the `readme <https://github.com/data61/MP-SPDZ/#tensorflow-inference>`_ for
 an example of how to run MP-SPDZ on TensorFlow graphs.
-
-Notes of the extension:
-The fit() function of the Sequential class has been extended with a variable_loader keywoard argument.
-This argument accepts a function that takes a single argument. This single argument is the reference
-to the optimizer instance. The variable_loader function should load the model weights stored in memory. This
-extension is ment to allow the loading of the same set of weights multipe times without requiring to store the 
-weights multiple times in the player input files.
-
 """
 
 import math
@@ -81,8 +73,13 @@ from functools import reduce
 def log_e(x):
     return mpc_math.log_fx(x, math.e)
 
+use_mux = False
+
 def exp(x):
-    return mpc_math.pow_fx(math.e, x)
+    if use_mux:
+        return mpc_math.mux_exp(math.e, x)
+    else:
+        return mpc_math.pow_fx(math.e, x)
 
 def get_limit(x):
     exp_limit = 2 ** (x.k - x.f - 1)
@@ -156,7 +153,7 @@ def argmax(x):
     """ Compute index of maximum element.
 
     :param x: iterable
-    :returns: sint
+    :returns: sint or 0 if :py:obj:`x` has length 1
     """
     def op(a, b):
         comp = (a[1] > b[1])
@@ -172,13 +169,16 @@ def softmax(x):
     return softmax_from_exp(exp_for_softmax(x)[0])
 
 def exp_for_softmax(x):
-    m = util.max(x)
+    m = util.max(x) - get_limit(x[0]) + math.log(len(x))
     mv = m.expand_to_vector(len(x))
     try:
         x = x.get_vector()
     except AttributeError:
         x = sfix(x)
-    return (x - mv > -get_limit(x)).if_else(exp(x - mv), 0), m
+    if use_mux:
+        return exp(x - mv), m
+    else:
+        return (x - mv > -get_limit(x)).if_else(exp(x - mv), 0), m
 
 def softmax_from_exp(x):
     return x / sum(x)
@@ -386,7 +386,7 @@ class Output(NoVariableLayer):
 class MultiOutputBase(NoVariableLayer):
     def __init__(self, N, d_out, approx=False, debug=False):
         self.X = sfix.Matrix(N, d_out)
-        self.Y = sint.Matrix(N, d_out)
+        self.Y = sfix.Matrix(N, d_out)
         self.nabla_X = sfix.Matrix(N, d_out)
         self.l = MemValue(sfix(-1))
         self.losses = sfix.Array(N)
@@ -504,6 +504,9 @@ class MultiOutput(MultiOutputBase):
                 self.exp[i].assign_vector(e)
                 if self.compute_loss:
                     true_X = sfix.dot_product(self.Y[batch[i]], self.X[i])
+                    # print_ln("true_X %s", true_X.reveal())
+                    # print_ln("Y %s", self.Y[batch[i]].reveal_nested())
+                    # print_ln("X %s", self.X[i].reveal_nested())
                     tmp[i] = m + log_e(sum(e)) - true_X
                     self.true_X[i] = true_X
         self.l.write(sum(tmp.get_vector(0, N)) / N)
@@ -1080,6 +1083,7 @@ class MaxPool(NoVariableLayer):
         self.nabla_Y = Tensor(output_shape, sfix)
         self.N = shape[0]
         self.comparisons = MultiArray([self.N, self.X.sizes[3],
+                                       output_shape[1], output_shape[2],
                                        ksize[1] * ksize[2]], sint)
 
     def __repr__(self):
@@ -1099,26 +1103,28 @@ class MaxPool(NoVariableLayer):
             red = util.tree_reduce(m, [(x[0], [1] if training else [])
                                        for x in pool])
             self.Y[bi][i][j][k] = red[0]
-            for i, x in enumerate(red[1]):
-                self.comparisons[bi][k][i] = x
+            for ii, x in enumerate(red[1]):
+                self.comparisons[bi][k][i][j][ii] = x
         self.traverse(batch, process)
 
     def backward(self, compute_nabla_X=True, batch=None):
         if compute_nabla_X:
             self.nabla_X.alloc()
+            self.nabla_X.assign_all(0)
             def process(pool, bi, k, i, j):
-                for (x, h_in, w_in, h, w), c in zip(pool,
-                                                    self.comparisons[bi][k]):
+                for (x, h_in, w_in, h, w), c \
+                    in zip(pool, self.comparisons[bi][k][i][j]):
                     hh = h * h_in
                     ww = w * w_in
-                    self.nabla_X[bi][hh][ww][k] = \
-                        util.if_else(h_in * w_in, c * self.nabla_Y[bi][i][j][k],
-                                     self.nabla_X[bi][hh][ww][k])
+                    res = h_in * w_in * c * self.nabla_Y[bi][i][j][k]
+                    self.nabla_X[bi][hh][ww][k] += res
         self.traverse(batch, process)
 
     def traverse(self, batch, process):
         need_padding = [self.strides[i] * (self.Y.sizes[i] - 1) + self.ksize[i] >
                         self.X.sizes[i] for i in range(4)]
+        overlap = reduce(operator.or_,
+                         (x < y for x, y in zip(self.strides, self.ksize)))
         @for_range_opt_multithread(self.n_threads,
                                    [len(batch), self.X.sizes[3]])
         def _(l, k):
@@ -1128,6 +1134,8 @@ class MaxPool(NoVariableLayer):
                 h_base = self.strides[1] * i
                 @for_range_opt(self.Y.sizes[2])
                 def _(j):
+                    if overlap:
+                        break_point()
                     w_base = self.strides[2] * j
                     pool = []
                     for ii in range(self.ksize[1]):
@@ -2010,6 +2018,9 @@ class Optimizer:
         return res
 
     def __init__(self, report_loss=None):
+        if get_program().options.binary:
+            raise CompilerError(
+                'machine learning code not compatible with binary circuits')
         self.tol = 0.000
         self.report_loss = report_loss
         self.X_by_label = None
@@ -2175,7 +2186,6 @@ class Optimizer:
                 self.X_by_label = [[None] * self.layers[0].N]
             assert len(self.X_by_label) in (1, 2)
             assert N % len(self.X_by_label) == 0
-            print('x_by_label %d' % len(self.X_by_label[0]))
             n = N // len(self.X_by_label)
             n_per_epoch = int(math.ceil(1. * max(len(X) for X in
                                                  self.X_by_label) / n))
@@ -2286,8 +2296,7 @@ class Optimizer:
 
     @_no_mem_warnings
     def run_by_args(self, program, n_runs, batch_size, test_X, test_Y,
-                    acc_batch_size=None,
-                    variable_loader=None):
+                    acc_batch_size=None):
         if acc_batch_size is None:
             acc_batch_size = batch_size
         depreciation = None
@@ -2309,15 +2318,12 @@ class Optimizer:
         if 'full_cisc' in program.args:
             program.options.keep_cisc = 'FPDiv,exp2_fx,log2_fx'
         model_input = 'model_input' in program.args
-        acc_first = (model_input or variable_loader is not None) and not 'train_first' in program.args
+        acc_first = model_input and not 'train_first' in program.args
         if model_input:
             for layer in self.layers:
                 layer.input_from(0)
         else:
             self.reset()
-            if variable_loader is not None:
-                variable_loader(self)
-
         if 'one_iter' in program.args:
             print_float_prec(16)
             self.output_weights()
@@ -2347,8 +2353,6 @@ class Optimizer:
             return
         @for_range(n_runs)
         def _(i):
-            n_correct = 0
-            n_test = 0
             if not acc_first:
                 start_timer(1)
                 self.run(batch_size,
@@ -2398,6 +2402,11 @@ class Optimizer:
         print_float_precision(max(6, sfix.f // 3))
         for layer in self.layers:
             layer.output_weights()
+
+    def summary(self):
+        sizes = [var.total_size() for var in self.thetas]
+        print(sizes)
+        print('Trainable params:', sum(sizes))
 
 class Adam(Optimizer):
     """ Adam/AMSgrad optimizer.
@@ -2668,9 +2677,7 @@ class keras:
                 return list(self.opt.thetas)
 
             def summary(self):
-                sizes = [var.total_size() for var in self.trainable_variables]
-                print(sizes)
-                print('Trainable params:', sum(sizes))
+                self.opt.summary()
 
             def build(self, input_shape, batch_size=128):
                 data_input_shape = input_shape
@@ -2797,7 +2804,7 @@ class keras:
                 self.batch_size = batch_size
                 self.opt = opt
 
-            def fit(self, x, y, batch_size, epochs=1, validation_data=None, variable_loader=None):
+            def fit(self, x, y, batch_size, epochs=1, validation_data=None):
                 assert len(x) == len(y)
                 self.build(x.sizes, batch_size)
                 if x.total_size() != self.opt.layers[0].X.total_size():
@@ -2814,7 +2821,7 @@ class keras:
                 self.opt.layers[-1].Y.address = y.address
                 self.opt.run_by_args(get_program(), epochs, batch_size,
                                      validation_data[0], validation_data[1],
-                                     batch_size, variable_loader=variable_loader)
+                                     batch_size)
                 return self.opt
 
             def predict(self, x, batch_size=None):
