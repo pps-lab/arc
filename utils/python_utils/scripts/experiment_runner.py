@@ -76,10 +76,12 @@ def compile_script_with_args(task_config: config_def.TaskConfig):
     """Executes the Script compilation phase of the experiment."""
     if task_config.skip_compile:
         return
+    compiler_args = task_config.compiler_args if task_config.compiler_args is not None else \
+        runner_defs.CompilerArguments[task_config.protocol_setup.name].value
     comp_runner = runner_defs.CompilerRunner(
         script_name=task_config.script_name,
         script_args=task_config.script_args,
-        compiler_args=runner_defs.CompilerArguments[task_config.protocol_setup.name].value,
+        compiler_args=compiler_args,
         code_dir=task_config.abs_path_to_code_dir
     )
     comp_runner.run()

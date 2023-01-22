@@ -116,6 +116,7 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     protocol_setup: ProtocolChoices
     input_file_name: str
     skip_compile: bool = False
+    compiler_args: list[str] = None
 
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
@@ -161,6 +162,7 @@ def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
         script_name=json_cofig_obj.mpc.script_name,
         input_file_name=json_cofig_obj.mpc.input_file_name,
         result_dir=result_dir,
-        skip_compile=json_cofig_obj.mpc.skip_compile
+        skip_compile=json_cofig_obj.mpc.skip_compile,
+        compiler_args=json_cofig_obj.mpc.compiler_args
     )
     return conf_obj

@@ -130,7 +130,7 @@ train_optimizer.gamma = MemValue(cfix(learning_rate))
 # original_prediction_results = audit_utils.print_predict_accuracy_layers(layers, model, batch_size,
 #                                                                            test_samples, test_labels)
 
-print_ln("%s", training_labels.reveal_nested())
+# print_ln("%s", training_labels.reveal_nested())
 
 # labels_nonprivate = training_labels.reveal_nested()
 # labels = list(map(ml.argmax, labels_nonprivate))
@@ -222,12 +222,12 @@ def unlearn_party(party_id):
     # audit_utils.print_predict_accuracy_layers(layers, model, 128, test_samples, test_labels)
     guesses = audit_utils.print_predict_accuracy_layers(layers, model, prediction_batch_size,
                                                            prediction_samples, prediction_labels)
-    # guesses = MultiArray([n_samples, 10], sfix)
-    guesses_arg = MultiArray([guesses.sizes[0], 1], sint)
-    @for_range_opt_multithread(n_thread_num, guesses.sizes[0])
-    def _(i):
-        guesses_arg[i] = ml.argmax(guesses[i])
-    print_ln("guesses %s", guesses_arg.reveal_nested())
+    # # guesses = MultiArray([n_samples, 10], sfix)
+    # guesses_arg = MultiArray([guesses.sizes[0], 1], sint)
+    # @for_range_opt_multithread(n_thread_num, guesses.sizes[0])
+    # def _(i):
+    #     guesses_arg[i] = ml.argmax(guesses[i])
+    # print_ln("guesses %s", guesses_arg.reveal_nested())
     unlearned_predictions[party_id] = guesses
 
 

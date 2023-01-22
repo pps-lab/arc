@@ -120,7 +120,6 @@ def compute_loss(X, Y):
         for model_id in range(n_data_owners):
             # sum_holder = MemValue(sfix(0))
             sum_holder = sfix(0)
-            library.print_ln("%s %s %s", sample_id, model_id, Y[sample_id].reveal_nested())
             # loss_array[sample_id][model_id] = predicted_class * ml.log_e(X[model_id][sample_id][predicted_class])
             for out_class_id in range(n_classes):
                 tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
