@@ -72,15 +72,15 @@ def process_input(task_config: config_def.TaskConfig):
     file_processor = ifp.InputFileProcessor(task_config.input_file_name)
     file_processor.process_input()
 
-def compile_script_with_args(task_connfig: config_def.TaskConfig):
+def compile_script_with_args(task_config: config_def.TaskConfig):
     """Executes the Script compilation phase of the experiment."""
-    if task_connfig.skip_compile:
+    if task_config.skip_compile:
         return
     comp_runner = runner_defs.CompilerRunner(
-        script_name=task_connfig.script_name,
-        script_args=task_connfig.script_args,
-        compiler_args=runner_defs.CompilerArguments[task_connfig.protocol_setup.name].value,
-        code_dir=task_connfig.abs_path_to_code_dir
+        script_name=task_config.script_name,
+        script_args=task_config.script_args,
+        compiler_args=runner_defs.CompilerArguments[task_config.protocol_setup.name].value,
+        code_dir=task_config.abs_path_to_code_dir
     )
     comp_runner.run()
 
@@ -130,7 +130,7 @@ def cli(player_number,sleep_time):
     )
     move_to_experiment_dir(task_config=task_config)
     process_input(task_config=task_config)
-    compile_script_with_args(task_connfig=task_config)
+    compile_script_with_args(task_config=task_config)
     output_prefix=generate_random_prefix()
     run_script_with_args(task_config=task_config,
         output_prefix=output_prefix)

@@ -24,7 +24,7 @@ audit_mnist:
       script_args:
         learning_rate: 0.0001
         n_num_threads: 16
-        n_data_owners: 2
+        n_data_owners: 4
         sample_cutoff_size: -1
       protocol_setup: "rep4-ring-party"
       input_file_name: "{{ dataset_dir }}/mnist-small.zip"
