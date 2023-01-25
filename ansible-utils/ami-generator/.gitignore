@@ -1,5 +1,0 @@
-ans-env/
-hosts.yml
-*.local.yml
-inventory/*.yml
-.venv/

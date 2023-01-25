@@ -1,6 +1,0 @@
-all:
-  hosts:
-    test01:
-      ansible_connection: ssh
-      ansible_user: # put your user in here
-      ansible_host: # Put your IP in here
