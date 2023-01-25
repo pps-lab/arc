@@ -1,5 +1,5 @@
 """This module defines the code that processes the input file containers and places the contained input files into the correct folders,
-namely into the Player-Data folder of the mp-spdz folder.
+namely into the Player-Data folder of the MP-SPDZ folder.
 
 The module defines the following functionalities:
 - class InputFileProcessor:
@@ -11,16 +11,16 @@ import os
 import tempfile
 
 
-DEFAULT_OUTPUT_FILE_PATH = os.path.join("mp-spdz","Player-Data")
+DEFAULT_OUTPUT_FILE_PATH = os.path.join("MP-SPDZ","Player-Data")
 
 class InputFileProcessor:
     """Implements the input file processing logic for the Experiment Runner
-    
+
     Attributes
     ----------
     - input_file : str
         The name of the input file container to process
-    
+
     Methods
     -------
     - process_input():
@@ -34,7 +34,7 @@ class InputFileProcessor:
             The name of the input file container to process
         """
         self.input_file = intput_file
-    
+
     def process_input(self):
         """Process the input file container defined during the construction of the object
 
@@ -52,4 +52,3 @@ class InputFileProcessor:
                         # Move file to MP-SPDZ
                         dest_path = os.path.join(DEFAULT_OUTPUT_FILE_PATH, path)
                         os.replace(file_path,dest_path)
-                

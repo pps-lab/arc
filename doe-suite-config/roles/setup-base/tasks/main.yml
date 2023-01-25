@@ -9,8 +9,8 @@
   delegate_to: localhost
   ansible.builtin.shell:
     chdir: "{{ does_project_dir }}"
-    cmd: "{{ does_project_dir }}/mp-spdz/Scripts/setup-ssl.sh 20 mp-spdz/Player-SSL-Data/"
-    creates: "{{ does_project_dir }}/mp-spdz/Player-SSL-Data/P0.key"
+    cmd: "{{ does_project_dir }}/MP-SPDZ/Scripts/setup-ssl.sh 20 MP-SPDZ/Player-SSL-Data/"
+    creates: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/P0.key"
 
 - name: "Remove autoupdater from ubuntu"
   become: True
@@ -142,7 +142,7 @@
 
 - name: Copy SSL Certificates
   ansible.builtin.copy:
-    src: "{{ does_project_dir }}/mp-spdz/Player-SSL-Data/"
+    src: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/"
     dest: "{{ mpspdz_dir }}/Player-SSL-Data/"
 
 ## MP_SPDZ SETUP AT THIS POINT!
@@ -237,9 +237,8 @@
     cmd: "{{poetry}} install"
     chdir: "{{ exp_code_dir }}"
 
-- name: Make symbolic link from exp_code_dir/script_utils to Compiler folder of mp-spdz
+- name: Make symbolic link from exp_code_dir/script_utils to Compiler folder of MP-SPDZ
   ansible.builtin.file:
     state: link
     path: "{{ mpspdz_dir }}/Compiler/script_utils"
     src: "{{ exp_code_dir }}/script_utils"
-

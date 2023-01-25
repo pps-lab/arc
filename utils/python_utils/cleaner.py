@@ -9,7 +9,7 @@ import re
 
 class Cleaner:
     """This class implements the workspace cleaning procedure.
-    
+
     Attributes
     ----------
     - code_dir: str
@@ -26,11 +26,11 @@ class Cleaner:
     - clean_output():
         Clean the experiment output files
     - clean_player_prep_data():
-        Clean the Player-Prep-Data folder in the mp-spdz folder of the code workspace.
+        Clean the Player-Prep-Data folder in the MP-SPDZ folder of the code workspace.
     - clean_player_data():
-        Clean the Player-Data folder in the mp-spdz folder of the code workspace.
+        Clean the Player-Data folder in the MP-SPDZ folder of the code workspace.
     - clean():
-        Cleans the code workspace.  
+        Cleans the code workspace.
     """
     def __init__(self, code_dir, output_prefix):
         """
@@ -51,9 +51,9 @@ class Cleaner:
         Parameters
         ----------
         - file_name : str
-            Name of the file that should be checked. 
+            Name of the file that should be checked.
         """
-        if not os.path.isfile(os.path.join(self.code_dir,"mp-spdz/",file_name)):
+        if not os.path.isfile(os.path.join(self.code_dir,"MP-SPDZ/",file_name)):
             return False
         match = self.pattern.match(file_name)
         if match:
@@ -63,20 +63,20 @@ class Cleaner:
 
     def clean_output(self):
         """Clean the experiment output files"""
-        input_file_list = os.listdir(os.path.join(self.code_dir,"mp-spdz/"))
+        input_file_list = os.listdir(os.path.join(self.code_dir,"MP-SPDZ/"))
         for input_file_name in [file_name for file_name in input_file_list if self.is_relevant(file_name)]:
-            input_file_path = os.path.join(self.code_dir,"mp-spdz/",input_file_name)
+            input_file_path = os.path.join(self.code_dir,"MP-SPDZ/",input_file_name)
             os.remove(input_file_path)
-        
+
     def clean_player_pred_data(self):
-        """Clean the Player-Prep-Data folder in the mp-spdz folder of the code workspace."""
-        player_prep_data_path = os.path.join(self.code_dir,"mp-spdz/Player-Prep-Data/")
+        """Clean the Player-Prep-Data folder in the MP-SPDZ folder of the code workspace."""
+        player_prep_data_path = os.path.join(self.code_dir,"MP-SPDZ/Player-Prep-Data/")
         shutil.rmtree(player_prep_data_path,ignore_errors=True)
         os.mkdir(player_prep_data_path)
-    
+
     def clean_player_data(self):
-        """Clean the Player-Data folder in the mp-spdz folder of the code workspace."""
-        player_data_path = os.path.join(self.code_dir,"mp-spdz/Player-Data")
+        """Clean the Player-Data folder in the MP-SPDZ folder of the code workspace."""
+        player_data_path = os.path.join(self.code_dir,"MP-SPDZ/Player-Data")
         shutil.rmtree(player_data_path,ignore_errors=True)
         os.mkdir(player_data_path)
 

@@ -45,8 +45,7 @@ prediction_labels.input_from(0)
 prediction_samples.input_from(0)
 
 # Prepare the model
-# from Compiler import ml
-from Compiler.script_utils import ml_modified as ml
+from Compiler import ml
 from Compiler.script_utils import output_utils as out_util
 from Compiler.script_utils import audit_function_utils as audit_utils
 from Compiler import library

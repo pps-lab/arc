@@ -34,7 +34,7 @@ remote:
   results_dir: "{{ '/cluster/scratch/' + euler_user + '/results' if cloud == 'euler' else '/home/ubuntu/results' }}"
 
 exp_code_dir: "{{ remote.dir }}/code"
-mpspdz_dir: "{{ exp_code_dir }}/mp-spdz"
+mpspdz_dir: "{{ exp_code_dir }}/MP-SPDZ"
 
 dataset_dir: "{{ exp_code_dir }}/input_data"
 
@@ -58,4 +58,3 @@ exp_base:
 
 # set the flag to attach an eni on a host type
 # attach_eni: True
-
