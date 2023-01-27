@@ -67,23 +67,28 @@ def print_predict_accuracy_model(model, test_samples, test_labels):
     library.print_ln("correct %s %s", acc, acc * cfix(0.0001))
 
 
-def print_predict_accuracy_opt(opt, batch_size, test_samples, test_labels):
-    guesses = opt.eval(test_samples, batch_size)
-    library.print_ln('guess %s', guesses.reveal_nested()[:3])
-    library.print_ln('truth %s', test_labels.reveal_nested()[:3])
+def reveal_accuracy(preds, labels):
 
-    @library.map_sum_opt(28, test_labels.sizes[0], [sint])
+    library.print_ln("Compute Accuracy:")
+
+    library.print_ln('  predictions %s', preds.reveal_nested()[:3])
+    library.print_ln('  labels %s', labels.reveal_nested()[:3])
+
+    @library.map_sum_opt(28, labels.sizes[0], [sint])
     def accuracy(i):
-        correct = sint((ml.argmax(guesses[i].reveal()) == ml.argmax(test_labels[i].reveal())))
+        # TODO [nku] why do we use reveal here?
+        correct = sint((ml.argmax(preds[i].reveal()) == ml.argmax(labels[i].reveal())))
         return correct
 
     acc = accuracy().reveal()
-    library.print_ln("correct %s %s", acc, acc * cfix(0.0001))
+    # TODO [nku] should actually compute the accuracy / size?
+    library.print_ln("  -> correct %s %s", acc, acc * cfix(0.0001))
 
-    return guesses
 
 
-def print_predict_accuracy_layers(layers, original_model_to_copy_weights_from, batch_size, test_samples, test_labels):
+def predict_on_model_copy(layers, original_model_to_copy_weights_from, batch_size, test_samples, test_labels):
+
+    # create a model copy -> to avoid problems  (maybe could use the input loader again?)
     evaluation_model = tf.keras.models.Sequential(layers)
     optim = tf.keras.optimizers.SGD()
     evaluation_model.compile(optimizer=optim)
@@ -95,7 +100,11 @@ def print_predict_accuracy_layers(layers, original_model_to_copy_weights_from, b
     evaluation_graph = evaluation_model.opt
     evaluation_graph.layers[0].X.address = test_samples.address
     evaluation_graph.layers[-1].Y.address = test_labels.address
-    return print_predict_accuracy_opt(evaluation_graph, batch_size, test_samples, test_labels)
+
+    guesses = evaluation_graph.eval(test_samples, batch_size)
+
+    return guesses
+
 
 
 def get_unlearn_data_for_party(data_owner, train_samples, train_labels, null_label, unlearn_size):
