@@ -1,18 +1,53 @@
 import Compiler.types as types
-import Compiler.library as library
+import Compiler.library as lib
 
 from Compiler import ml
-from Compiler.types import sint, cfix, sfix, MultiArray, MemValue
+from Compiler.types import sint, cfix, sfix, MultiArray, Array
+from Compiler.library import print_ln
+
+import operator
+from functools import reduce
+from Compiler import util
 
 tf = ml
 
+
+def comp_mod_zscore_threshold_matrix(matrix, threshold, debug):
+
+    threshold_matrix = MultiArray(list(matrix.sizes), matrix.value_type)
+
+    if debug:
+        mad_matrix =  MultiArray(list(matrix.sizes), matrix.value_type)
+    else:
+        mad_matrix = None
+
+    @lib.for_range(len(matrix))
+    def _(i):
+        raw_array = matrix.get_part(i, 1)[0]
+
+        score_array = mad_modified_z_score(raw_array)
+        #score_array = MAD_Score(loss_array)
+
+        #print_ln("    mad_array=%s", score_array.reveal())
+
+        @lib.for_range(score_array.length)
+        def _(j):
+            threshold_matrix[i][j] = score_array[j] > threshold
+
+        if debug:
+            mad_matrix.get_part(i, 1).assign(score_array)
+
+    return threshold_matrix, mad_matrix
+
+
 def compute_median(X_arr):
     """Compute the median of an Array.
-    
+
     This function computes the median of an array by sorting a copy of the provided array and either returns the arithmetic mean of the
-    middle elements of the sorted array (for an array of even length), or returns the middle element of the sorted array (for an array of 
-    odd length). The function expects that X_arr is an instance of Array() 
+    middle elements of the sorted array (for an array of even length), or returns the middle element of the sorted array (for an array of
+    odd length). The function expects that X_arr is an instance of Array()
     """
+
     X_copy = types.Array(X_arr.length, X_arr.value_type)
     X_copy.assign(X_arr)
     X_copy.sort()
@@ -23,58 +58,81 @@ def compute_median(X_arr):
         the_median = X_copy[X_copy.length//2]
     return the_median
 
-def compute_abs_diff_value(X_arr, the_val):
-    """This functions computes the absolute difference of each array entry of X_arr and the_val.
 
-    The function expects X_arr to be of type Array and to be not None.
-    It also expects the_val to be not None and an instance of a compatible value type of the value type of X_arr 
+
+
+def mad_modified_z_score(input_arr):
+
+    """Compute modified z-score based on Median Absolute Deviation (MAD).
+
+    There are two cases according to the following link to handle the case of MAD==0-
+    https://www.ibm.com/docs/el/cognos-analytics/11.1.0?topic=terms-modified-z-score
     """
-    X_copy = types.Array(X_arr.length, X_arr.value_type)
-    @library.for_range(start=0,stop=X_arr.length,step=1)
-    def _(i):
-        X_copy[i] = abs(X_arr[i] - the_val)
-    return X_copy
 
-# We expect an Array
-def MAD_Score(X_array):
-    """This function computes the MAD_Score of X_array.
-    
-    The function expects X_array to be not None and to be an instance of Array.
-    The MAD_Score is defined as: MAD_Score(X_arr) = (X_arr - median(X_Arr))/(median_absolute_difference(X_arr))
-    """
-    score_array = types.Array(X_array.length, X_array.value_type)
-    X_median = compute_median(X_array)
-    X_abs_diff = compute_abs_diff_value(X_array, X_median)
-    X_abs_median = compute_median(X_abs_diff)
-    
-    @library.for_range(start=0,stop=X_array.length,step=1)
-    def _(i):
-        score_array[i] = (X_array[i] - X_median)/(X_abs_median)
-    return score_array
+    n = input_arr.length
 
-    
+    input_arr_median = compute_median(input_arr)
+
+
+    # CASE 1: MAD!=0 -> (X-MEDIAN)/(1.486*MAD). 1.486*MAD
+    abs_deviations = input_arr.same_shape()
+    @lib.for_range(n)
+    def _(i):
+        abs_deviations[i] = abs(input_arr[i] - input_arr_median)
+
+    MAD = compute_median(abs_deviations)
+    consistency_constant = 1.486
+    denominator_mad = (consistency_constant * MAD)
+
+
+    # CASE 2: MAD==0: (X-MEDIAN)/(1.253314*MeanAD)
+    consistency_constant_mean = 1.253314
+    mean = sum(input_arr) / n
+
+    tmp = input_arr.same_shape()
+    @lib.for_range(n)
+    def _(i):
+        tmp[i] = abs(input_arr[i] - mean)
+    mean_abs_deviation = sum(tmp) / n
+    denominator_mad0 = consistency_constant_mean * mean_abs_deviation
+
+
+    # COMPUTE MODIFIED Z-SCORE (two versions depending whether MAD==0)
+    denominator = util.cond_swap(MAD==0, denominator_mad, denominator_mad0)[0]
+
+    output_arr = input_arr.same_shape()
+    @lib.for_range(n)
+    def _(i):
+        output_arr[i] = (input_arr[i] - input_arr_median) / denominator
+
+    #print_ln("input=%s    output=%s", input_arr.reveal(), output_arr.reveal())
+
+    return output_arr
+
+
+
 def print_predict_accuracy_model(model, test_samples, test_labels):
     guesses = model.predict(test_samples, batch_size=128)
-    library.print_ln('guess %s', guesses.reveal_nested()[:3])
-    library.print_ln('truth %s', test_labels.reveal_nested()[:3])
+    lib.print_ln('guess %s', guesses.reveal_nested()[:3])
+    lib.print_ln('truth %s', test_labels.reveal_nested()[:3])
 
-    @library.map_sum_opt(28, 10000, [sint])
+    @lib.map_sum_opt(28, 10000, [sint])
     def accuracy(i):
       correct = sint((ml.argmax(guesses[i].reveal()) == ml.argmax(test_labels[i].reveal())))
       return correct
 
     acc = accuracy().reveal()
-    library.print_ln("correct %s %s", acc, acc * cfix(0.0001))
+    lib.print_ln("correct %s %s", acc, acc * cfix(0.0001))
 
 
 def reveal_accuracy(preds, labels):
 
-    library.print_ln("Compute Accuracy:")
+    lib.print_ln("Compute Accuracy:")
 
-    library.print_ln('  predictions %s', preds.reveal_nested()[:3])
-    library.print_ln('  labels %s', labels.reveal_nested()[:3])
+    lib.print_ln('  predictions %s', preds.reveal_nested()[:3])
+    lib.print_ln('  labels %s', labels.reveal_nested()[:3])
 
-    @library.map_sum_opt(28, labels.sizes[0], [sint])
+    @lib.map_sum_opt(28, labels.sizes[0], [sint])
     def accuracy(i):
         # TODO [nku] why do we use reveal here?
         correct = sint((ml.argmax(preds[i].reveal()) == ml.argmax(labels[i].reveal())))
@@ -82,7 +140,7 @@ def reveal_accuracy(preds, labels):
 
     acc = accuracy().reveal()
     # TODO [nku] should actually compute the accuracy / size?
-    library.print_ln("  -> correct %s %s", acc, acc * cfix(0.0001))
+    lib.print_ln("  -> correct %s %s", acc, acc * cfix(0.0001))
 
 
 
@@ -107,15 +165,6 @@ def predict_on_model_copy(layers, original_model_to_copy_weights_from, batch_siz
 
 
 
-def get_unlearn_data_for_party(data_owner, train_samples, train_labels, null_label, unlearn_size):
-    unlearn_start_region = data_owner * unlearn_size
-
-    modified_training_labels = MultiArray([train_labels.sizes[0], 10], sfix)
-    modified_training_labels.assign(train_labels)
-    modified_training_labels.get_part(unlearn_start_region, unlearn_size).assign(null_label)
-
-    return train_samples, modified_training_labels
-
 
 def compute_loss(X, Y):
     n_classes = 10
@@ -124,7 +173,7 @@ def compute_loss(X, Y):
     loss_array = MultiArray([n_samples, n_data_owners], sfix)
 
     # for sample_id in range(n_samples):
-    @library.for_range(start=0, stop=n_samples, step=1)
+    @lib.for_range(start=0, stop=n_samples, step=1)
     def _(sample_id):
         for model_id in range(n_data_owners):
             # sum_holder = MemValue(sfix(0))
@@ -136,13 +185,13 @@ def compute_loss(X, Y):
             # # sum_holder.write(-(sum_holder.read()))
             loss_array[sample_id][model_id] = -sum_holder
 
-    # @library.for_range(start=0, stop=n_samples, step=1)
+    # @lib.for_range(start=0, stop=n_samples, step=1)
     # def _(sample_id):
-    #     @library.for_range(start=0, stop=n_data_owners, step=1)
+    #     @lib.for_range(start=0, stop=n_data_owners, step=1)
     #     def _(model_id):
     #         sum_holder = MemValue(sfix(0))
     #
-    #         @library.for_range(start=0, stop=n_classes, step=1)
+    #         @lib.for_range(start=0, stop=n_classes, step=1)
     #         def _(out_class_id):
     #             tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
     #             sum_holder.write(sum_holder.read() + tmp)
@@ -150,3 +199,64 @@ def compute_loss(X, Y):
     #         loss_array[sample_id][model_id] = -sum_holder.read()
 
     return loss_array
+
+
+
+# TODO [nku] check euclidean distance function!
+def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
+    """
+
+    Following: https://nenadmarkus.com/p/all-pairs-euclidean/
+
+    Args:
+        A (MultiArray): P x M
+        B (MultiArray): R x M
+
+    Returns:
+        Pairwise euclidean distances between vectors in A and vectors in B
+        (MultiArray) P x R
+    """
+
+
+    aTa = Array(len(A), A.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(A))
+    def f(i):
+        aTa[i] = sum(A[i] * A[i])
+
+    print_ln("  aTa done")
+
+    #print_ln("aTa=%s", aTa.reveal())
+    print(f"aTa={aTa.length}")
+
+    bTb = Array(len(B) , B.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(B))
+    def f(i):
+        bTb[i] = sum(B[i] * B[i])
+
+    print_ln("  bTb done")
+
+    #print_ln("bTb=%s", bTb.reveal())
+    print(f"bTb={bTb.length}")
+
+    L2 = A.dot(B.transpose())
+    print(f"L2={L2.sizes}")
+
+    print_ln("  AB done")
+
+    @lib.for_range_opt_multithread(n_threads, len(A))
+    def f(i):
+        L2[i] = L2[i] * -2 + bTb + aTa[i]
+
+    return L2
+
+
+def flatten(M: MultiArray):
+    """Preserve the first dimension but flatten all remaining dimensions
+
+    Args:
+        M (MultiArray): N x R1 x R2 ... x RN
+    Returns:
+        2D MultiArray: N x (R1 * R2 ... * RN)
+    """
+    part_size = reduce(operator.mul, M.sizes[1:])
+    return MultiArray([M.sizes[0], part_size], M.value_type, address=M.address)

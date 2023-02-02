@@ -8,49 +8,39 @@ from Compiler import library
 
 from Compiler.script_utils.audit import owner_unlearn
 
+from Compiler.script_utils import config
+
 program.options_from_args()
 program.use_trunc_pr = True
 program.use_edabits = True
 
-print(program.args)
 
-params = output_utils.parse_kv_args(program.args)
-
-DEBUG_AUDIT = params.get("debug", False)
-
-if DEBUG_AUDIT:
-    print(f"Compiling in Debug Mode...")
-else:
-    print(f"Compiling in Non Debug Mode...")
+class AuditConfig(config.BaseAuditModel):
+    learning_rate: float = 0.01 # TODO
+    mod_zscore_threshold: float = 2.5
+    n_unlearn_epochs: int = 1
 
 
-n_thread_num = int(params.get('n_num_threads', 16))
+cfg = config.from_program_args(program.args, AuditConfig)
 
+ml.set_n_threads(cfg.n_threads)
 
+input_loader = data.get_input_loader(dataset=cfg.dataset, debug=cfg.debug, emulate=cfg.emulate)
 
-input_loader = data.get_input_loader(params, debug=DEBUG_AUDIT)
+library.start_timer(timer_id=100)
 
-
-# TODO [nku] this is probably not properly done in mnist case
-ml.set_n_threads(n_thread_num)  # suspect ?
+result = owner_unlearn.audit(input_loader, config=cfg, debug=cfg.debug)
 
 
 # TODO: should probably think about the output here -> can we define a structured output form that
 #       applies to all audit functions
 #       maybe could distinguish between "reveal" output vs "debugging output"
-
-library.start_timer(timer_id=100)
-
-result = owner_unlearn.audit(input_loader, params, debug=DEBUG_AUDIT)
-
-
 # Party Level: [{"party": 3, "score": 0.9}], also []
-
 # Sample Level: [{"party": 3, "sample_id": 1, "score": 0.7}]
-
 # Feature Level: [{"feature_id": "col1", "score": 0.9}]  -> this would be more complex for some feature audit methods
 
 library.stop_timer(timer_id=100)
+
 
 for k, v in result.items():
     output_utils.output_value(name=k, value=v, repeat=False)

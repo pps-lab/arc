@@ -4,7 +4,7 @@ script?=audit_owner_unlearn
 
 MPSPDZFLAGS=-R 64
 
-AUDITARGS=dataset__mnist
+AUDITARGS:= dataset__mnist emulate__True
 
 
 LINK=$(PWD)/MP-SPDZ/Programs/Source/$(script).mpc
@@ -26,5 +26,5 @@ compile: simlink
 emulate: compile
 	cd MP-SPDZ && ./emulate.x $(script)-$(subst $e ,-,$(AUDITARGS))-debug__False
 
-emulate-debug: compile
+emulate-debug: compile-debug
 	cd MP-SPDZ && ./emulate.x $(script)-$(subst $e ,-,$(AUDITARGS))-debug__True
