@@ -1,4 +1,4 @@
-"""This module defines the Configuration model. 
+"""This module defines the Configuration model.
 It uses pydantic to parse the config.json file.
 
 The module defines the following functionality:
@@ -10,7 +10,7 @@ The module defines the following functionality:
 - class ArgumentLineConfig:
     Defines the model for the configuration received via the command line
 - class JsonMpcConfing:
-    Defines the model for the MPC-specific configuration received via the config.json file 
+    Defines the model for the MPC-specific configuration received via the config.json file
 - class JsonConfigModel:
     Defines the relevant model for the configuration received via the config.json file
 
@@ -38,7 +38,7 @@ class ProtocolChoices(enum.Enum):
 
 class TaskConfig(pydantic.BaseModel):
     """Defines the Configuration for a single Experiment Run
-    
+
     Attributes
     ----------
     - player_id : int
@@ -57,8 +57,6 @@ class TaskConfig(pydantic.BaseModel):
         The list of 0-based positional arguments under which the given script should be compiled with
     - protocol_setup : ProtocolChoices
         The kind of MPC protocol that should be used in the Experiment
-    - input_file_name : str
-        The name of the input file container that contains the input files for the given experiment.
     - result_dir : str
         The path to the directory which contains the results folder
     """
@@ -71,14 +69,13 @@ class TaskConfig(pydantic.BaseModel):
     script_name: str
     script_args: typing.Dict[str, object]
     protocol_setup: ProtocolChoices
-    input_file_name: str
     result_dir: str
     skip_compile: bool = False
     compiler_args: list = None
 
 class ArgumentLineConfig(pydantic.BaseModel):
     """Defines the model for the configuration received via the command line
-    
+
     Attributes
     ----------
     - player_id : int
@@ -91,7 +88,7 @@ class ArgumentLineConfig(pydantic.BaseModel):
 
 class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     """Defines the model for the MPC-specific configuration received via the config.json file
-    
+
     Attributes
     ----------
     - player_count : int
@@ -106,8 +103,6 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
         The list of 0-based positional arguments under which the given script should be compiled with
     - protocol_setup : ProtocolChoices
         The kind of MPC protocol that should be used in the Experiment
-    - input_file_name : str
-        The name of the input file container that contains the input files for the given experiment.
     """
     player_count: int
     player_0_hostname: str
@@ -115,7 +110,6 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     script_name: str
     script_args: typing.Dict[str, object]
     protocol_setup: ProtocolChoices
-    input_file_name: str
     skip_compile: bool = False
     compiler_args: list[str] = None
 
@@ -128,7 +122,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
 
 def parse_json_config(config_path):
     """Parses the config.json file found under the given config_path and returns a JsonConfigModel object
-    
+
     Parameters
     ----------
     - config_path : str
@@ -137,10 +131,10 @@ def parse_json_config(config_path):
     config_obj = JsonConfigModel.parse_file(config_path)
     return config_obj
 
-def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int, 
+def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
     sleep_time: float, result_dir: str):
     """Builds the TaskConfig object that contains all configuration information. It builds this object from the JsonConfigModel stored in json_config_obj, the player_number, the sleep_time and the result_dir arguments.
-    
+
     Parameters
     ----------
     - json_cofig_obj : JsonConfigModel
@@ -161,7 +155,6 @@ def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
         protocol_setup=json_cofig_obj.mpc.protocol_setup,
         script_args=json_cofig_obj.mpc.script_args,
         script_name=json_cofig_obj.mpc.script_name,
-        input_file_name=json_cofig_obj.mpc.input_file_name,
         result_dir=result_dir,
         skip_compile=json_cofig_obj.mpc.skip_compile,
         compiler_args=json_cofig_obj.mpc.compiler_args
