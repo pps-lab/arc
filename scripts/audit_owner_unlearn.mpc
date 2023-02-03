@@ -25,7 +25,7 @@ cfg = config.from_program_args(program.args, AuditConfig)
 
 ml.set_n_threads(cfg.n_threads)
 
-input_loader = data.get_input_loader(dataset=cfg.dataset, batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate)
+input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate)
 
 library.start_timer(timer_id=100)
 

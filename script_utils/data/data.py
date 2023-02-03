@@ -5,7 +5,7 @@ import ruamel.yaml
 import glob, os, shutil
 
 
-def get_input_loader(dataset, batch_size, debug, emulate):
+def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate):
 
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
 
@@ -13,9 +13,9 @@ def get_input_loader(dataset, batch_size, debug, emulate):
 
 
     if dataset.lower().startswith("mnist"):
-        il = mnist.MnistInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, batch_size=batch_size, debug=debug, emulate=emulate)
+        il = mnist.MnistInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate)
     elif dataset.lower().startswith("cifar"):
-        il = cifar.CifarInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, batch_size=batch_size, debug=debug, emulate=emulate)
+        il = cifar.CifarInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il

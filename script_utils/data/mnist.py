@@ -8,7 +8,7 @@ from typing import List
 
 class MnistInputLoader(AbstractInputLoader):
 
-    def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, batch_size: int, emulate: bool, debug: bool):
+    def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
         """The first part of the input of every party is their training set.
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples
@@ -30,7 +30,7 @@ class MnistInputLoader(AbstractInputLoader):
             self._test_samples = MultiArray([n_test_samples, 28, 28], sfix)
             self._test_labels = MultiArray([n_test_samples, 10], sint)
 
-        self._load_input_data(n_train_samples=n_train_samples, batch_size=batch_size, emulate=emulate, debug=debug)
+        self._load_input_data(n_train_samples=n_train_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug)
 
 
     def model_latent_space_layer(self):

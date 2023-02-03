@@ -56,7 +56,7 @@ class AbstractInputLoader(ABC):
         return len(self._audit_trigger_samples)
 
 
-    def _load_input_data(self, n_train_samples: List[int], batch_size: int, emulate: bool, debug: bool):
+    def _load_input_data(self, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
 
         self._batch_size = batch_size
         self._train_index = {}
@@ -97,6 +97,10 @@ class AbstractInputLoader(ABC):
                 print_ln("  loading %s trigger samples...", self.audit_trigger_size())
 
                 self._audit_trigger_samples.input_from(0)
+
+                if audit_trigger_idx is not None:
+                    self._audit_trigger_mislabels = self._audit_trigger_mislabels.get_part(audit_trigger_idx, 1)
+                    self._audit_trigger_samples = self._audit_trigger_samples.get_part(audit_trigger_idx, 1)
 
                 # first build model and then set weights from input
                 self._model = self._load_model(input_shape=self._train_samples.sizes, batch_size=batch_size)

@@ -26,6 +26,8 @@ class BaseAuditModel(BaseModel):
     batch_size: int = 128
     n_threads: int = 8
 
+    audit_trigger_idx: int = None
+
     class Config:
         extra = "allow"
         smart_union = True
