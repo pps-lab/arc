@@ -43,7 +43,7 @@ class CifarInputLoader(AbstractInputLoader):
             # 1st Conv Layer
             ml.keras.layers.Conv2D(filters=96, input_shape=(32,32,3), kernel_size=(7,7), strides=(2,2), padding=2, activation='relu'),
             ml.keras.layers.MaxPooling2D(pool_size=3, strides=(2,2)),
-            ml.keras.layers.BatchNormalization(),
+            #ml.keras.layers.BatchNormalization(),
 
             # 2nd Conv Layer
             ml.keras.layers.Conv2D(filters=256, kernel_size=(5, 5), strides=(1,1), padding=2, activation='relu'),
@@ -63,7 +63,7 @@ class CifarInputLoader(AbstractInputLoader):
             ml.keras.layers.Flatten(),
 
             # 1st fully connected
-            ml.keras.layers.Dense(3*3*256, activation='relu'),
+            ml.keras.layers.Dense(256, activation='relu'),
             #tf.keras.layers.Dropout(0.5),
 
             # 2nd fully connected

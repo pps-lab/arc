@@ -1,5 +1,0 @@
-
-
-- name: Download Mnist dataset
-  ansible.builtin.shell:
-    cmd: "aws s3 sync s3://{{ input_bucket_name }} {{ dataset_dir }}"

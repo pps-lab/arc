@@ -12,20 +12,17 @@ This module provides the following functionalities:
 - function move_to_experiment_dir(task_config : config_def.TaskConfig):
     Change the current working directory to the directory containing the code of the evaluation framework
 
-- function process_input(task_config: config_def.TaskConfig):
-    Executes the Input processing phase using the InputProcessor in the input_file_processor.py module
-
 - function compile_script_with_args(task_connfig: config_def.TaskConfig):
-    Executes the Script compilation phase of the experiment. 
+    Executes the Script compilation phase of the experiment.
 
 - function run_script_with_args(task_config: config_def.TaskConfig, output_prefix: str):
     Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output
 
-- function capture_output(task_config: config_def.TaskConfig, output_prefix: str): 
+- function capture_output(task_config: config_def.TaskConfig, output_prefix: str):
     Captures the raw textual output using the OutputCapture class in the 'output_capture.py' module with output_prefix and moves the results to the results folders given in the task configuration.
 
 - function clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
-    Cleans the workspace from the output files with the prefix output_prefix and the data 
+    Cleans the workspace from the output files with the prefix output_prefix and the data
     stored in the Player-Data and Player-Prep-Data folders.
 
 - function cli(player_number,sleep_time):
@@ -34,7 +31,6 @@ This module provides the following functionalities:
 """
 import python_utils.config_def as config_def
 import python_utils.runner_defs as runner_defs
-import python_utils.input_file_processor as ifp
 import python_utils.output_capture as out_cap
 import python_utils.cleaner as clr
 import click
@@ -53,7 +49,7 @@ def generate_random_prefix() -> str :
 def prepare_config(player_number,sleep_time):
     """Exceutes the config model construction step."""
     result_dir = os.getcwd()
-    json_config_path = os.path.join(result_dir,DEFAULT_CONFIG_NAME) 
+    json_config_path = os.path.join(result_dir,DEFAULT_CONFIG_NAME)
     json_config_obj = config_def.parse_json_config(config_path=json_config_path)
     task_config = config_def.build_task_config(
         json_cofig_obj=json_config_obj,
@@ -66,11 +62,6 @@ def prepare_config(player_number,sleep_time):
 def move_to_experiment_dir(task_config: config_def.TaskConfig):
     """Change the current working directory to the directory containing the code of the evaluation framework"""
     os.chdir(task_config.abs_path_to_code_dir)
-
-def process_input(task_config: config_def.TaskConfig):
-    """Change the current working directory to the directory containing the code of the evaluation framework"""
-    file_processor = ifp.InputFileProcessor(task_config.input_file_name)
-    file_processor.process_input()
 
 def compile_script_with_args(task_config: config_def.TaskConfig):
     """Executes the Script compilation phase of the experiment."""
@@ -99,7 +90,7 @@ def run_script_with_args(task_config: config_def.TaskConfig, output_prefix: str)
     )
     script_runner_obj.run()
 
-def capture_output(task_config: config_def.TaskConfig, 
+def capture_output(task_config: config_def.TaskConfig,
     output_prefix: str):
     """Captures the raw textual output using the OutputCapture class in the 'output_capture.py' module with output_prefix and moves the results to the results folders given in the task configuration."""
     result_dir_path = os.path.join(task_config.result_dir,DEFAULT_RESULT_FOLDER)
@@ -109,14 +100,16 @@ def capture_output(task_config: config_def.TaskConfig,
     out_cap_obj.capture_output()
 
 def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
-    """Cleans the workspace from the output files with the prefix output_prefix and the data 
+    """Cleans the workspace from the output files with the prefix output_prefix and the data
     stored in the Player-Data and Player-Prep-Data folders."""
     cleaner_obj = clr.Cleaner(code_dir=task_config.abs_path_to_code_dir,
         output_prefix=output_prefix)
     cleaner_obj.clean()
 
-    
 
+
+
+# TODO [nku] can we replace this with a make file?
 
 @click.command()
 @click.option("--player-number","player_number",required=True,
@@ -131,7 +124,6 @@ def cli(player_number,sleep_time):
         sleep_time=sleep_time
     )
     move_to_experiment_dir(task_config=task_config)
-    process_input(task_config=task_config)
     compile_script_with_args(task_config=task_config)
     output_prefix=generate_random_prefix()
     run_script_with_args(task_config=task_config,
@@ -139,7 +131,7 @@ def cli(player_number,sleep_time):
     capture_output(task_config=task_config,
         output_prefix=output_prefix)
     clean_workspace(task_config=task_config,output_prefix=output_prefix)
-    
-    
+
+
 if __name__ == "__main__":
     cli()

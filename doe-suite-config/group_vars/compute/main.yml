@@ -7,8 +7,8 @@ ec2_volume_size: 100
 #ec2_image_id:  ami-0419cab1fa37ab915 # original ami
 #ec2_volume_snapshot: snap-0b47b340fc299a25b
 
-ec2_image_id: ami-01e56baf86ddd0b13	 # precompiled ami
-ec2_volume_snapshot: snap-02b216094602e4cd7
+ec2_image_id: ami-05401181765ee24c9	 # precompiled ami
+ec2_volume_snapshot: snap-024cfffc9d4b0532d
 
 instance_role: EC2WithS3Role
 

@@ -1,4 +1,5 @@
 from Compiler.script_utils.data import mnist
+from Compiler.script_utils.data import cifar
 
 import ruamel.yaml
 import glob, os, shutil
@@ -11,10 +12,10 @@ def get_input_loader(dataset, batch_size, debug, emulate):
     _prepare_dataset(dataset, emulate)
 
 
-    if dataset.startswith("mnist"):
+    if dataset.lower().startswith("mnist"):
         il = mnist.MnistInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, batch_size=batch_size, debug=debug, emulate=emulate)
-    elif dataset.startswith("cifar"):
-        il = mnist.CifarInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, batch_size=batch_size, debug=debug, emulate=emulate)
+    elif dataset.lower().startswith("cifar"):
+        il = cifar.CifarInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, batch_size=batch_size, debug=debug, emulate=emulate)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
