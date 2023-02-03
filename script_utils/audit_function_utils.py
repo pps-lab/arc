@@ -203,6 +203,7 @@ def compute_loss(X, Y):
 
 
 # TODO [nku] check euclidean distance function!
+# TODO [nku] mention that we don't take the square root
 def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
     """
 
@@ -216,6 +217,8 @@ def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
         Pairwise euclidean distances between vectors in A and vectors in B
         (MultiArray) P x R
     """
+
+
 
 
     aTa = Array(len(A), A.value_type)

@@ -4,19 +4,17 @@ import ruamel.yaml
 import glob, os, shutil
 
 
-def get_input_loader(dataset, debug, emulate):
+def get_input_loader(dataset, batch_size, debug, emulate):
 
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
-
-    # TODO [nku] needs to come from config
-    batch_size = 128
-
 
     _prepare_dataset(dataset, emulate)
 
 
-    if dataset == "mnist":
+    if dataset.startswith("mnist"):
         il = mnist.MnistInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, batch_size=batch_size, debug=debug, emulate=emulate)
+    elif dataset.startswith("cifar"):
+        il = mnist.CifarInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, batch_size=batch_size, debug=debug, emulate=emulate)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il

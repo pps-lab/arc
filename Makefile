@@ -1,19 +1,27 @@
 
 
 script?=audit_owner_unlearn
+dataset?=mnist_6k_4party
 
 MPSPDZFLAGS=-R 64
 
-AUDITARGS:= dataset__mnist emulate__True
+AUDITARGS:= dataset__$(dataset) emulate__True
 
+
+LINK_UTILS=$(PWD)/MP-SPDZ/Compiler/script_utils
 
 LINK=$(PWD)/MP-SPDZ/Programs/Source/$(script).mpc
 
-
 all: emulate
+
+
+setup-mpspdz:
+	cd MP-SPDZ && $(MAKE) -j 8 tldr
+	cd MP-SPDZ && make emulate.x
 
 # only if simlink does not exist, create it
 simlink:
+	[ -L $(LINK_UTILS) ] && [ -e $(LINK_UTILS) ] || ln -s  $(PWD)/script_utils $(LINK_UTILS)
 	[ -L $(LINK) ] && [ -e $(LINK) ] || ln -s  $(PWD)/scripts/$(script).mpc $(LINK)
 
 
