@@ -75,7 +75,7 @@ def audit(input_loader, config, debug: bool):
         # restore the initial variable state (unless first)
         @lib.if_(data_owner_id > 0)
         def _():
-            for i, (model_var, initial_var) in  enumerate(zip(model.trainable_variables, backup_variables, strict=True)):
+            for i, (model_var, initial_var) in  enumerate(zip(model.trainable_variables, backup_variables)): #, strict=True -> only works for pytgon 3.10
 
                 print_ln("  restoring trainable_variable %s", i)
 
