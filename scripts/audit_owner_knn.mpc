@@ -13,6 +13,7 @@ from Compiler.script_utils import config
 program.options_from_args()
 program.use_trunc_pr = True
 program.use_edabits = True
+program.use_split(4) # TODO: try to play around with this
 
 
 
