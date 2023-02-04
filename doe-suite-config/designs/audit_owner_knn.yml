@@ -1,6 +1,6 @@
 $SUITE_VARS$:
   sleep_time: 2.0
-  _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils"
+  _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
 
@@ -31,7 +31,9 @@ audit:
         emulate: False
         dataset: "MNIST_Trigger_mal_10_parties_4" # TODO [nku] here could select other datasets
         batch_size: 128
-        n_threads: 16
+        n_threads: 32
+
+        audit_trigger_idx: 0 # select single audit trigger
 
         # knn specific
         K: 25

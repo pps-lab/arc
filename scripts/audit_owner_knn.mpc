@@ -10,10 +10,6 @@ from Compiler.script_utils.audit import knn
 
 from Compiler.script_utils import config
 
-program.options_from_args()
-program.use_trunc_pr = True
-program.use_edabits = True
-program.use_split(4) # TODO: try to play around with this
 
 
 
@@ -21,8 +17,13 @@ class AuditConfig(config.BaseAuditModel):
     K: int = 25 # knn K
     mod_zscore_threshold: float = 2.5
 
-
+program.options_from_args()
 cfg = config.from_program_args(program.args, AuditConfig)
+
+if not cfg.emulate:
+    program.use_trunc_pr = True
+    program.use_edabits = True
+    program.use_split(4)
 
 ml.set_n_threads(cfg.n_threads)
 
