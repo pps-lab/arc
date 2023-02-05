@@ -163,7 +163,7 @@ class CompilerArguments(enum.Enum):
     """Provides a named mapping between the concrete MPC protocol VM runners and required compiler flags for MPC script compilation for the given MPC protocol."""
     EMULATE_X = ['-R', '64']
     REPLICATED_RING_PARTY_X = ['-R', "64"]
-    REP4_RING_PARTY_X = ['-R', "64", '-Z', '4', '-C']  # edabits  -> need -C for vectorization
+    REP4_RING_PARTY_X = ['-R', "64", '-Z', '4' ] # TODO [nku] maybe try to bring back, '-C']  # edabits  -> need -C for vectorization
     BRAIN_PARTY_X = ['-R', '64']
     REPLICATED_BIN_PARTY_X = ['-B', '64']
     PS_REP_BIN_PARTY_X = ['-B', '64']
