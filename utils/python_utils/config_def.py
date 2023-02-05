@@ -70,8 +70,15 @@ class TaskConfig(pydantic.BaseModel):
     script_args: typing.Dict[str, object]
     protocol_setup: ProtocolChoices
     result_dir: str
-    skip_compile: bool = False
+    stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
+
     compiler_args: list = None
+
+    @pydantic.validator('stage')
+    def convert_to_list(cls, v):
+        if not isinstance(v, list):
+            v = [v]
+        return v
 
 class ArgumentLineConfig(pydantic.BaseModel):
     """Defines the model for the configuration received via the command line
@@ -110,7 +117,8 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     script_name: str
     script_args: typing.Dict[str, object]
     protocol_setup: ProtocolChoices
-    skip_compile: bool = False
+    stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
+
     compiler_args: list[str] = None
 
 
@@ -156,7 +164,7 @@ def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
         script_args=json_cofig_obj.mpc.script_args,
         script_name=json_cofig_obj.mpc.script_name,
         result_dir=result_dir,
-        skip_compile=json_cofig_obj.mpc.skip_compile,
+        stage=json_cofig_obj.mpc.stage,
         compiler_args=json_cofig_obj.mpc.compiler_args
     )
     return conf_obj

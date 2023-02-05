@@ -65,8 +65,6 @@ def move_to_experiment_dir(task_config: config_def.TaskConfig):
 
 def compile_script_with_args(task_config: config_def.TaskConfig):
     """Executes the Script compilation phase of the experiment."""
-    if task_config.skip_compile:
-        return
     compiler_args = task_config.compiler_args if task_config.compiler_args is not None else \
         runner_defs.CompilerArguments[task_config.protocol_setup.name].value
     comp_runner = runner_defs.CompilerRunner(
@@ -124,13 +122,16 @@ def cli(player_number,sleep_time):
         sleep_time=sleep_time
     )
     move_to_experiment_dir(task_config=task_config)
-    compile_script_with_args(task_config=task_config)
-    output_prefix=generate_random_prefix()
-    run_script_with_args(task_config=task_config,
-        output_prefix=output_prefix)
-    capture_output(task_config=task_config,
-        output_prefix=output_prefix)
-    clean_workspace(task_config=task_config,output_prefix=output_prefix)
+    if "compile" in task_config.stage:
+        compile_script_with_args(task_config=task_config)
+
+    if "run" in task_config.stage:
+        output_prefix=generate_random_prefix()
+        run_script_with_args(task_config=task_config,
+            output_prefix=output_prefix)
+        capture_output(task_config=task_config,
+            output_prefix=output_prefix)
+        clean_workspace(task_config=task_config,output_prefix=output_prefix)
 
 
 if __name__ == "__main__":
