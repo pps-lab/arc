@@ -134,12 +134,10 @@ def reveal_accuracy(preds, labels):
 
     @lib.map_sum_opt(28, labels.sizes[0], [sint])
     def accuracy(i):
-        # TODO [nku] why do we use reveal here?
         correct = sint((ml.argmax(preds[i].reveal()) == ml.argmax(labels[i].reveal())))
         return correct
 
     acc = accuracy().reveal()
-    # TODO [nku] should actually compute the accuracy / size?
     lib.print_ln("  -> correct %s %s", acc, acc * cfix(0.0001))
 
 
@@ -202,10 +200,9 @@ def compute_loss(X, Y):
 
 
 
-# TODO [nku] check euclidean distance function!
-# TODO [nku] mention that we don't take the square root
 def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
     """
+    Computes the square of the euclidean distance
 
     Following: https://nenadmarkus.com/p/all-pairs-euclidean/
 
@@ -218,9 +215,6 @@ def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
         (MultiArray) P x R
     """
 
-
-
-
     aTa = Array(len(A), A.value_type)
     @lib.for_range_multithread(n_threads, 1, len(A))
     def f(i):
@@ -228,7 +222,6 @@ def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
 
     print_ln("  aTa done")
 
-    #print_ln("aTa=%s", aTa.reveal())
     print(f"aTa={aTa.length}")
 
     bTb = Array(len(B) , B.value_type)
@@ -238,7 +231,6 @@ def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
 
     print_ln("  bTb done")
 
-    #print_ln("bTb=%s", bTb.reveal())
     print(f"bTb={bTb.length}")
 
     L2 = A.dot(B.transpose())

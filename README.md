@@ -5,6 +5,18 @@
 This repository contains the evaluation framework and the auditing function prototype
 developed by Alexander Mandt as part of his Bachelor Thesis *Cryptographic Auditing in ML*.
 
+
+
+
+After setting up MP-SPDZ (with emulator), we can use the following commands to compile and emulate:
+```
+make emulate
+
+make emulate-debug
+```
+
+
+
 ## Background
 
 The evaluation framework builds upon [MP-SPDZ](https://github.com/data61/MP-SPDZ/tree/master) and the

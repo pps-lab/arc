@@ -6,6 +6,8 @@ from Compiler.script_utils.data import AbstractInputLoader
 
 from typing import List
 
+
+# TODO [hly] The Cifar dataset / model is not loaded properly, as we cannot achieve the expected accuracies.
 class CifarInputLoader(AbstractInputLoader):
 
     def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):

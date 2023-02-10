@@ -5,6 +5,13 @@
     msg: "-> base only"
   tags: [print_action]
 
+- name: Increase max number of possible files
+  become: True
+  ansible.posix.sysctl:
+    name: fs.file-max
+    value: '1048576' # increase number of files open
+    state: present
+
 - name: Generate SSL Certificates for 20 players locally if not exist yet # TODO: Does this expire? does this work in parallel?
   delegate_to: localhost
   ansible.builtin.shell:
@@ -154,7 +161,7 @@
   when: aws_cli_stat.stat.exists == False
   block:
     - name: Install packages
-      become: yes
+      become: True
       apt:
         pkg:
           - zip
@@ -172,7 +179,7 @@
         remote_src: yes
 
     - name: Install awscli via shell
-      become: yes
+      become: True
       ansible.builtin.shell:
         chdir: /tmp
         cmd: ./aws/install
