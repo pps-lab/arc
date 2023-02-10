@@ -1,0 +1,6 @@
+
+
+netem_delay: "40ms" # rtt -> 2* => 80ms
+
+
+netem_rate: "2gbit"

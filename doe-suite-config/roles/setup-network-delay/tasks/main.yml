@@ -1,0 +1,30 @@
+# According to: https://netbeez.net/blog/how-to-use-the-linux-traffic-control/
+
+
+- name: Install package containing traffic control (tc)
+  become: True
+  ansible.builtin.apt:
+    pkg:
+      - iproute2
+      - iperf
+    state: present
+    update_cache: yes
+
+- name: Delete all rules
+  become: True
+  ignore_errors: True  # -> fails if now rules exist
+  ansible.builtin.shell: tc qdisc del dev {{ ansible_default_ipv4.interface }} root
+
+- name: Simulating Network
+  debug:
+    msg: "Simulating Network with  (i) Latency: delay={{ netem_delay }}" #" (ii) Bandwidth Limit:  rate={{ netem_rate }}"
+
+  tags: [print_action]
+
+
+# https://man7.org/linux/man-pages/man8/tc-netem.8.html
+- name: Add constant network delay to an interface
+  become: True
+  ansible.builtin.shell: tc qdisc add dev {{ ansible_default_ipv4.interface }} root netem delay {{ netem_delay }} rate {{ netem_rate }}
+
+  # NOTE: 40ms -> For ping this introduces 80ms delay in rtt -> 40ms from each side
