@@ -1,8 +1,11 @@
 $SUITE_VARS$:
-  sleep_time: 2.0
+  sleep_time: 2.0 # TODO [hly] can remove (also from experiment runner) as it does not have any effect
   _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
+
+
+# TODO [hly]: The knn algorithm is still buggy. The l2 distance should be fine but either in the model/data loading or afterward there is a problem
 
 audit:
   n_repetitions: 1
@@ -12,6 +15,7 @@ audit:
       check_status: True
       init_roles:
         - setup-base
+        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
         - download-dataset
       $CMD$:
       - main: "[% my_run.cmd | replace('<PLAYER-ID>', 0) %]"
@@ -21,26 +25,30 @@ audit:
 
   base_experiment:
     mpc:
-      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`compute`].private_dns_name') | first %]"
+      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`compute`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
       player_count: 4
       protocol_setup: "rep4-ring-party"
+      compiler_args: ['-R', "64", '-Z', '4', '-C', '--budget', '1000000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+
       script_name: "audit_owner_knn"
       script_args:
-        debug: True
+        debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
-        dataset: "MNIST_Trigger_mal_10_parties_4" # TODO [nku] here could select other datasets
-        batch_size: 128
-        n_threads: 32
+        dataset: "MNIST_Trigger_mal_10_parties_4" # TODO [hly] here would switch between datasets
 
-        audit_trigger_idx: 0 # select single audit trigger
+        # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
+        batch_size: 1024 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+        n_threads: 64 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+
+        audit_trigger_idx: 0 # select single audit trigger (from all)
 
         # knn specific
         K: 25
         mod_zscore_threshold: 2.5
 
-#     skip_compile: True
-
+      stage: # "compile" in run and then in next run "run"
+        $FACTOR$: [compile, run] # ensure that this is last factor
 
 $ETL$:
   extract_mpspdz:
