@@ -5,6 +5,20 @@
     msg: "-> base only"
   tags: [print_action]
 
+- name: Add or modify nofile soft limit
+  become: True
+  community.general.pam_limits:
+    domain: ubuntu
+    limit_type: soft
+    limit_item: nofile
+    value: 1048576
+
+- name: reload
+  become: True
+  ansible.builtin.shell:
+    cmd: sysctl -p
+
+
 - name: Generate SSL Certificates for 20 players locally if not exist yet # TODO: Does this expire? does this work in parallel?
   delegate_to: localhost
   ansible.builtin.shell:
@@ -154,7 +168,7 @@
   when: aws_cli_stat.stat.exists == False
   block:
     - name: Install packages
-      become: yes
+      become: True
       apt:
         pkg:
           - zip
@@ -172,7 +186,7 @@
         remote_src: yes
 
     - name: Install awscli via shell
-      become: yes
+      become: True
       ansible.builtin.shell:
         chdir: /tmp
         cmd: ./aws/install

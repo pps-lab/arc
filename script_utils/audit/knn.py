@@ -11,7 +11,7 @@ from Compiler import types
 from Compiler.script_utils import audit_function_utils as audit_utils
 
 
-
+# TODO [hly]: Something is still buggy here. The l2 distance squared is checked, but the problem may be in the forward pass to get the latent space or then later after computing the distances
 
 def audit(input_loader, config, debug: bool):
 

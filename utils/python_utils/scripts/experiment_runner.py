@@ -105,9 +105,7 @@ def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
     cleaner_obj.clean()
 
 
-
-
-# TODO [nku] can we replace this with a make file?
+# TODO: I think this could be simplified with e.g., a makefile?
 
 @click.command()
 @click.option("--player-number","player_number",required=True,
