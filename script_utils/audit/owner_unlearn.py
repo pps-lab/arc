@@ -70,7 +70,6 @@ def audit(input_loader, config, debug: bool):
         n_sample = n_audit_triggers_per_party[data_owner_id]
 
         # modify the labels of the unlearn party on the label copy
-        # WEIRD BUG HERE IS IT MAYBE THE UDPATE?
         train_labels_copy.get_part(start, n_sample).assign_all(null_label)
 
         # restore the initial variable state (unless first)
