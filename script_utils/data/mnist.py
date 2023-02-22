@@ -4,11 +4,14 @@ from Compiler.library import print_ln
 
 from Compiler.script_utils.data import AbstractInputLoader
 
+import torch.nn as nn
+import torch
+
 from typing import List
 
 class MnistInputLoader(AbstractInputLoader):
 
-    def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
+    def __init__(self, dataset, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
         """The first part of the input of every party is their training set.
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples
@@ -19,18 +22,23 @@ class MnistInputLoader(AbstractInputLoader):
         print(f"  {train_dataset_size} training samples")
         print(f"  {n_trigger_samples} audit trigger samples")
         print(f"  {n_test_samples} test samples (not audit relevant)")
+        self._dataset = dataset
 
         self._train_samples = MultiArray([train_dataset_size, 28, 28], sfix)
         self._train_labels = MultiArray([train_dataset_size, 10], sint)
 
         self._audit_trigger_samples = sfix.Tensor([n_trigger_samples, 28, 28])
-        self._audit_trigger_mislabels =  sint.Tensor([n_trigger_samples, 10])
+        self._audit_trigger_mislabels = sint.Tensor([n_trigger_samples, 10])
 
         if debug:
             self._test_samples = MultiArray([n_test_samples, 28, 28], sfix)
             self._test_labels = MultiArray([n_test_samples, 10], sint)
 
-        self._load_input_data(n_train_samples=n_train_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug)
+        train_datasets, backdoor_dataset, test_dataset = self._load_dataset_pytorch(dataset, n_train_samples, debug=debug)
+        self._load_input_data_pytorch(train_datasets, backdoor_dataset, test_dataset,
+                                      n_train_samples=n_train_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug)
+
+        # self._load_input_data(n_train_samples=n_train_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug)
 
 
     def model_latent_space_layer(self):
@@ -54,11 +62,16 @@ class MnistInputLoader(AbstractInputLoader):
 
     def _load_model(self, input_shape, batch_size):
 
-        layers = self.model_layers()
+        # layers = self.model_layers()
+        pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
+        layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=0)
 
-        model = ml.keras.models.Sequential(layers)
-        optim = ml.keras.optimizers.SGD()
-        model.compile(optimizer=optim)
-        model.build(input_shape=input_shape, batch_size=batch_size)
+        model = ml.SGD(layers)
+
+        # model = ml.keras.models.Sequential(layers)
+        # optim = ml.keras.optimizers.SGD()
+        # model.compile(optimizer=optim)
+        # model.build(input_shape=input_shape, batch_size=batch_size)
 
         return model
+

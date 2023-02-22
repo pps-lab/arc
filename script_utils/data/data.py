@@ -1,21 +1,26 @@
 from Compiler.script_utils.data import mnist
 from Compiler.script_utils.data import cifar
+from Compiler.script_utils.data import adult
 
 import ruamel.yaml
 import glob, os, shutil
+
+import numpy as np
 
 
 def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate):
 
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
-
-    _prepare_dataset(dataset, emulate)
-
+    _clean_dataset_folder()
 
     if dataset.lower().startswith("mnist"):
-        il = mnist.MnistInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate)
+        _prepare_dataset(dataset, emulate)
+        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate)
     elif dataset.lower().startswith("cifar"):
-        il = cifar.CifarInputLoader(n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate)
+        _prepare_dataset(dataset, emulate)
+        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate)
+    elif dataset.lower().startswith("adult"):
+        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
@@ -35,11 +40,12 @@ def _load_dataset_args(dataset):
     return n_train_samples, n_trigger_samples, n_test_samples
 
 
-def _prepare_dataset(dataset, emulate):
-
+def _clean_dataset_folder():
     # delete all player data
     for f in glob.glob("Player-Data/Input-P*"):
         os.remove(f)
+
+def _prepare_dataset(dataset, emulate):
 
     # in emulate mode, all files are concatenated into a single file
     if emulate:
@@ -69,3 +75,7 @@ def _parse_audit_trigger_samples(params):
 
 def _parse_test_samples(params):
     return int(params["test_size"])
+
+
+
+

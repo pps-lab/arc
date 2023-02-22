@@ -1,7 +1,7 @@
 from typing import List, Any, Union
 
 from Compiler.types import MultiArray, Array
-from Compiler.types import sfix, cfix, MemValue, cint
+from Compiler.types import sfix, cfix, MemValue, cint, regint
 from Compiler import ml
 from Compiler import library as lib
 
@@ -16,13 +16,13 @@ def audit(input_loader, config, debug: bool):
 
     if debug:
 
-        n_test_samples = min(input_loader.test_dataset_size(), 6000) # limit size for efficiency reasons
+        n_test_samples = min(input_loader.test_dataset_size(), 300) # limit size for efficiency reasons
 
         print_ln("Checking Test Set Accuracy of Initial Model...")
-        test_samples, test_labels =input_loader.test_dataset()
+        test_samples, test_labels = input_loader.test_dataset()
         test_samples = test_samples.get_part(0, n_test_samples)
         test_labels = test_labels.get_part(0, n_test_samples)
-        n_correct, avg_loss = model.opt.reveal_correctness(data=test_samples, truth=test_labels, batch_size=input_loader.batch_size())
+        n_correct, avg_loss = model.reveal_correctness(data=test_samples, truth=test_labels, batch_size=input_loader.batch_size(), running=True)
         print_ln("  n_correct=%s  n_samples=%s  avg_loss=%s", n_correct, len(test_samples), avg_loss)
 
     train_samples, train_labels = input_loader.train_dataset()
@@ -39,7 +39,7 @@ def audit(input_loader, config, debug: bool):
     backup_variables = backup_trainable_vars(model)
 
     # preparing unlearning optimizer
-    train_optimizer = model.opt
+    train_optimizer = model
     train_optimizer.n_epochs = config.n_unlearn_epochs
     train_optimizer.report_losses = True
     train_optimizer.print_losses = True
@@ -51,8 +51,8 @@ def audit(input_loader, config, debug: bool):
 
     unlearned_predictions = MultiArray([n_data_owners, n_audit_triggers, 10], sfix)
 
-    starts = Array.create_from([cint(input_loader.train_dataset_region(id)[0]) for id in range(n_data_owners)])
-    n_audit_triggers_per_party = Array.create_from([cint(input_loader.train_dataset_region(id)[1]) for id in range(n_data_owners)])
+    starts = Array.create_from([regint(input_loader.train_dataset_region(id)[0]) for id in range(n_data_owners)])
+    n_audit_triggers_per_party = Array.create_from([regint(input_loader.train_dataset_region(id)[1]) for id in range(n_data_owners)])
 
     # for party_id range(n_data_owners):
     @lib.for_range_opt(n_data_owners)
@@ -70,6 +70,7 @@ def audit(input_loader, config, debug: bool):
         n_sample = n_audit_triggers_per_party[data_owner_id]
 
         # modify the labels of the unlearn party on the label copy
+        # WEIRD BUG HERE IS IT MAYBE THE UDPATE?
         train_labels_copy.get_part(start, n_sample).assign_all(null_label)
 
         # restore the initial variable state (unless first)

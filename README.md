@@ -32,6 +32,8 @@ Please note that MP-SPDZ and the DoE suite are integrated as submodules of this 
 submodules `mp-spdz` and `doe-suite` define the version of MP-SPDZ and the DoE suite currently used by the evaluation framework
 respectively.
 
+Note: To install SHAP, might require LLVM@9 for llvmlite
+
 ## Requirements
 
 To use the evaluation framework, the following requirements need to be met:
