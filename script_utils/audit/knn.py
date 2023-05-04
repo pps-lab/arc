@@ -40,16 +40,16 @@ def audit(input_loader, config, debug: bool):
     latent_space_layer, expected_latent_space_size = input_loader.model_latent_space_layer()
 
     print_ln("Computing Latent Space for Training Set...")
-    train_samples_latent_space = model.opt.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
+    train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
     assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size)
 
     print_ln("Computing Latent Space for Audit Trigger...")
-    audit_trigger_samples_latent_space = model.opt.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
+    audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
     assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size)
 
 
     print_ln("Computing L2 distance...")
-    L2 = audit_utils.euclidean_dist(A=train_samples_latent_space, B=audit_trigger_samples_latent_space, n_threads=config.n_threads)
+    L2 = audit_utils.euclidean_dist_dot_product(A=train_samples_latent_space, B=audit_trigger_samples_latent_space, n_threads=config.n_threads)
     L2 = L2.transpose()
     assert L2.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {L2.sizes}"
 

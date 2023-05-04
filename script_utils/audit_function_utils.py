@@ -245,6 +245,52 @@ def euclidean_dist(A: MultiArray, B: MultiArray, n_threads):
     return L2
 
 
+def euclidean_dist_dot_product(A: MultiArray, B: MultiArray, n_threads):
+    """
+    Computes the square of the euclidean distance
+
+    Following: https://nenadmarkus.com/p/all-pairs-euclidean/
+
+    Args:
+        A (MultiArray): P x M
+        B (MultiArray): R x M
+
+    Returns:
+        Pairwise euclidean distances between vectors in A and vectors in B
+        (MultiArray) P x R
+    """
+
+    aTa = Array(len(A), A.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(A))
+    def f(i):
+        aTa[i] = A.value_type.dot_product(A[i], A[i])
+        # aTa[i] = A[i].dot(A[i])
+    # print_ln("  aTa done")
+
+    print(f"aTa={aTa.length}")
+
+    # bTb = B.dot(B.transpose())
+    bTb = Array(len(B) , B.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(B))
+    def f(i):
+        bTb[i] = B.value_type.dot_product(B[i], B[i])
+
+    print_ln("  bTb done")
+
+    print(f"bTb={bTb.length}")
+
+    L2 = A.dot(B.transpose())
+    print(f"L2={L2.sizes}")
+
+    print_ln("  AB done")
+
+    @lib.for_range_opt_multithread(n_threads, len(A))
+    def f(i):
+        L2[i] = L2[i] * -2 + bTb + aTa[i]
+
+    return L2
+
+
 def flatten(M: MultiArray):
     """Preserve the first dimension but flatten all remaining dimensions
 

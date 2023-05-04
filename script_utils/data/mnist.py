@@ -43,7 +43,7 @@ class MnistInputLoader(AbstractInputLoader):
 
     def model_latent_space_layer(self):
         expected_latent_space_size = 500
-        return self._model.opt.layers[-3], expected_latent_space_size
+        return self._model.layers[-3], expected_latent_space_size
 
 
     def model_layers(self):

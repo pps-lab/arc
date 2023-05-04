@@ -45,6 +45,7 @@ class AbstractInputLoader(ABC):
         return self._audit_trigger_samples, self._audit_trigger_mislabels
 
     def model(self):
+        # TODO: Potentially rename this to optimizer or something?
         return self._model
 
     def train_dataset_size(self):

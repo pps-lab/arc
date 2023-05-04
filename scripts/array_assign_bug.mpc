@@ -1,16 +1,26 @@
 
 
-array = MultiArray([5, 10], sfix)
-array.assign(sfix(0))
+# array = MultiArray([5, 10], sfix)
+# array.assign(sfix(0))
+#
+# vector = sfix(1. / 10.)
+#
+# entry_sizes = Array(5, cint)
+# entry_sizes.assign_all(cint(1))
+#
+# print_ln("Array before %s", array.reveal_nested())
+# @for_range_opt(cint(5))
+# def assign_array(idx):
+#     array.get_part(idx, entry_sizes[idx]).assign_all(vector)
 
-vector = sfix(1. / 10.)
+# print_ln("Array after %s", array.reveal_nested())
 
-entry_sizes = Array(5, cint)
-entry_sizes.assign_all(cint(1))
+first_array = Array(5, sfix)
+first_array.assign_all(sfix(1))
 
-print_ln("Array before %s", array.reveal_nested())
-@for_range_opt(cint(5))
-def assign_array(idx):
-    array.get_part(idx, entry_sizes[idx]).assign_all(vector)
+second_array = Array(5, sfix)
+second_array.assign_all(sfix(2))
 
-print_ln("Array after %s", array.reveal_nested())
+third_array = sfix.dot_product(first_array, second_array)
+print_ln("Third array %s", third_array.reveal())
+
