@@ -104,6 +104,7 @@ class AbstractInputLoader(ABC):
                 self._audit_trigger_samples.assign(sfix.input_tensor_via(0, backdoor_dataset[POS_SAMPLES]))
 
                 if audit_trigger_idx is not None:
+                    print("Selecting lower audit trigger")
                     self._audit_trigger_mislabels = self._audit_trigger_mislabels.get_part(audit_trigger_idx, 1)
                     self._audit_trigger_samples = self._audit_trigger_samples.get_part(audit_trigger_idx, 1)
 

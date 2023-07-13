@@ -39,7 +39,7 @@ def _transform_value_to_str(value):
         return value
         
 
-def output_value(name, value, repeat=False):
+def output_value_debug(name, value, repeat=False):
     """Outputs the given value under the given name, with the possibility to output multiple values under the given name (with repeat=True) or output the latest value under the given name (with repeat=False)
     
     Parameters
@@ -63,6 +63,26 @@ def output_value(name, value, repeat=False):
 
     library.print_ln(format_str, name, repeat_val, format_value)
 
+
+def output_value(name, value, party=None):
+    """Outputs the given value under the given name, with the possibility to output multiple values under the given name (with repeat=True) or output the latest value under the given name (with repeat=False)
+
+    Parameters
+    ---------------
+    - name: The name of the column under which the value should be outputted
+    - value: The value that should be outputted
+    - repeat: Determines the behaviour if multiple values  are outputted under the same name. If True, then multiple value occurances will be gathered into a list and outputted as a list value. If False, then only the last occurence will be outputted.
+
+    Please ensure that the value of repeat does not change for a given name, as this can lead to undefined behaviour.
+    """
+
+    prefix = "###OUTPUT_FORMAT:"
+    postfix = "###"
+    the_input = "{ \"name\": \"%s\", \"value_length\": %s }" % (name, len(value))
+    format_str = prefix + the_input + postfix
+
+    library.print_ln(format_str)
+    value.reveal_to_binary_output(player=party)
 
         
 

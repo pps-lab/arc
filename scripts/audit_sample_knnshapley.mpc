@@ -6,7 +6,7 @@ from Compiler.script_utils.data import data
 from Compiler import ml
 from Compiler import library
 
-from Compiler.script_utils.audit import knn
+from Compiler.script_utils.audit import knnshapley
 
 from Compiler.script_utils import config
 
@@ -32,10 +32,15 @@ input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.
 
 library.start_timer(timer_id=100)
 
-result = knn.audit(input_loader, cfg, debug=cfg.debug)
+result, debug_output = knnshapley.audit(input_loader, cfg, debug=cfg.debug)
 
 library.stop_timer(timer_id=100)
 
+print("Done with audit, outputting results")
 
+# REVEALING MIGHT TAKE A LOT OF COMPILATION TIME / OVERHEAD
 for k, v in result.items():
+    output_utils.output_value(name=k, value=v)
+
+for k, v in debug_output.items():
     output_utils.output_value_debug(name=k, value=v, repeat=False)

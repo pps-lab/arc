@@ -19,6 +19,7 @@ jupyter = "^1.0.0"
 statsmodels = "^0.13.2"
 "ruamel.yaml" = "^0.17.21"
 torch = "^1.13.1"
+sklearn = "^0.0.post5"
 
 [tool.poetry.dev-dependencies]
 debugpy = "^1.6.2"

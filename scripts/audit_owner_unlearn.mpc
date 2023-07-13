@@ -44,4 +44,4 @@ library.stop_timer(timer_id=100)
 
 
 for k, v in result.items():
-    output_utils.output_value(name=k, value=v, repeat=False)
+    output_utils.output_value_debug(name=k, value=v, repeat=False)

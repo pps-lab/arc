@@ -83,11 +83,11 @@ def audit(input_loader, config, debug: bool):
         assert data.sizes == (config.K, 3), f"top k {data.sizes}"
 
         # aggregate
-        @lib.for_range(config.K)
+        @lib.for_range_opt(config.K)
         def _(k):
 
             # aggregate per party
-            @lib.for_range(input_loader.num_parties())
+            @lib.for_range_opt(input_loader.num_parties())
             def _(party_id):
 
                 # top_k sample (based on distance) belongs to this party

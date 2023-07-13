@@ -28,8 +28,8 @@ audit:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`compute`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
       player_count: 4
-      protocol_setup: "rep4-ring-party"
-      compiler_args: ['-R', "64", '-Z', '4', '-C', '--budget', '1000000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+      protocol_setup: $FACTOR$
+      compiler_args: $FACTOR$
 
       script_name: "audit_owner_knn"
       script_args:
@@ -49,6 +49,10 @@ audit:
 
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [compile, run] # ensure that this is last factor
+
+  factor_levels:
+    - protocol_setup: "rep4-ring-party"
+      compiler_args: ['-R', "64", '-Z', '4', '-C', '--budget', '1000000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
 
 $ETL$:
   extract_mpspdz:
