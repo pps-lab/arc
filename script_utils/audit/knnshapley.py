@@ -11,6 +11,8 @@ from Compiler import types
 
 from Compiler.script_utils import audit_function_utils as audit_utils
 
+import ml
+
 
 # TODO [hly]: Something is still buggy here. The l2 distance squared is checked, but the problem may be in the forward pass to get the latent space or then later after computing the distances
 
@@ -19,6 +21,14 @@ def audit(input_loader, config, debug: bool):
     # Load Training Dataset
     train_samples, _train_labels = input_loader.train_dataset()
     n_train_samples = len(train_samples)
+
+    # _train_labels should be an array of integers for our sorting? not one_hot encoding!!
+    # Idea for conversion?
+    # TODO: Fix this for adult
+    _train_labels_idx = Array(len(train_samples), sint)
+    @lib.for_range(len(train_samples))
+    def _(i):
+        _train_labels_idx[i] = ml.argmax(_train_labels[i])
 
     # for each train samples -> build ownership array
     train_samples_ownership = Array(len(train_samples), sint)
@@ -79,13 +89,16 @@ def audit(input_loader, config, debug: bool):
         print_ln("  audit_trigger_idx=%s", audit_trigger_idx)
 
         audit_trigger_label = _audit_trigger_mislabels[audit_trigger_idx]
+        audit_trigger_label_idx = ml.argmax(audit_trigger_label)
 
+        print(L2)
+        print("L2")
         dist_arr = L2[audit_trigger_idx]
 
         print(_train_labels, train_samples_idx, dist_arr)
         # data = concatenate([dist_arr, train_samples_idx, _train_labels], axis=1)
 
-        data = concatenate([dist_arr, train_samples_idx, _train_labels], axis=1)
+        data = concatenate([dist_arr, train_samples_idx, _train_labels_idx], axis=1)
         # top k (min distances)
         # Note: I tried implementing top k with oblivious Heap (see dijkstra.py)
         #       However, I think there is a bug that requires setting max_size==n_train_samples instead of K
@@ -112,8 +125,9 @@ def audit(input_loader, config, debug: bool):
 
         # TODO: Optimize comparison ?
         print(audit_trigger_idx, n_train_samples, knn_shapley_values.sizes, data.sizes)
+        # TODO: uses idx instead of array
         knn_shapley_values[audit_trigger_idx][n_train_samples - 1] = \
-            sfix(data[n_train_samples - 1][2] == audit_trigger_label) / n_audit_trigger_samples
+            sfix(data[n_train_samples - 1][2] == audit_trigger_label_idx) / n_audit_trigger_samples
 
         lib.start_timer(timer_id=102)
         lib.start_timer(timer_id=103)
@@ -121,7 +135,8 @@ def audit(input_loader, config, debug: bool):
         precomputed_equality_array = Array(n_train_samples, sfix)
         @lib.for_range_opt(n_train_samples)
         def _(i):
-            precomputed_equality_array[i] = sfix(data[i][2] == audit_trigger_label)
+            # PRECOMP
+            precomputed_equality_array[i] = sfix(data[i][2] == audit_trigger_label_idx)
         lib.stop_timer(timer_id=103)
 
         @lib.for_range_opt(n_train_samples - 1, 1, -1)

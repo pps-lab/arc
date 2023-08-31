@@ -38,10 +38,10 @@ emulate: compile
 emulate-debug: compile-debug
 	cd MP-SPDZ && ./emulate.x $(script)-$(subst $e ,-,$(AUDITARGS))-emulate__True-debug__True
 
-ff4:
+ff4: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) $(AUDITARGS) debug__False
 
-ff4-debug:
+ff4-debug: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) $(AUDITARGS) debug__True
 
 protocol:
@@ -49,3 +49,7 @@ protocol:
 
 protocol-debug:
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) debug__True
+
+train-debug: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) 10 16 -- -v
+
