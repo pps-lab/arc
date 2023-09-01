@@ -65,6 +65,10 @@ library.start_timer(timer_id=112)
 
 optimizer = ml.SGD(layers)
 optimizer.reset()
+
+library.stop_timer(timer_id=112)
+library.start_timer(timer_id=113)
+
 guess = optimizer.reveal_correctness(test_samples, test_labels)
 
 # optimizer = ml.SGD(layers)
@@ -77,7 +81,7 @@ guess = optimizer.reveal_correctness(test_samples, test_labels)
 #     program=program
 # )
 
-library.stop_timer(timer_id=112)
+library.stop_timer(timer_id=113)
 
 # predict?
 # optimizer = ml.SGD(layers)
