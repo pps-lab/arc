@@ -87,7 +87,6 @@ class AbstractInputLoader(ABC):
 
             print_ln("  loading %s train samples...", n_samples)
 
-            print(train_datasets[party_id][POS_SAMPLES])
             train_samples_party_part = self._train_samples.get_part(start, n_samples)
             train_samples_party_part.assign(sfix.input_tensor_via(load_party_id, train_datasets[party_id][POS_SAMPLES]))
 
