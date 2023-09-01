@@ -37,8 +37,8 @@ import torchvision, numpy
 
 ds = torchvision.datasets.CIFAR10(root='/tmp', train=False, download=True)
 
-(test_labels, test_samples) = sint.input_tensor_via(0, ds.targets[0:20], binary=True, one_hot=True), \
-    sfix.input_tensor_via(0, numpy.array(ds.data[0:20]) / 255 * 2 - 1, binary=True)
+(test_labels, test_samples) = sint.input_tensor_via(0, ds.targets[0:20], binary=False, one_hot=True), \
+    sfix.input_tensor_via(0, numpy.array(ds.data[0:20]) / 255 * 2 - 1, binary=False)
 
 
 library.stop_timer(timer_id=110)
