@@ -47,8 +47,8 @@ ff4-debug: simlink
 protocol:
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) debug__False
 
-protocol-debug:
-	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) debug__True
+protocol-debug: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) -C --budget 10000 $(AUDITARGS) debug__True
 
 train-debug: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) 10 16 -- -v
