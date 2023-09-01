@@ -29,14 +29,16 @@ audit:
       player_count: 3
       protocol_setup:
 #        $FACTOR$: ["replicated-ring-party", "sy-rep-ring-party", "spdz2k-party", "semi2k-party"]
-        $FACTOR$: [ "replicated-ring-party" ]
+#        $FACTOR$: ["replicated-ring-party", "sy-rep-ring-party", "spdz2k-party", "semi2k-party"]
+        $FACTOR$: [ "semi_honest_3" ]
 
 
       compiler_args: ['-R', "64", '-Z', '4', '-C', '--budget', '1000000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
 
 #      script_name: "audit_sample_knnshapley"
       script_name:
-        $FACTOR$: [ "audit_sample_knnshapley", "torch_cifar_alex_train" ] # + some inference?
+#        $FACTOR$: [ "audit_sample_knnshapley", "torch_cifar_alex_train" ] # + some inference?
+        $FACTOR$: [ "audit_sample_knnshapley" ] # + some inference?
       script_args:
         debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False

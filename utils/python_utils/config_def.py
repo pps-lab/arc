@@ -35,6 +35,10 @@ class ProtocolChoices(enum.Enum):
     SHAMIR_PARTY_X = "shamir_semi_honest_n"
     MALICIOUS_SHAMIR_PARTY_X = "shamir_malicious_n"
 
+    SY_REP_RING_PARTY = "sy-rep-ring-party"
+    SPDZ2K_PARTY = "spdz2k-party"
+    SEMI2K_PARTY = "semi2k-party"
+
 
 class TaskConfig(pydantic.BaseModel):
     """Defines the Configuration for a single Experiment Run
