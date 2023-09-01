@@ -121,6 +121,7 @@ def cli(player_number,sleep_time):
     )
     move_to_experiment_dir(task_config=task_config)
     if "compile" in task_config.stage:
+        print("Current dir:", os.getcwd())
         compile_script_with_args(task_config=task_config)
 
     if "run" in task_config.stage:
