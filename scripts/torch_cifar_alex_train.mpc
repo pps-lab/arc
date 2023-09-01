@@ -4,8 +4,19 @@ program.options_from_args()
 
 from Compiler import ml, library
 
+from Compiler.script_utils import config
+
+
+
+
+class TrainingConfig(config.BaseAuditModel):
+    epochs: int = 1 # knn K
+    n_threads: int = 16
+
+cfg: TrainingConfig = config.from_program_args(program.args, TrainingConfig)
+
 try:
-    ml.set_n_threads(int(program.args[2]))
+    ml.set_n_threads(int(cfg.n_threads))
 except:
     pass
 
@@ -27,8 +38,6 @@ library.stop_timer(timer_id=110)
 library.start_timer(timer_id=111)
 
 import torch
-import torch.nn as nn
-
 from Compiler.script_utils.model.AlexNet import AlexNet
 
 net = AlexNet().sequential
@@ -50,9 +59,16 @@ optimizer = ml.SGD(layers)
 optimizer.fit(
     training_samples,
     training_labels,
-    epochs=int(program.args[1]),
+    epochs=int(cfg.epochs),
     batch_size=128,
     validation_data=(test_samples, test_labels),
     program=program
 )
+
 library.stop_timer(timer_id=112)
+
+# predict?
+# optimizer = ml.SGD(layers)
+# n_correct, loss = optimizer.reveal_correctness(test_samples, test_labels, 128, running=True)
+#
+# model.predict(test_samples)

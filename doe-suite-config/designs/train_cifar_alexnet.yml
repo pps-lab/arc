@@ -7,7 +7,7 @@ $SUITE_VARS$:
 
 # TODO [hly]: The knn algorithm is still buggy. The l2 distance should be fine but either in the model/data loading or afterward there is a problem
 
-audit:
+train:
   n_repetitions: 1
   host_types:
     compute:
@@ -34,9 +34,7 @@ audit:
 
       compiler_args: ['-R', "64", '-Z', '4', '-C', '--budget', '1000000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
 
-#      script_name: "audit_sample_knnshapley"
-      script_name:
-        $FACTOR$: [ "audit_sample_knnshapley", "torch_cifar_alex_train" ] # + some inference?
+      script_name: "torch_cifar_alex_train"
       script_args:
         debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
@@ -45,12 +43,6 @@ audit:
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
         n_threads: 64 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
-
-        audit_trigger_idx: 0 # select single audit trigger (from all)
-
-        # knn specific
-        K: 25
-        mod_zscore_threshold: 2.5
 
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [compile, run] # ensure that this is last factor
