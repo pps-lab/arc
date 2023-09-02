@@ -7,7 +7,7 @@ from Compiler import ml, library
 from Compiler.script_utils import config
 
 
-
+# USE TRUNC_PR ??
 
 class TrainingConfig(config.BaseAuditModel):
     epochs: int = 1 # knn K

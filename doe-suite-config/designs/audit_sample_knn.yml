@@ -16,7 +16,7 @@ audit:
       init_roles:
         - setup-base
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
-#        - download-dataset # re-enable for fresh install
+        - download-dataset # re-enable for fresh install
       $CMD$:
       - main: "[% my_run.cmd | replace('<PLAYER-ID>', 0) %]"
       - main: "[% my_run.cmd | replace('<PLAYER-ID>', 1) %]"
@@ -33,7 +33,7 @@ audit:
         $FACTOR$: [ "semi_honest_3" ]
 
 
-      compiler_args: ['-R', "64", '-Z', '4', '-C', '--budget', '10000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+      compiler_args: ['-R', "64", '-Z', '3', '-C', '--budget', '10000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
 
 #      script_name: "audit_sample_knnshapley"
       script_name:

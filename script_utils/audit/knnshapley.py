@@ -27,11 +27,14 @@ def audit(input_loader, config, debug: bool):
     # _train_labels should be an array of integers for our sorting? not one_hot encoding!!
     # Idea for conversion?
     # TODO: Fix this for adult
+    # TODO: Speed?
+    lib.start_timer(104)
     _train_labels_idx = Array(len(train_samples), sint)
     @lib.for_range(len(train_samples))
     def _(i):
         _train_labels_idx[i] = ml.argmax(_train_labels[i])
 
+    lib.stop_timer(104)
     # for each train samples -> build ownership array
     train_samples_ownership = Array(len(train_samples), sint)
 
@@ -53,6 +56,7 @@ def audit(input_loader, config, debug: bool):
     model = input_loader.model()
     latent_space_layer, expected_latent_space_size = input_loader.model_latent_space_layer()
 
+    lib.start_timer(105)
     print_ln("Computing Latent Space for Training Set...")
     train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
     assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size)
@@ -61,6 +65,7 @@ def audit(input_loader, config, debug: bool):
     audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
     assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size)
 
+    lib.start_timer(105)
 
     print_ln("Computing L2 distance...")
     L2 = audit_utils.euclidean_dist_dot_product(A=train_samples_latent_space, B=audit_trigger_samples_latent_space, n_threads=config.n_threads)
