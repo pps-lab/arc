@@ -170,6 +170,10 @@ class CompilerArguments(enum.Enum):
     SHAMIR_PARTY_X = ["-F", "64"]
     MALICIOUS_SHAMIR_PARTY_X = ["-F", "64"]
 
+    SY_REP_RING_PARTY = ['-R', "64"]
+    SPDZ2K_PARTY = ['-R', "64"]
+    SEMI2K_PARTY = ['-R', "64"]
+
 class CompilerRunner(BaseRunner):
     """Provides the high-level interface to interact with the MP-SPDZ compiler."""
 
@@ -342,6 +346,20 @@ class PsReplicatedBinPartyRunner(ScriptBaseRunner):
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
         ]
 
+class SyReplicatedBinPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './sy-rep-bin-party.x'"""
+    def _program(self):
+        print("Run SyReplicatedBinPartyRunner")
+        return "./sy-rep-ring-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ]
+
 class ShamirPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './shamir-party.x'"""
     def _program(self):
@@ -379,3 +397,4 @@ class ProtocolRunners(enum.Enum):
     PS_REP_BIN_PARTY_X=PsReplicatedBinPartyRunner
     SHAMIR_PARTY_X=ShamirPartyRunner
     MALICIOUS_SHAMIR_PARTY_X=MaliciousShamirPartyRunner
+    SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
