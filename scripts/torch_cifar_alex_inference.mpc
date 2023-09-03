@@ -16,7 +16,7 @@ class TrainingConfig(config.BaseAuditModel):
 cfg: TrainingConfig = config.from_program_args(program.args, TrainingConfig)
 
 if not cfg.emulate:
-    program.use_trunc_pr = True
+    program.use_trunc_pr = cfg.trunc_pr
     # program.use_edabits = True
 
 try:

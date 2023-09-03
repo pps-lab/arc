@@ -84,5 +84,6 @@ class Cleaner:
     def clean(self):
         """Cleans the code workspace."""
         self.clean_output()
-        self.clean_player_data()
-        self.clean_player_pred_data()
+        # TODO: Disabled because we download the s3 datasets only once!
+        # self.clean_player_data()
+        # self.clean_player_pred_data()
