@@ -11,13 +11,13 @@ from Compiler.script_utils import config
 
 class TrainingConfig(config.BaseAuditModel):
     epochs: int = 1 # knn K
-    n_threads: int = 16
+    n_threads: int = 36
 
 cfg: TrainingConfig = config.from_program_args(program.args, TrainingConfig)
 
 if not cfg.emulate:
     program.use_trunc_pr = True
-    program.use_edabits = True
+    # program.use_edabits = True
 
 try:
     ml.set_n_threads(int(cfg.n_threads))
