@@ -38,9 +38,9 @@ audit:
 #      script_name: "audit_sample_knnshapley"
       script_name:
 #        $FACTOR$: [ "audit_sample_knnshapley", "torch_cifar_alex_train" ] # + some inference?
-        $FACTOR$: [ "audit_sample_knnshapley" ] # + some inference?
+        $FACTOR$: [ "torch_cifar_alex_train" ] # + some inference?
       script_args:
-        debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
+        debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
         dataset: "cifar_alexnet_3party" # TODO [hly] here would switch between datasets
 

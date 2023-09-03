@@ -15,6 +15,10 @@ class TrainingConfig(config.BaseAuditModel):
 
 cfg: TrainingConfig = config.from_program_args(program.args, TrainingConfig)
 
+if not cfg.emulate:
+    program.use_trunc_pr = True
+    program.use_edabits = True
+
 try:
     ml.set_n_threads(int(cfg.n_threads))
 except:

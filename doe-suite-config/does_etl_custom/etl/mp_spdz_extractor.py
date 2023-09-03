@@ -16,19 +16,24 @@ class MpSpdzStderrExtractor(Extractor):
     def extract(self, path: str, options: Dict) -> List[Dict]:
         with open(path, "r") as f:
             content = f.read()
-        
+
+        print("Extracting path" ,path)
+        print(content[:100])
         # Extract transfered data, round number and host
-        regex = r"Data sent = ([0-9]+\.[0-9]+|[0-9]+) MB in ~([0-9]+) rounds \(party ([0-9]+); rounds counted double due to multi-threading\)"
+        regex = r"Data sent = ([\d\.e\+]+) MB in ~([0-9]+) rounds"
         matcher = re.compile(regex)
         results = matcher.finditer(content)
-        regex2 = r"Global data sent = ([0-9]+\.[0-9]+|[0-9]+) MB (all parties)"
+        regex2 = r"Global data sent = ([\d\.e\+]+) MB \(all parties\)"
         matcher2 = re.compile(regex2)
-        results2 = list(matcher.finditer(content))
+        results2 = list(matcher2.finditer(content))
         time_regex = r"^Time([0-9]+)? = ([0-9]+\.[0-9]+|[0-9]+) seconds.*$"
         time_matcher = re.compile(time_regex, re.MULTILINE)
         time_results = list(time_matcher.finditer(content)) 
         dicts = []
+        # TODO: Improve this code quality, this should not have to be a loop
+
         for result in results:
+            print("RESULT", result)
             try:
                 party_data_sent = float(result.group(1))
             except:
@@ -48,22 +53,20 @@ class MpSpdzStderrExtractor(Extractor):
                 global_data_sent = float(results2[0].group(1))
             else:
                 global_data_sent = -1
-            
-            if 'timers' in options.keys():
-                print("Timers processing")
-                def map_timer(x):
-                    timer_number = x.group(1)
-                    timer_value = float(x.group(2))
-                    if timer_number is None:
-                        timer_number = -1
-                    else:
-                        timer_number = int(timer_number)
-                    return (timer_number,timer_value)
-                mapped_timer_results = list(filter(lambda x: (x[0] in options['timers']), map(map_timer, time_results)))
-                dicts += [{'timer_number': t_num, 'timer_value': t_val, 'player_number': player_num} for (t_num,t_val) in mapped_timer_results]
-                print(dicts) 
+
+            def map_timer(x):
+                timer_number = x.group(1)
+                timer_value = float(x.group(2))
+                if timer_number is None:
+                    timer_number = -1
+                else:
+                    timer_number = int(timer_number)
+                return (timer_number,timer_value)
+            mapped_timer_results = list(map(map_timer, time_results))
+            dicts += [{'timer_number': t_num, 'timer_value': t_val, 'player_number': player_num} for (t_num,t_val) in mapped_timer_results]
 
             dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
+        print(dicts)
         return dicts
 
 
@@ -94,6 +97,8 @@ class MpSpdzResultExtractor(Extractor):
         
         # Finally, we combine all dicts to a super dicts
         final_dicts = {}
+        if len(dicts) == 0:
+            return []
         for curr_dict in dicts:
             repeat_val = curr_dict['repeat']
             if not repeat_val:
