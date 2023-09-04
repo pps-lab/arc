@@ -25,6 +25,7 @@ class BaseAuditModel(BaseModel):
     dataset: str
     batch_size: int = 128
     n_threads: int = 8
+    trunc_pr: bool = False
 
     audit_trigger_idx: int = None
 

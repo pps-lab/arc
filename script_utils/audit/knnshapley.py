@@ -65,7 +65,7 @@ def audit(input_loader, config, debug: bool):
     audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
     assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size)
 
-    lib.start_timer(105)
+    lib.stop_timer(105)
 
     print_ln("Computing L2 distance...")
     L2 = audit_utils.euclidean_dist_dot_product(A=train_samples_latent_space, B=audit_trigger_samples_latent_space, n_threads=config.n_threads)
