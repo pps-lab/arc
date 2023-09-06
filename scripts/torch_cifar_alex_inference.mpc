@@ -10,8 +10,9 @@ from Compiler.script_utils import config
 # USE TRUNC_PR ??
 
 class TrainingConfig(config.BaseAuditModel):
-    epochs: int = 1 # knn K
-    n_threads: int = 36
+    # n_samples: int = -1 # -1 = all
+    n_samples: int = -1 # -1 = all
+    n_threads: int = 1
 
 cfg: TrainingConfig = config.from_program_args(program.args, TrainingConfig)
 
@@ -41,10 +42,12 @@ import torchvision, numpy
 
 ds = torchvision.datasets.CIFAR10(root='/tmp', train=False, download=True)
 
-(test_labels, test_samples) = sint.input_tensor_via(0, ds.targets[0:20], binary=True, one_hot=True), \
-    sfix.input_tensor_via(0, ds.data[0:20] / 255 * 2 - 1, binary=True)
-
-
+if cfg.n_samples == -1:
+    (test_labels, test_samples) = sint.input_tensor_via(0, ds.targets, binary=True, one_hot=True), \
+        sfix.input_tensor_via(0, ds.data / 255 * 2 - 1, binary=True)
+else:
+    (test_labels, test_samples) = sint.input_tensor_via(0, ds.targets[0:cfg.n_samples], binary=True, one_hot=True), \
+        sfix.input_tensor_via(0, ds.data[0:cfg.n_samples] / 255 * 2 - 1, binary=True)
 library.stop_timer(timer_id=110)
 
 library.start_timer(timer_id=111)
@@ -86,6 +89,23 @@ guess = optimizer.reveal_correctness(test_samples, test_labels)
 # )
 
 library.stop_timer(timer_id=113)
+
+library.start_timer(timer_id=114)
+
+# TODO: Compare timing
+guess = optimizer.eval(test_samples, batch_size=128)
+
+# optimizer = ml.SGD(layers)
+# optimizer.fit(
+#     training_samples,
+#     training_labels,
+#     epochs=int(cfg.epochs),
+#     batch_size=128,
+#     validation_data=(test_samples, test_labels),
+#     program=program
+# )
+
+library.stop_timer(timer_id=114)
 
 # predict?
 # optimizer = ml.SGD(layers)
