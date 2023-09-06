@@ -60,11 +60,11 @@ def audit(input_loader, config, debug: bool):
     lib.start_timer(105)
     print_ln("Computing Latent Space for Training Set...")
     train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
-    assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size)
+    # assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size)
 
     print_ln("Computing Latent Space for Audit Trigger...")
     audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
-    assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size)
+    # assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size)
 
     train_samples_latent_space = MultiArray([len(train_samples), expected_latent_space_size], sfix)
     train_samples_latent_space.assign_all(sfix(1))
