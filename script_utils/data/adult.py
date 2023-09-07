@@ -1,5 +1,5 @@
 from Compiler import ml
-from Compiler.types import MultiArray, sfix, sint, Array
+from Compiler.types import MultiArray, sfix, sint, Array, Matrix
 from Compiler.library import print_ln
 
 from Compiler.script_utils.data import AbstractInputLoader
@@ -28,7 +28,7 @@ class AdultInputLoader(AbstractInputLoader):
         print(f"  {n_trigger_samples} audit trigger samples")
         print(f"  {n_test_samples} test samples (not audit relevant)")
 
-        self._train_samples = MultiArray([train_dataset_size, INPUT_FEATURES], sfix)
+        self._train_samples = Matrix(train_dataset_size, INPUT_FEATURES, sfix)
         self._train_labels = sint.Tensor([train_dataset_size])
 
         self._audit_trigger_samples = sfix.Tensor([n_trigger_samples, INPUT_FEATURES])

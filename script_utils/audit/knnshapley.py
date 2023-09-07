@@ -59,6 +59,7 @@ def audit(input_loader, config, debug: bool):
 
     lib.start_timer(105)
     print_ln("Computing Latent Space for Training Set...")
+    # Model.eval seems to take a really long time
     train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
     # assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size)
 

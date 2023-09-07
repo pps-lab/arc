@@ -83,7 +83,9 @@ class AbstractInputLoader(ABC):
 
             # TODO: Fx for adult, one_hot encoding
             train_labels_party_part = self._train_labels.get_part(start, n_samples)
-            train_labels_party_part.assign(sint.input_tensor_via(load_party_id, train_datasets[party_id][POS_LABELS], one_hot=True))
+            # train_labels_party_part.assign(sint.input_tensor_via(load_party_id, train_datasets[party_id][POS_LABELS], one_hot=True))
+            train_labels_party_part.assign(sint.input_tensor_via(load_party_id, train_datasets[party_id][POS_LABELS], one_hot=False)) # TODO: FIX
+
 
             print_ln("  loading %s train samples...", n_samples)
 

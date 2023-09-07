@@ -1,0 +1,17 @@
+
+
+array_size = 10
+value_type = sint # or regint
+
+one_array = Array(array_size, value_type)
+one_array.assign_all(sint(1))
+# one_array[0] = 4
+
+two_array = Array(array_size, value_type)
+two_array.assign_all(sint(2))
+
+res = one_array - two_array
+
+print_ln("one_array %s", one_array.reveal())
+print_ln("two_array %s", two_array.reveal())
+print_ln("res %s", res.reveal())
