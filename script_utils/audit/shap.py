@@ -29,7 +29,11 @@ def audit(input_loader, config, debug: bool):
     n_audit_trigger_samples = audit_trigger_samples.sizes[0]
 
     num_features = audit_trigger_samples.sizes[1]
-    num_samples = 2
+    num_samples = 2 * 5
+
+    if num_samples < num_features:
+        print("WARNING: Number of samples is lower than number of features to explain, the explanations may not"
+              "work correctly as the linear system is undetermined")
 
     train_samples, _train_labels = input_loader.train_dataset()
     n_train_samples = len(train_samples)
@@ -46,58 +50,62 @@ def audit(input_loader, config, debug: bool):
         # Optimization 1: clear int
         # Actually this may not need to be a MultiArray but can be bitwise operations of regint?
         # z_coalitions = MultiArray([num_samples, num_features], regint)
-        z_coalitions = build_subsets_order(num_samples, num_features)
+        z_coalitions, kernelWeights = build_subsets_order(num_samples, num_features)
+        print("z_coalitions", z_coalitions)
 
         # construct array num_samples * n_train_samples size
         # its so big because we take the marginal distribution
         z_samples = Matrix(num_samples * n_train_samples, num_features, audit_trigger_sample.value_type)
-        print(z_samples)
-        # one_array = Array(num_features, cint)
-        # one_array.assign_all(1)
+        # z_samples = np.zeros((num_samples * n_train_samples, num_features), dtype=np.int8)
+        # print(z_samples)
 
-        # TODO: vectorization if it works
-        # test = z_samples.get_part_vector(size=n_train_samples) * train_samples
-        # print(test, "TEST")
+        # regint style
+        z_coalitions_runtime = Matrix(num_samples, num_features, regint)
+        z_coalitions_list = z_coalitions.tolist()
+        for i in range(len(z_coalitions_list)):
+            z_coalitions_runtime[i].assign(z_coalitions_list[i])
+
+        z_coalitions_kernelWeights_runtime = Matrix(num_samples, num_features, cfix)
+        z_coalitions_kernelWeights_list = (np.expand_dims(kernelWeights, 1) * z_coalitions).tolist()
+        for i in range(len(z_coalitions_list)):
+            z_coalitions_kernelWeights_runtime[i].assign(z_coalitions_kernelWeights_list[i])
+
+        # kernelWeights_list = kernelWeights_runtime.tolist()
+        # for i in range(len(kernelWeights_list)):
+        #     kernelWeights_runtime[i].assign(kernelWeights_list[i])
 
         @lib.for_range_opt(num_samples)
         def coalitions(z_i):
-
-            # # TODO: Vectorize this when elementwise operations become available
-            # @lib.for_range_opt(num_features)
-            # def ran(f_i):
-            #     z_samples[z_i * n_train_samples:(z_i + 1) * n_train_samples, f_i] = audit_trigger_sample[f_i] * z_coalitions[z_i][f_i] \
-            #                      + (1 - z_coalitions[z_i][f_i]) * background_sample[f_i]
-
-            # TODO: Do column-wise update
-            # @lib.for_range_opt(num_features)
-            # def ran(f_i):
-            #     addresses = regint.inc(train_samples.sizes[0], train_samples.address + f_i,
-            #                            train_samples.sizes[1])
-            #     train_col =  train_samples.value_type.load_mem(addresses)
-            #     print(train_col)
-            #
-            #     col_wise_update = audit_trigger_sample[f_i] * z_coalitions[z_i][f_i] \
-            #                                                           + (1 - z_coalitions[z_i][f_i]) * train_samples[train_idx][f_i]
-
             @lib.for_range_opt(n_train_samples)
             def coalition_train_sample(train_idx):
                 # TODO: Vectorize this when elementwise operations become available... can we update the whole column at once?
                 @lib.for_range_opt(num_features)
                 def ran(f_i):
-                    z_samples[(z_i * n_train_samples) + train_idx][f_i] = audit_trigger_sample[f_i] * z_coalitions[z_i][f_i] \
-                                                                          + (1 - z_coalitions[z_i][f_i]) * train_samples[train_idx][f_i]
+                    z_samples[(z_i * n_train_samples) + train_idx][f_i] = audit_trigger_sample[f_i] * z_coalitions_runtime[z_i][f_i] \
+                                                                          + (1 - z_coalitions_runtime[z_i][f_i]) * train_samples[train_idx][f_i]
 
+        # compile-time
+        # for z_i in range(num_samples):
+        #     for train_idx in range(n_train_samples):
+        #         # TODO: Vectorize this when elementwise operations become available... can we update the whole column at once?
+        #         for f_i in range(num_features):
+        #             # print(train_idx, f_i, z_coalitions.shape, z_i, z_coalitions[z_i][f_i], 1 - z_coalitions[z_i][f_i])
+        #             # z_samples[(z_i * n_train_samples) + train_idx][f_i] = 0
+        #             # print(audit_trigger_sample[f_i] * regint(int(z_coalitions[z_i][f_i])))
+        #             # print((1 - z_coalitions[z_i][f_i]) * train_samples[train_idx][f_i])
+        #             z_samples[(z_i * n_train_samples) + train_idx][f_i] = audit_trigger_sample[f_i] * convert_np_regint(z_coalitions[z_i][f_i]) \
+        #                                                                   + (1 - convert_np_regint(z_coalitions[z_i][f_i])) * train_samples[train_idx][f_i]
 
                     # z_samples[(z_i * n_train_samples) + train_idx][f_i] = (audit_trigger_sample[f_i] == 1).if_else(z_coalitions[z_i][f_i], z_samples[(z_i * n_train_samples) + train_idx][f_i])
                                                                           # + (1 - z_coalitions[z_i][f_i]) * train_samples[train_idx][f_i]
 
-            print_ln("%s: %s", z_coalitions[z_i], z_samples[z_i].reveal())
+            # print_ln("%s: %s", z_coalitions[z_i], z_samples[z_i].reveal())
+        print("Done generating z_samples")
 
         model = input_loader.model()
-        prediction_results = model.eval(train_samples, batch_size=config.batch_size)
-        prediction_results_ex = Array(num_samples, sint)
-        prediction_results_ex.assign_all(sint(0))
-        print(prediction_results)
+        prediction_results = model.eval(z_samples, batch_size=config.batch_size)
+        prediction_results_ex = Array(num_samples, sfix)
+        prediction_results_ex.assign_all(sfix(0))
 
         # integrate predictinos over marginal distribution
         @lib.for_range_opt(num_samples)
@@ -106,11 +114,39 @@ def audit(input_loader, config, debug: bool):
             def summer(i):
                 prediction_results_ex[z_i] = prediction_results_ex[z_i] + prediction_results[(z_i * n_train_samples) + i]
 
-        print(prediction_results_ex)
-        print_ln(prediction_results_ex.reveal())
+            prediction_results_ex[z_i] = prediction_results_ex[z_i] * cfix(1. / n_train_samples)
 
+        print_ln("Average prediction without feature: %s", prediction_results_ex.reveal())
 
+        # Now we train a lin reg on the samples
 
+        # these can be constants
+        invert_res = invert_compile_time(z_coalitions, kernelWeights)
+        print("invert_res", invert_res.shape)
+
+        # now we should compute X^T y
+        runtime_xtxinv = Matrix(invert_res.shape[0], invert_res.shape[1], cfix)
+        print("Compile-time", invert_res[0][0], invert_res[0][1])
+
+        for i in range(num_samples):
+            runtime_xtxinv[i].assign(invert_res[i].tolist())
+
+        print("Compile-time", invert_res[0][0], invert_res[0][1])
+        print_ln("Runtime %s %s", runtime_xtxinv[0][0], runtime_xtxinv[0][1])
+
+        # Now finally some private-public multiplications are happening
+        print("prediction_results_ex", prediction_results_ex)
+        print("z_coalitions_runtime", z_coalitions_runtime)
+
+        secret_xty = z_coalitions_kernelWeights_runtime.transpose().dot(prediction_results_ex)
+        print("secret_xty", secret_xty)
+        print("runtime_xtxinv", runtime_xtxinv)
+        print_ln("runtime_xtxinv %s", runtime_xtxinv)
+        print_ln("secret_xty %s", secret_xty.reveal_nested())
+        secret_params = runtime_xtxinv.dot(secret_xty)
+        print_ln("SECRET PARAMS %s", secret_params.reveal_nested())
+        print_ln("SUM %s", sum(secret_params.reveal_nested()))
+        # print_ln("SUM %s", )
 
     return {}, {}
 
@@ -128,7 +164,8 @@ def audit(input_loader, config, debug: bool):
         # def coalitions(z_i):
 
 
-
+def convert_np_regint(input):
+    return regint(int(input))
 
 def audit_shap(input_loader, config, debug: bool):
     # Load Training Dataset
@@ -319,7 +356,8 @@ def audit_shap(input_loader, config, debug: bool):
     return result, debug_output
 
 def build_subsets_order(num_samples, num_features):
-    z_coalitions = MultiArray([num_samples, num_features], regint)
+    # z_coalitions = MultiArray([num_samples, num_features], regint)
+    z_coalitions = np.zeros((num_samples, num_features), dtype=np.int64)
 
     # These are constant and based on compile-time data such as the number of features
     num_subset_sizes = int(np.ceil((num_features - 1) / 2.0))
@@ -352,6 +390,7 @@ def build_subsets_order(num_samples, num_features):
     remaining_weight_vector = copy.copy(weight_vector)
 
     n_samples_added = 0
+    kernelWeights = np.zeros(num_samples)
 
     for subset_size in range(1, num_subset_sizes + 1):
 
@@ -382,18 +421,21 @@ def build_subsets_order(num_samples, num_features):
             for inds in itertools.combinations(group_inds, subset_size):
                 mask[:] = 0
                 mask[np.array(inds, dtype='int64')] = 1
-                z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                # z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                z_coalitions[n_samples_added, :] = mask
+                kernelWeights[n_samples_added] = w
                 n_samples_added += 1
                 if subset_size <= num_paired_subset_sizes:
                     # TODO: Not sure what this does but i guess its an optimization?
                     mask[:] = np.abs(mask - 1)
-                    z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                    # z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                    z_coalitions[n_samples_added, :] = mask
+                    kernelWeights[n_samples_added] = w
                     n_samples_added += 1
         else:
             break
     print(f"num_full_subsets = {num_full_subsets}")
 
-    kernelWeights = np.zeros(num_samples)
     # add random samples from what is left of the subset space
     nfixed_samples = n_samples_added
     samples_left = num_samples - n_samples_added
@@ -423,7 +465,9 @@ def build_subsets_order(num_samples, num_features):
                 new_sample = True
                 used_masks[mask_tuple] = n_samples_added
                 samples_left -= 1
-                z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                # z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                z_coalitions[n_samples_added, :] = mask
+                kernelWeights[n_samples_added] = 1.0
                 n_samples_added += 1
             else:
                 kernelWeights[used_masks[mask_tuple]] += 1.0
@@ -436,7 +480,9 @@ def build_subsets_order(num_samples, num_features):
                 # increment a previous sample's weight
                 if new_sample:
                     samples_left -= 1
-                    z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                    # z_coalitions[n_samples_added].assign_vector(mask.tolist())
+                    z_coalitions[n_samples_added, :] = mask
+                    kernelWeights[n_samples_added] = 1.0
                     n_samples_added += 1
                 else:
                     # we know the compliment sample is the next one after the original sample, so + 1
@@ -446,6 +492,29 @@ def build_subsets_order(num_samples, num_features):
         # the fixed enumerated samples have been already counted
         weight_left = np.sum(weight_vector[num_full_subsets:])
         print(f"weight_left = {weight_left}")
+        print(f"kernelWeights {kernelWeights}")
         kernelWeights[nfixed_samples:] *= weight_left / kernelWeights[nfixed_samples:].sum()
 
-        return z_coalitions
+        return z_coalitions, kernelWeights
+
+def invert_compile_time(z_coalitions, kernelWeights):
+    # eyAdj2 = eyAdj - self.maskMatrix[:, nonzero_inds[-1]] * (
+    #     self.link.f(self.fx[dim]) - self.link.f(self.fnull[dim]))
+    # (X^T - X)^T
+    # etmp = np.transpose(np.transpose(z_coalitions) - z_coalitions)
+    etmp = z_coalitions
+    print(f"etmp[:4,:] {etmp[:4, :]}")
+    print(f"kernelWeights {kernelWeights}")
+
+    # solve a weighted least squares equation to estimate phi
+    # wX^T X
+    tmp = np.transpose(np.transpose(etmp) * np.transpose(kernelWeights))
+    print(f"tmp {tmp}")
+    etmp_dot = np.dot(np.transpose(tmp), etmp)
+    try:
+        tmp2 = np.linalg.inv(etmp_dot)
+    except np.linalg.LinAlgError:
+        tmp2 = np.linalg.pinv(etmp_dot)
+    # (wX^T X)-1
+    return tmp2
+
