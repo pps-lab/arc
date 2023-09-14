@@ -8,9 +8,9 @@ from Compiler import ml, library
 # USE TRUNC_PR ??
 
 class TrainingConfig(config.BaseAuditModel):
-    n_samples: int = 10 # -1 = all
+    n_samples: int = 240 # -1 = all
     # n_samples: int = -1 # -1 = all
-    n_threads: int = 1
+    n_threads: int = 8
 
 cfg: TrainingConfig = config.from_program_args(program.args, TrainingConfig)
 
@@ -59,14 +59,14 @@ for i in range(50):
     loss = criterion(outputs, labels)
     loss.backward()
     optimizer.step()
-    print('Training loss: %f' % loss)
+    # print('Training loss: %f' % loss)
 
     with torch.no_grad():
         inputs = torch.Tensor(X_test)
         labels = torch.Tensor(y_test)
         outputs = net(inputs)
         loss = criterion(outputs, labels)
-        print('Test loss: %f' % loss)
+        # print('Test loss: %f' % loss)
 
 library.stop_timer(timer_id=112)
 
@@ -87,18 +87,21 @@ y_test = sfix.input_tensor_via(0, y_test)
 
 layers = ml.layers_from_torch(net, X_train.shape, input_via=0, batch_size=100,
                               regression=True)
-
 optimizer = ml.Optimizer(layers)
 
 library.stop_timer(timer_id=113)
 library.start_timer(timer_id=114)
 
 pred = optimizer.eval(X_test)
-print_ln('Truth %s', (y_test).reveal_nested())
-print_ln('Prediction %s', (pred).reveal_nested())
-print_ln('Difference %s', (Matrix.create_from(pred) - y_test).reveal_nested())
-print_ln('Secure test loss: %s',
-         ((sum((pred[:] - y_test[:]) ** 2)) /
-          (y.shape[1] * len(y_test))).reveal())
+
+
+if cfg.debug:
+    # we dont test the opening part
+    print_ln('Truth %s', (y_test).reveal_nested())
+    print_ln('Prediction %s', (pred).reveal_nested())
+    print_ln('Difference %s', (Matrix.create_from(pred) - y_test).reveal_nested())
+    print_ln('Secure test loss: %s',
+             ((sum((pred[:] - y_test[:]) ** 2)) /
+              (y.shape[1] * len(y_test))).reveal())
 
 library.stop_timer(timer_id=114)
