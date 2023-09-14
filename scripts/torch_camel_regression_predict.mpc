@@ -1,0 +1,103 @@
+# train linear regression model on random data and test it securely
+
+program.options_from_args()
+
+from Compiler.script_utils import config
+from Compiler import ml, library
+
+# USE TRUNC_PR ??
+
+class TrainingConfig(config.BaseAuditModel):
+    n_samples: int = 10 # -1 = all
+    # n_samples: int = -1 # -1 = all
+    n_threads: int = 1
+
+cfg: TrainingConfig = config.from_program_args(program.args, TrainingConfig)
+
+if not cfg.emulate:
+    program.use_trunc_pr = cfg.trunc_pr
+    # program.use_edabits = True
+
+try:
+    ml.set_n_threads(int(cfg.n_threads))
+except:
+    pass
+
+library.start_timer(timer_id=110)
+
+from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
+
+X, y = make_regression(n_samples=1000, n_targets=1)
+
+if len(y.shape) == 1:
+    import numpy
+    y = numpy.asmatrix(y).transpose()
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+library.stop_timer(timer_id=110)
+library.start_timer(timer_id=111)
+
+import torch
+import torch.nn as nn
+
+net = nn.Sequential(
+    nn.Linear(X.shape[1], y_test.shape[1])
+)
+library.stop_timer(timer_id=111)
+library.start_timer(timer_id=112)
+# train for a bit
+optimizer = torch.optim.SGD(net.parameters(), lr=.1)
+criterion = nn.MSELoss()
+
+for i in range(50):
+    inputs = torch.Tensor(X_train)
+    labels = torch.Tensor(y_train)
+    optimizer.zero_grad()
+    outputs = net(inputs)
+    loss = criterion(outputs, labels)
+    loss.backward()
+    optimizer.step()
+    print('Training loss: %f' % loss)
+
+    with torch.no_grad():
+        inputs = torch.Tensor(X_test)
+        labels = torch.Tensor(y_test)
+        outputs = net(inputs)
+        loss = criterion(outputs, labels)
+        print('Test loss: %f' % loss)
+
+library.stop_timer(timer_id=112)
+
+library.start_timer(timer_id=113)
+
+from Compiler import ml
+
+# if cfg.n_samples != -1:
+#     X_test = X_test[:cfg.n_samples]
+#     y_test = y_test[:cfg.n_samples]
+
+X_train = sfix.input_tensor_via(0, X_train)
+X_test = sfix.input_tensor_via(0, X_test)
+
+y_train = sfix.input_tensor_via(0, y_train)
+y_test = sfix.input_tensor_via(0, y_test)
+
+layers = ml.layers_from_torch(net, X_train.shape, input_via=0, batch_size=100,
+                              regression=True)
+
+optimizer = ml.Optimizer(layers)
+
+library.stop_timer(timer_id=113)
+library.start_timer(timer_id=114)
+
+pred = optimizer.eval(X_test)
+print_ln('Truth %s', (y_test).reveal_nested())
+print_ln('Prediction %s', (pred).reveal_nested())
+print_ln('Difference %s', (Matrix.create_from(pred) - y_test).reveal_nested())
+print_ln('Secure test loss: %s',
+         ((sum((pred[:] - y_test[:]) ** 2)) /
+          (y.shape[1] * len(y_test))).reveal())
+
+library.stop_timer(timer_id=114)
