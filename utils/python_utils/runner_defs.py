@@ -413,4 +413,4 @@ class ProtocolRunners(enum.Enum):
     SHAMIR_PARTY_X=ShamirPartyRunner
     MALICIOUS_SHAMIR_PARTY_X=MaliciousShamirPartyRunner
     SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
-    MASCOT_PARTY_X=MascotPartyRunner
+    MASCOT_PARTY=MascotPartyRunner
