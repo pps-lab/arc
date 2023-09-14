@@ -173,6 +173,7 @@ class CompilerArguments(enum.Enum):
     SY_REP_RING_PARTY = ['-R', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
     SEMI2K_PARTY = ['-R', "64"]
+    MASCOT_PARTY = ['-F', "64"]
 
 class CompilerRunner(BaseRunner):
     """Provides the high-level interface to interact with the MP-SPDZ compiler."""
@@ -387,6 +388,20 @@ class MaliciousShamirPartyRunner(ScriptBaseRunner):
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
         ]
 
+class MascotPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './malicious-shamir-party.x'"""
+    def _program(self):
+        return "./mascot-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ]
+
 class ProtocolRunners(enum.Enum):
     """Provides a named mapping between the concrete MPC protocol VM runners and the interface implementations for each of the concrete MPC protocol VMs."""
     EMULATE_X = EmulatorRunner
@@ -398,3 +413,4 @@ class ProtocolRunners(enum.Enum):
     SHAMIR_PARTY_X=ShamirPartyRunner
     MALICIOUS_SHAMIR_PARTY_X=MaliciousShamirPartyRunner
     SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
+    MASCOT_PARTY_X=MascotPartyRunner

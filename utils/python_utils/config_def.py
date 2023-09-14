@@ -38,6 +38,7 @@ class ProtocolChoices(enum.Enum):
     SY_REP_RING_PARTY = "sy-rep-ring-party"
     SPDZ2K_PARTY = "spdz2k-party"
     SEMI2K_PARTY = "semi2k-party"
+    MASCOT_PARTY = "mascot-party"
 
 
 class TaskConfig(pydantic.BaseModel):
