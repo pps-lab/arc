@@ -74,9 +74,10 @@ library.start_timer(timer_id=113)
 
 from Compiler import ml
 
-# if cfg.n_samples != -1:
-#     X_test = X_test[:cfg.n_samples]
-#     y_test = y_test[:cfg.n_samples]
+if cfg.n_samples != -1:
+    X_test = X_test[:cfg.n_samples]
+    y_test = y_test[:cfg.n_samples]
+    print(f"Evaluating {cfg.n_samples} samples")
 
 X_train = sfix.input_tensor_via(0, X_train)
 X_test = sfix.input_tensor_via(0, X_test)
