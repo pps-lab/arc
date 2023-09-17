@@ -399,6 +399,7 @@ class MascotPartyRunner(ScriptBaseRunner):
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-N", f"{self.player_count}",
+                "-v",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
                 ]
