@@ -39,6 +39,7 @@ class ProtocolChoices(enum.Enum):
     SPDZ2K_PARTY = "spdz2k-party"
     SEMI2K_PARTY = "semi2k-party"
     MASCOT_PARTY = "mascot-party"
+    MASCOT_OFFLINE = "mascot-offline"
 
 
 class TaskConfig(pydantic.BaseModel):
