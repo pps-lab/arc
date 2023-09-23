@@ -40,6 +40,8 @@ class ProtocolChoices(enum.Enum):
     SEMI2K_PARTY = "semi2k-party"
     MASCOT_PARTY = "mascot-party"
     MASCOT_OFFLINE = "mascot-offline"
+    LOWGEAR_PARTY = "lowgear-party"
+    HIGHGEAR_PARTY = "lowgear-party"
 
 
 class TaskConfig(pydantic.BaseModel):

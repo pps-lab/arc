@@ -404,6 +404,36 @@ class MascotPartyRunner(ScriptBaseRunner):
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
                 ]
 
+class LowgearPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './malicious-shamir-party.x'"""
+    def _program(self):
+        return "./lowgear-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                "-v",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ]
+
+class HighgearPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './malicious-shamir-party.x'"""
+    def _program(self):
+        return "./highgear-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                "-v",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ]
+
 class MascotOfflineRunner(ScriptBaseRunner):
     def _program(self):
         return "./mascot-offline.x"
@@ -430,3 +460,5 @@ class ProtocolRunners(enum.Enum):
     SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
     MASCOT_PARTY=MascotPartyRunner
     MASCOT_OFFLINE=MascotOfflineRunner
+    LOWGEAR_PARTY=LowgearPartyRunner
+    HIGHGEAR_PARTY=HighgearPartyRunner
