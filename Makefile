@@ -30,7 +30,7 @@ compile-debug: simlink
 	cd MP-SPDZ && ./compile.py $(RING_64) $(script) $(AUDITARGS) emulate__True debug__True
 
 compile: simlink
-	cd MP-SPDZ && ./compile.py $(RING_64) $(script) $(AUDITARGS) emulate__True debug__False
+	cd MP-SPDZ && ./compile.py $(RING_64) $(script) --budget 10000 $(AUDITARGS) emulate__True debug__False
 
 emulate: compile
 	cd MP-SPDZ && ./emulate.x $(script)-$(subst $e ,-,$(AUDITARGS))-emulate__True-debug__False
@@ -52,4 +52,16 @@ protocol-debug: simlink
 
 train-debug: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) 10 16 -- -v
+
+compile-256: simlink
+	cd MP-SPDZ && ./compile.py -F 256 $(script) --budget 10000 $(AUDITARGS) emulate__True debug__False
+
+protocol-256:
+	cd MP-SPDZ && ./Scripts/compile-run.py -F 256 -E $(protocol) $(script) $(AUDITARGS) debug__False
+
+compile-field: simlink
+	cd MP-SPDZ && ./compile.py -F 64 $(script) $(AUDITARGS) emulate__True debug__True
+
+run-field: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) emulate__True debug__True
 

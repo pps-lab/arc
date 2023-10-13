@@ -50,6 +50,7 @@ def audit(input_loader, config, debug: bool):
         # Optimization 1: clear int
         # Actually this may not need to be a MultiArray but can be bitwise operations of regint?
         # z_coalitions = MultiArray([num_samples, num_features], regint)
+        lib.start_timer(101)
         z_coalitions, kernelWeights = build_subsets_order(num_samples, num_features)
         print("z_coalitions", z_coalitions)
 
@@ -69,11 +70,13 @@ def audit(input_loader, config, debug: bool):
         z_coalitions_kernelWeights_list = (np.expand_dims(kernelWeights, 1) * z_coalitions).tolist()
         for i in range(len(z_coalitions_list)):
             z_coalitions_kernelWeights_runtime[i].assign(z_coalitions_kernelWeights_list[i])
+        lib.stop_timer(101)
 
         # kernelWeights_list = kernelWeights_runtime.tolist()
         # for i in range(len(kernelWeights_list)):
         #     kernelWeights_runtime[i].assign(kernelWeights_list[i])
 
+        lib.start_timer(102)
         @lib.for_range_opt(num_samples)
         def coalitions(z_i):
             @lib.for_range_opt(n_train_samples)
@@ -83,7 +86,7 @@ def audit(input_loader, config, debug: bool):
                 def ran(f_i):
                     z_samples[(z_i * n_train_samples) + train_idx][f_i] = audit_trigger_sample[f_i] * z_coalitions_runtime[z_i][f_i] \
                                                                           + (1 - z_coalitions_runtime[z_i][f_i]) * train_samples[train_idx][f_i]
-
+        lib.stop_timer(102)
         # compile-time
         # for z_i in range(num_samples):
         #     for train_idx in range(n_train_samples):
