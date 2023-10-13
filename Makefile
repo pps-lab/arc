@@ -56,7 +56,7 @@ train-debug: simlink
 compile-256: simlink
 	cd MP-SPDZ && ./compile.py -F 256 $(script) --budget 10000 $(AUDITARGS) emulate__True debug__False
 
-protocol-256:
+protocol-256: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -F 256 -E $(protocol) $(script) $(AUDITARGS) debug__False
 
 compile-field: simlink
