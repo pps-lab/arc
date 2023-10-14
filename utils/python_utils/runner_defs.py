@@ -257,7 +257,7 @@ class ScriptBaseRunner(BaseRunner):
             The name of the script that should be executed
         - args : list[str]
             The list of arguments under which the given script was compiled under
-        - playere_0_host : str
+        - player_0_host : str
             The hostname of the machine that hosts the player 0 MPC protocol VM proccess
         - player_id : int
             The id of the MPC protocol VM process

@@ -175,6 +175,7 @@ def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
         script_name=json_cofig_obj.mpc.script_name,
         result_dir=result_dir,
         stage=json_cofig_obj.mpc.stage,
-        compiler_args=json_cofig_obj.mpc.compiler_args
+        compiler_args=json_cofig_obj.mpc.compiler_args,
+        program_args=json_cofig_obj.mpc.program_args
     )
     return conf_obj
