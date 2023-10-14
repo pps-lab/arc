@@ -79,6 +79,7 @@ class TaskConfig(pydantic.BaseModel):
     protocol_setup: ProtocolChoices
     result_dir: str
     stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
+    program_args: list = None
 
     compiler_args: list = None
 

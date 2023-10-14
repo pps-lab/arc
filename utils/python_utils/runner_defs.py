@@ -84,9 +84,15 @@ import subprocess
 import enum
 import os
 import shlex
+from typing import Dict, List
 
 
 # This class expects that each Runner is executed
+def program_args_cmdline(program_args: Dict[str, str]) -> List[str]:
+    list_tuples = [(f'-{k}', v) for k, v in program_args.items()]
+    # flatten
+    flat_list = [item for sublist in list_tuples for item in sublist]
+    return flat_list
 
 def script_name_and_args_to_correct_execution_name(script_name, script_args):
     """Tranforms the script_name and the script_args argument list into the name of the bytecode file that an MPC protocol virtual machine executes.
@@ -240,7 +246,7 @@ class ScriptBaseRunner(BaseRunner):
     - player_count : int
         The number of MPC protocol VM processes that will be part of the experiment execution
     """
-    def __init__(self, output_prefix, script_name, args, player_0_host, player_id, player_count):
+    def __init__(self, output_prefix, script_name, args, player_0_host, player_id, player_count, program_args):
         """
         Parameters:
         - output_prefix : str
@@ -255,6 +261,8 @@ class ScriptBaseRunner(BaseRunner):
             The id of the MPC protocol VM process
         - player_count : int
             The number of MPC protocol VM processes that will be part of the experiment execution
+        - program_args: list
+            List of additional program arguments that should be passed to the MPC protocol VM
         """
         self.output_prefix = output_prefix
         self.script_name = script_name
@@ -262,6 +270,7 @@ class ScriptBaseRunner(BaseRunner):
         self.player_0_host = player_0_host
         self.player_id = player_id
         self.player_count = player_count
+        self.program_args = program_args
 
     def _env(self):
         my_env = os.environ.copy()
@@ -410,15 +419,16 @@ class LowgearPartyRunner(ScriptBaseRunner):
         return "./lowgear-party.x"
 
     def _args(self):
-        return ["-OF", self.output_prefix,
+        program_args_flat = program_args_cmdline(self.program_args)
+        return (["-OF", self.output_prefix,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-N", f"{self.player_count}",
                 "-v",
-                f"{self.player_id}",
-                "-b", "1000",
-                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
-                ]
+                f"{self.player_id}"]
+                + program_args_flat + [
+                    script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ])
 
 class HighgearPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './malicious-shamir-party.x'"""
