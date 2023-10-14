@@ -89,6 +89,8 @@ from typing import Dict, List
 
 # This class expects that each Runner is executed
 def program_args_cmdline(program_args: Dict[str, str]) -> List[str]:
+    if program_args is None:
+        return []
     list_tuples = [(f'-{k}', v) for k, v in program_args.items()]
     # flatten
     flat_list = [item for sublist in list_tuples for item in sublist]
