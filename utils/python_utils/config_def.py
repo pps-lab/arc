@@ -129,6 +129,7 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
 
     compiler_args: list[str] = None
+    program_args: typing.List[typing.Dict[str, str]] = None
 
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
