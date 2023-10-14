@@ -416,6 +416,7 @@ class LowgearPartyRunner(ScriptBaseRunner):
                 "-N", f"{self.player_count}",
                 "-v",
                 f"{self.player_id}",
+                "-b", "1000",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
                 ]
 
