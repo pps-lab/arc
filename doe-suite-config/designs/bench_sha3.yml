@@ -21,11 +21,11 @@ kzg:
         - setup-base
         - setup-consistency
         - setup-largeprimes
-#        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
     mpc:
@@ -40,7 +40,8 @@ kzg:
 
       script_args:
         # inference specific
-        n_samples: 4
+        n_samples:
+          $FACTOR$: [ 2, 4, 6, 8 ]
 
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor

@@ -28,6 +28,13 @@ kzg:
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
+
+    consistency_args:
+      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+      hosts_file: "{{ exp_consistency_hosts_file }}"
+      pc:
+        $FACTOR$: [ kzg, ipa, ped] # kzg, ipa, ped
+
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
@@ -40,18 +47,12 @@ kzg:
 
       script_args:
         # inference specific
-        n_samples: 60000
+        n_samples: 262000
         n_input_parties: 3
 
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
 
-    consistency_args:
-      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
-      hosts_file: "{{ exp_consistency_hosts_file }}"
-      pc: kzg # kzg, ipa, ped (todo)
-#      size: 16
-      # todo add spdz
 
 
 $ETL$:
