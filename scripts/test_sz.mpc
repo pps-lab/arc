@@ -14,30 +14,27 @@ class SchwartzZippelConfig(config.BaseAuditModel):
     # n_samples: int = 200 # -1 = all
     # n_samples: int = -1 # -1 = all
     n_threads: int = 1
+    n_input_parties: int = 3
 
 cfg: SchwartzZippelConfig = config.from_program_args(program.args, SchwartzZippelConfig)
 
-compile_array = np.repeat(4, cfg.n_samples)
+for i in range(cfg.n_input_parties):
+    compile_array = np.repeat(4, cfg.n_samples)
 
-# inputs
-# inputs_x = Array(cfg.n_samples, sint)
-# @for_range_opt(cfg.n_samples)
-# def _(i):
-# # for i in range(cfg.n_samples):
-#     inputs_x[i] = sint(4)
-library.start_timer(timer_id=100)
+    library.start_timer(timer_id=200 + i)
 
-inputs_x = sfix.input_tensor_via(0, compile_array)
+    inputs_x = sfix.input_tensor_via(i, compile_array)
 
-print_ln("%s", inputs_x[0].reveal())
+    print_ln("%s", inputs_x[0].reveal())
 
-library.stop_timer(timer_id=100)
+    library.stop_timer(timer_id=200 + i)
+
+    library.start_timer(timer_id=300 + i)
+
+    input_consistency.compute_and_output_poly(inputs_x, i)
+
+    library.stop_timer(timer_id=300 + i)
+
+
 
 # inputs_x.write_to_file()
-
-library.start_timer(timer_id=101)
-
-input_consistency.compute_and_output_poly(inputs_x, 0)
-
-library.stop_timer(timer_id=101)
-
