@@ -133,7 +133,7 @@ def run_consistency_check(task_config, output_prefix):
 
     mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     output_file = f"{output_prefix}-P{task_config.player_id}-0"
-    if not os.file.exists(os.path.join(mp_spdz_path,output_file)):
+    if not os.path.exists(os.path.join(mp_spdz_path,output_file)):
         print(f"Error: Could not find mpspdz output file! Expected to find {output_file} in {mp_spdz_path}")
         return
 
