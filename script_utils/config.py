@@ -22,7 +22,7 @@ class BaseAuditModel(BaseModel):
 
     debug: bool = False
     emulate: bool = False
-    dataset: str
+    dataset: str = None
     batch_size: int = 128
     n_threads: int = 8
     trunc_pr: bool = False

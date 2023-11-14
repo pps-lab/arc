@@ -1,11 +1,11 @@
 ---
 
-#instance_type: c5.9xlarge
-instance_type: t2.xlarge
-ec2_volume_size: 50
+instance_type: c5.9xlarge
+#instance_type: t2.xlarge
+ec2_volume_size: 100
 
-ec2_image_id: ami-0dc85e9d5743deec9	 # precompiled ami, #4
-ec2_volume_snapshot: snap-0c2123426c5ee42dd
+ec2_image_id: ami-0875ac3ffe3b458a3	 # precompiled ami, #4
+ec2_volume_snapshot: snap-0a2a18f55b6287597
 
 # AMI from Nikolay
 #ec2_image_id: ami-06dd92ecc74fdfb36

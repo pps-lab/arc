@@ -1,10 +1,29 @@
 
 
 from circuit import sha3_256
-a = sbitvec.from_vec([])
-b = sbitvec.from_hex('cc')
-c = sbitvec.from_hex('41fb')
-d = sbitvec.from_hex('1f877c')
-e = sbitvec.from_vec([sbit(0)] * 8)
-for x in a, b, c, d, e:
-    sha3_256(x).reveal_print_hex()
+
+from Compiler.script_utils import config
+
+class SHA3HashConfig(config.BaseAuditModel):
+    n_samples: int = 400 # -1 = all
+    n_threads: int = 1
+
+n_bits_per_sample = sfix.f
+
+cfg: SHA3HashConfig = config.from_program_args(program.args, SHA3HashConfig)
+
+n_bits = cfg.n_samples * n_bits_per_sample
+print("Hashing %s bits", n_bits)
+input_array = sbitvec.from_vec([sbit(0)] * n_bits)
+
+hash = sha3_256(input_array)
+hash.reveal_print_hex()
+
+
+# a = sbitvec.from_vec([])
+# b = sbitvec.from_hex('cc')
+# c = sbitvec.from_hex('41fb')
+# d = sbitvec.from_hex('1f877c')
+# e = sbitvec.from_vec([sbit(0)] * 8)
+# for x in a, b, c, d, e:
+#     sha3_256(x).reveal_print_hex()

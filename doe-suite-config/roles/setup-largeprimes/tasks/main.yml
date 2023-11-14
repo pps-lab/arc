@@ -11,7 +11,7 @@
     state: absent
 
 - name: Add large prime szp (5 limbs)
-  ansible.builtin.shell: echo 'MOD = -DGFP_MOD_SZ=5 -DMAX_MOD_SZ=13' >> CONFIG.mine
+  ansible.builtin.shell: echo 'MOD = -DGFP_MOD_SZ=6 -DMAX_MOD_SZ=13' >> CONFIG.mine
   args:
     chdir: "{{ mpspdz_dir }}"
 
