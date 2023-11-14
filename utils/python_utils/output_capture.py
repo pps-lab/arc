@@ -88,7 +88,7 @@ class OutputCapture:
                 thread_num = int(match.group(2))
                 result_file_name = f"result-P{player_id}-{thread_num}.txt"
                 result_file_path = os.path.join(self.result_dir,result_file_name)
-                os.replace(input_file_path,result_file_path)
+                os.replace(input_file_path, result_file_path)
             else:
                 # print(f"Captured_output: {input_file} is not relevant",file=sys.stderr)
                 pass

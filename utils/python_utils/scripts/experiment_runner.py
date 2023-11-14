@@ -131,10 +131,12 @@ def run_consistency_check(task_config, output_prefix):
         capture_output=True
     )
 
-    mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
-    output_file = f"{output_prefix}-P{task_config.player_id}-0"
-    if not os.path.exists(os.path.join(mp_spdz_path,output_file)):
-        print(f"Error: Could not find mpspdz output file! Expected to find {output_file} in {mp_spdz_path}")
+    # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
+    # output_file = f"{output_prefix}-P{task_config.player_id}-0"
+    result_file_name = f"result-P{task_config.player_id}-0.txt"
+    result_file_path = os.path.join(task_config.result_dir, result_file_name)
+    if not os.path.exists(result_file_path):
+        print(f"Error: Could not find mpspdz output file! Expected to find {result_file_path}")
         return
 
     # PROVE_VERIFY
@@ -142,7 +144,7 @@ def run_consistency_check(task_config, output_prefix):
     args = {
         "hosts": task_config.consistency_args.hosts_file,
         "party": task_config.player_id,
-        "mpspdz-output-file": os.path.join(mp_spdz_path, output_file),
+        "mpspdz-output-file": result_file_path,
     }
     args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
     executable_str = f"{executable} {args_str}"
