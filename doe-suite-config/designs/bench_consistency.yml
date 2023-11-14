@@ -41,6 +41,7 @@ kzg:
       script_args:
         # inference specific
         n_samples: 60000
+        n_input_parties: 3
 
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor

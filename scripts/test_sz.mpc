@@ -14,7 +14,7 @@ class SchwartzZippelConfig(config.BaseAuditModel):
     # n_samples: int = 200 # -1 = all
     # n_samples: int = -1 # -1 = all
     n_threads: int = 1
-    n_input_parties: int = 3
+    n_input_parties: int = 2
 
 cfg: SchwartzZippelConfig = config.from_program_args(program.args, SchwartzZippelConfig)
 
