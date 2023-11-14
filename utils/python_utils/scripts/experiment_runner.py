@@ -124,14 +124,17 @@ def run_consistency_check(task_config, output_prefix):
     executable_str = f"{executable} {args_str}"
     print(f"Running consistency check with command: {executable_str}")
 
+    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+    consistency_output_file = open(os.path.join(result_dir_path, "consistency.log"), "w+")
+
     import subprocess
     result_gen_commitments = subprocess.run(
         executable_str,
         shell=True,
         cwd=task_config.consistency_args.abs_path_to_code_dir,
         check=True,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE,
+        stdout=consistency_output_file,
+        stderr=consistency_output_file,
         text=True
     )
     print(result_gen_commitments.stdout, file=sys.stdout)
@@ -140,7 +143,6 @@ def run_consistency_check(task_config, output_prefix):
     # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     # output_file = f"{output_prefix}-P{task_config.player_id}-0"
     result_file_name = f"result-P{task_config.player_id}-0.txt"
-    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
     result_file_path = os.path.join(result_dir_path, result_file_name)
     if not os.path.exists(result_file_path):
         print(f"Error: Could not find mpspdz output file! Expected to find {result_file_path}")
@@ -163,9 +165,8 @@ def run_consistency_check(task_config, output_prefix):
         shell=True,
         cwd=task_config.consistency_args.abs_path_to_code_dir,
         check=True,
-        # capture_output=True,
-        stdout = subprocess.PIPE,
-        stderr = subprocess.PIPE,
+        stdout=consistency_output_file,
+        stderr=consistency_output_file,
         text=True
     )
     print(result_prove_verify.stdout, file=sys.stdout)
