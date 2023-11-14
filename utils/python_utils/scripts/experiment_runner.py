@@ -135,10 +135,10 @@ def run_consistency_check(task_config, output_prefix):
         check=True,
         stdout=consistency_output_file,
         stderr=consistency_output_file,
-        text=True
+        # text=True
     )
-    print(result_gen_commitments.stdout, file=sys.stdout)
-    print(result_gen_commitments.stderr, file=sys.stderr)
+    # print(result_gen_commitments.stdout, file=sys.stdout)
+    # print(result_gen_commitments.stderr, file=sys.stderr)
 
     # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     # output_file = f"{output_prefix}-P{task_config.player_id}-0"
@@ -167,10 +167,10 @@ def run_consistency_check(task_config, output_prefix):
         check=True,
         stdout=consistency_output_file,
         stderr=consistency_output_file,
-        text=True
+        # text=True
     )
-    print(result_prove_verify.stdout, file=sys.stdout)
-    print(result_prove_verify.stderr, file=sys.stderr)
+    # print(result_prove_verify.stdout, file=sys.stdout)
+    # print(result_prove_verify.stderr, file=sys.stderr)
 
 
 
