@@ -52,7 +52,7 @@ def prepare_config(player_number,sleep_time):
     json_config_path = os.path.join(result_dir,DEFAULT_CONFIG_NAME)
     json_config_obj = config_def.parse_json_config(config_path=json_config_path)
     task_config = config_def.build_task_config(
-        json_cofig_obj=json_config_obj,
+        json_config_obj=json_config_obj,
         player_number=player_number,
         sleep_time=sleep_time,
         result_dir=result_dir
@@ -105,6 +105,59 @@ def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
         output_prefix=output_prefix)
     cleaner_obj.clean()
 
+def run_consistency_check(task_config, output_prefix):
+    if task_config.consistency_args is None:
+        print("No consistency check arguments specified. Skipping consistency check.")
+        return
+
+    # GEN COMMITMENTS
+    executable = f"target/release/gen_commitments_{task_config.consistency_args.pc}"
+    args = {
+        "hosts": task_config.consistency_args.hosts_file,
+        "party": task_config.player_id,
+        "player-input-binary-path": f"{task_config.abs_path_to_code_dir}/Player-Data/Input-Binary-P{task_config.player_id}-0",
+        "save": "",
+    }
+    args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+    executable_str = f"{executable} {args_str}"
+    print(f"Running consistency check with command: {executable_str}")
+
+    import subprocess
+    subprocess.run(
+        executable_str,
+        shell=True,
+        cwd=task_config.consistency_args.abs_path_to_code_dir,
+        check=True,
+        capture_output=True
+    )
+
+    mp_spdz_path = task_config.abs_path_to_code_dir
+    output_file = f"{output_prefix}-P{task_config.player_id}-0"
+    if not os.file.exists(os.path.join(mp_spdz_path,output_file)):
+        print(f"Error: Could not find mpspdz output file! Expected to find {output_file} in {mp_spdz_path}")
+        return
+
+    # PROVE_VERIFY
+    executable = f"target/release/prove_verify_{task_config.consistency_args.pc}"
+    args = {
+        "hosts": task_config.consistency_args.hosts_file,
+        "party": task_config.player_id,
+        "mpspdz-output-file": os.path.join(mp_spdz_path, output_file),
+    }
+    args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+    executable_str = f"{executable} {args_str}"
+    print(f"Running consistency check with command: {executable_str}")
+
+    import subprocess
+    subprocess.run(
+        executable_str,
+        shell=True,
+        cwd=task_config.consistency_args.abs_path_to_code_dir,
+        check=True,
+        capture_output=True
+    )
+
+
 
 # TODO: I think this could be simplified with e.g., a makefile?
 
@@ -130,6 +183,8 @@ def cli(player_number,sleep_time):
             output_prefix=output_prefix)
         capture_output(task_config=task_config,
             output_prefix=output_prefix)
+        run_consistency_check(task_config=task_config,
+                              output_prefix=output_prefix)
         clean_workspace(task_config=task_config,output_prefix=output_prefix)
 
 

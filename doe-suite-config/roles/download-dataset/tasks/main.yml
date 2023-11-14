@@ -25,6 +25,7 @@
   ansible.builtin.unarchive:
     src: "{{ file.path }}"
     dest: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
+    creates: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
     remote_src: yes
   loop: "{{ my_zip_files.files }}"
   loop_control:

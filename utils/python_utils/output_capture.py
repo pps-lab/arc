@@ -90,4 +90,5 @@ class OutputCapture:
                 result_file_path = os.path.join(self.result_dir,result_file_name)
                 os.replace(input_file_path,result_file_path)
             else:
-                print(f"Captured_output: {input_file} is not relevant",file=sys.stderr)
+                # print(f"Captured_output: {input_file} is not relevant",file=sys.stderr)
+                pass

@@ -2,16 +2,17 @@
 
 
 # TODO: set remote repository (code will be cloned on each remote host)
-git_remote_repository: "git@github.com:pps-lab/cryptographic-auditing-mpc.git"
+#git_remote_repository: "git@github.com:pps-lab/cryptographic-auditing-mpc.git"
 # Can also get multiple repos and with a specific branch / commit
-#git_remote_repository:
-#- repo: git@github.com:nicolas-kuechler/doe-suite.git
-#  version: main
-#- repo: git@github.com:nicolas-kuechler/doe-suite.git
-#  version: etl
+git_remote_repository:
+- repo: "git@github.com:pps-lab/cryptographic-auditing-mpc.git"
+  version: master
+- repo: "git@github.com:pps-lab/collaborative-zksnark.git"
+  version: main
+- repo: "git@github.com:hiddely/mpc-consistency.git"
+  version: master
 
 prj_id_prefix: "cryptographic-auditing-mpc"
-
 
 prj_id: "{{ prj_id_prefix }}_{{ does_project_id_suffix }}"
 
@@ -35,6 +36,11 @@ remote:
 
 exp_code_dir: "{{ remote.dir }}/code"
 mpspdz_dir: "{{ exp_code_dir }}/MP-SPDZ"
+exp_consistency_dir: "{{ remote.dir }}/mpc-consistency"
+exp_arkworks_dir: "{{ remote.dir }}/collaborative-zksnark"
+
+exp_consistency_hosts_file: "{{ exp_consistency_dir }}/data/vpc"
+exp_arkworks_hosts_file: "{{ exp_arkworks_dir }}/mpc-snarks/data/vpc"
 
 dataset_dir: "{{ exp_code_dir }}/input_data"
 

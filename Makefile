@@ -44,7 +44,7 @@ ff4: simlink
 ff4-debug: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) $(AUDITARGS) debug__True
 
-protocol:
+protocol: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) debug__False
 
 protocol-debug: simlink
@@ -65,3 +65,5 @@ compile-field: simlink
 run-field: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) emulate__True debug__True
 
+protocol-bls377: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -P 8444461749428370424248824938781546531375899335154063827935233455917409239041 -E $(protocol) $(script) $(AUDITARGS) debug__False

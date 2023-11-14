@@ -44,51 +44,6 @@ class ProtocolChoices(enum.Enum):
     HIGHGEAR_PARTY = "lowgear-party"
 
 
-class TaskConfig(pydantic.BaseModel):
-    """Defines the Configuration for a single Experiment Run
-
-    Attributes
-    ----------
-    - player_id : int
-        The id of the player
-    - sleep_time : float
-        The number of seconds to sleep between the compilation step and running step (Not used)
-    - player_count : int
-        The number of players involved in the experiment
-    - player_0_hostname : str
-        The hostname of player 0 to which all MPC protocol virtual machines should connect to
-    - abs_path_to_code_dir : str
-        The absolute path to the experiment code directory where the code for the evaluation framework is stored
-    - script_name : str
-        The name of the script that will be executed as part of the experiment
-    - script_args : list[str]
-        The list of 0-based positional arguments under which the given script should be compiled with
-    - protocol_setup : ProtocolChoices
-        The kind of MPC protocol that should be used in the Experiment
-    - result_dir : str
-        The path to the directory which contains the results folder
-    """
-    player_id: int
-    sleep_time: float
-    player_count: int
-    player_0_hostname: str
-    abs_path_to_code_dir: str
-    # MPC specific options
-    script_name: str
-    script_args: typing.Dict[str, object]
-    protocol_setup: ProtocolChoices
-    result_dir: str
-    stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
-    program_args: dict = None
-
-    compiler_args: list = None
-
-    @pydantic.validator('stage')
-    def convert_to_list(cls, v):
-        if not isinstance(v, list):
-            v = [v]
-        return v
-
 class ArgumentLineConfig(pydantic.BaseModel):
     """Defines the model for the configuration received via the command line
 
@@ -131,11 +86,15 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     compiler_args: list[str] = None
     program_args: typing.Dict[str, str] = None
 
+class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
+    hosts_file: str
+    pc: typing.Literal['kzg', 'ipa', 'ped']
+    abs_path_to_code_dir: str
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     """Defines the relevant model for the configuration received via the config.json file"""
     mpc: JsoncMpcConfig
-
+    consistency_args: typing.Optional[JsonConsistencyConfig]
 
 
 def parse_json_config(config_path):
@@ -149,8 +108,8 @@ def parse_json_config(config_path):
     config_obj = JsonConfigModel.parse_file(config_path)
     return config_obj
 
-def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
-    sleep_time: float, result_dir: str):
+def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
+                      sleep_time: float, result_dir: str):
     """Builds the TaskConfig object that contains all configuration information. It builds this object from the JsonConfigModel stored in json_config_obj, the player_number, the sleep_time and the result_dir arguments.
 
     Parameters
@@ -167,15 +126,63 @@ def build_task_config(json_cofig_obj: JsonConfigModel, player_number: int,
     conf_obj = TaskConfig(
         player_id=player_number,
         sleep_time=sleep_time,
-        player_count=json_cofig_obj.mpc.player_count,
-        player_0_hostname=json_cofig_obj.mpc.player_0_hostname,
-        abs_path_to_code_dir=json_cofig_obj.mpc.abs_path_to_code_dir,
-        protocol_setup=json_cofig_obj.mpc.protocol_setup,
-        script_args=json_cofig_obj.mpc.script_args,
-        script_name=json_cofig_obj.mpc.script_name,
+        player_count=json_config_obj.mpc.player_count,
+        player_0_hostname=json_config_obj.mpc.player_0_hostname,
+        abs_path_to_code_dir=json_config_obj.mpc.abs_path_to_code_dir,
+        protocol_setup=json_config_obj.mpc.protocol_setup,
+        script_args=json_config_obj.mpc.script_args,
+        script_name=json_config_obj.mpc.script_name,
         result_dir=result_dir,
-        stage=json_cofig_obj.mpc.stage,
-        compiler_args=json_cofig_obj.mpc.compiler_args,
-        program_args=json_cofig_obj.mpc.program_args
+        stage=json_config_obj.mpc.stage,
+        compiler_args=json_config_obj.mpc.compiler_args,
+        program_args=json_config_obj.mpc.program_args,
+        consistency_args=json_config_obj.consistency_args
     )
     return conf_obj
+
+
+class TaskConfig(pydantic.BaseModel):
+    """Defines the Configuration for a single Experiment Run
+
+    Attributes
+    ----------
+    - player_id : int
+        The id of the player
+    - sleep_time : float
+        The number of seconds to sleep between the compilation step and running step (Not used)
+    - player_count : int
+        The number of players involved in the experiment
+    - player_0_hostname : str
+        The hostname of player 0 to which all MPC protocol virtual machines should connect to
+    - abs_path_to_code_dir : str
+        The absolute path to the experiment code directory where the code for the evaluation framework is stored
+    - script_name : str
+        The name of the script that will be executed as part of the experiment
+    - script_args : list[str]
+        The list of 0-based positional arguments under which the given script should be compiled with
+    - protocol_setup : ProtocolChoices
+        The kind of MPC protocol that should be used in the Experiment
+    - result_dir : str
+        The path to the directory which contains the results folder
+    """
+    player_id: int
+    sleep_time: float
+    player_count: int
+    player_0_hostname: str
+    abs_path_to_code_dir: str
+    # MPC specific options
+    script_name: str
+    script_args: typing.Dict[str, object]
+    protocol_setup: ProtocolChoices
+    result_dir: str
+    stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
+    program_args: dict = None
+
+    compiler_args: list = None
+    consistency_args: typing.Optional[JsonConsistencyConfig] = None
+
+    @pydantic.validator('stage')
+    def convert_to_list(cls, v):
+        if not isinstance(v, list):
+            v = [v]
+        return v

@@ -1,0 +1,10 @@
+
+
+from circuit import sha3_256
+a = sbitvec.from_vec([])
+b = sbitvec.from_hex('cc')
+c = sbitvec.from_hex('41fb')
+d = sbitvec.from_hex('1f877c')
+e = sbitvec.from_vec([sbit(0)] * 8)
+for x in a, b, c, d, e:
+    sha3_256(x).reveal_print_hex()

@@ -18,14 +18,6 @@
   ansible.builtin.shell:
     cmd: sysctl -p
 
-
-- name: Generate SSL Certificates for 20 players locally if not exist yet # TODO: Does this expire? does this work in parallel?
-  delegate_to: localhost
-  ansible.builtin.shell:
-    chdir: "{{ does_project_dir }}"
-    cmd: "bash {{ does_project_dir }}/MP-SPDZ/Scripts/setup-ssl.sh 20 MP-SPDZ/Player-SSL-Data/"
-    creates: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/P0.key"
-
 - name: "Remove autoupdater from ubuntu"
   become: True
   ansible.builtin.apt:
@@ -40,16 +32,19 @@
     pkg:
       - automake
       - build-essential
+      - clang
       - git
       - libboost-dev
       - libboost-thread-dev
       - libntl-dev
+      - libgmp-dev
       - libsodium-dev
       - libssl-dev
       - libtool
       - m4
       - python3
       - texinfo
+      - cmake
       - yasm
     update_cache: yes
     state: present
@@ -83,16 +78,23 @@
 #    dest: "{{git_repo_mpspdz_location}}/CONFIG"
 #  when: have_compiled_res.stat.exists == False
 
-- name: Update CONFIG to customize player-data dir
-  ansible.builtin.replace:
-    path: "{{ mpspdz_dir }}/CONFIG"
-    regexp: '-DPREP_DIR="Player-Data\/"'
-    replace: '-DPREP_DIR="Player-Prep-Data/"'
+#- name: Update CONFIG to customize player-data dir
+#  ansible.builtin.replace:
+#    path: "{{ mpspdz_dir }}/CONFIG"
+#    regexp: '-DPREP_DIR="Player-Data\/"'
+#    replace: '-DPREP_DIR="Player-Prep-Data/"'
 - name: Update CONFIG to customize player-ssl dir
   ansible.builtin.replace:
     path: "{{ mpspdz_dir }}/CONFIG"
     regexp: '-DSSL_DIR="Player-Data\/"'
     replace: '-DSSL_DIR="Player-SSL-Data/"'
+
+# TODO: Look into this Player-Prep-Data dir ??
+- name: Update CONFIG to customize player-data dir
+  ansible.builtin.replace:
+    path: "{{ mpspdz_dir }}/CONFIG"
+    regexp: '-DPREP_DIR="Player-Prep-Data\/"'
+    replace: '-DPREP_DIR="Player-Data/"'
 
 - name: "Create Player-Data/ folder"
   ansible.builtin.file:
@@ -114,29 +116,36 @@
     path: "{{ mpspdz_dir }}/semi2k-party.x"
   register: mpspdz_compiled
 - name: "Compile MP-SPDZ (if some files dont exist)"
-  when: mpspdz_compiled.stat.exists == False
+#  when: mpspdz_compiled.stat.exists == False
   block:
-    - name: "Make cmake 3.15"
-      community.general.make:
-        chdir: "{{ mpspdz_dir }}"
-        jobs: "8"
-        target: "cmake"
+#    - name: "Make cmake 3.15" # TODO: Is this necessary?
+#      community.general.make:
+#        chdir: "{{ mpspdz_dir }}"
+#        jobs: "8"
+#        target: "cmake"
+    # TODO: compiling cmake and immediately doing the next module, messes it up
     - name: "Make boost 1.81"
       community.general.make:
         chdir: "{{ mpspdz_dir }}"
-        jobs: "8"
+        jobs: "36"
         target: "boost"
-    - name: "Compile MP-SPDZ mpir to get all libraries"
+    # SOMEHOW THIS LIBOTE IS FAILING??
+    - name: "Compile libote"
       community.general.make:
         chdir: "{{ mpspdz_dir }}"
-        jobs: "8"
+        jobs: "36"
+        target: "libote"
+    - name: "Compile MP-SPDZ tldr to get all libraries"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "36"
         target: "tldr"
     #  when: have_compiled_res.stat.exists == False
 
-    - name: "Compile MP-SPDZ"
+    - name: "Compile MP-SPDZ all"
       community.general.make:
         chdir: "{{ mpspdz_dir }}"
-        jobs: "8"
+        jobs: "36"
         target: "all"
     #  when: have_compiled_res.stat.exists == False
 
@@ -154,6 +163,25 @@
 #    path: "{{git_repo_mpspdz_location}}/Player-Prep-Data"
 #    state: directory
 
+- name: "Check if SSL certificates are up to date (note: this checks validity on coordinator machine)"
+  delegate_to: localhost
+  openssl_certificate_info:
+    path: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/P0.pem"
+    # for valid_at, invalid_at and valid_in
+    valid_at:
+      one_day: "+1d"
+  register: result
+
+- name: Generate SSL Certificates for 20 players locally if not exist yet # TODO: Does this expire? does this work in parallel?
+  delegate_to: localhost
+  when: result.valid_at.one_day == False
+  ansible.builtin.shell:
+    chdir: "{{ does_project_dir }}"
+    cmd: "bash {{ does_project_dir }}/MP-SPDZ/Scripts/setup-ssl.sh 20 MP-SPDZ/Player-SSL-Data/"
+    creates: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/P0.key"
+
+# TODO: add step to re-generate ssl certs locally (if they are outdated)
+# TODO: Re-enable
 - name: Copy SSL Certificates
   ansible.builtin.copy:
     src: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/"

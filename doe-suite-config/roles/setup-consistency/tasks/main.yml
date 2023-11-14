@@ -1,0 +1,37 @@
+---
+
+# THIS ASSUMES SPECIFIC AMI, SO IT DOES NOT DO THE FULL SETUP
+
+- debug:
+    msg: "-> consistency only"
+  tags: [print_action]
+
+#- debug:
+#    msg: "{{ hostvars['localhost']['suite_hosts_lst'] }}"
+#
+#- debug:
+#    msg: "{{ hostvars['localhost']['ec2_instance_info'] }}"
+#
+#- debug:
+#    var: not exist
+
+- name: Delete hosts file
+  file:
+    path: "{{ exp_consistency_hosts_file }}"
+    state: absent
+
+- name: Setup hosts file
+  lineinfile:
+    path: "{{ exp_consistency_hosts_file }}"  # Specify the path to your output file
+    line: "{{ private_ip_lookup[item.private_dns_name] }}:8000"
+    create: yes
+  loop: "{{ hostvars['localhost']['suite_hosts_lst'] }}"
+  vars:
+    private_ip_lookup: "{{ hostvars['localhost']['ec2_instance_info'] | json_query('instances[*].{key: private_dns_name, value: private_ip_address}') | items2dict }}"
+
+- name: Compile project
+  command:
+    cmd: cargo build --release
+    chdir: "{{ exp_consistency_dir }}"
+
+# compile:

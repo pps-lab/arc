@@ -12,7 +12,7 @@ twopc:
       check_status: True
       init_roles:
         - setup-base
-#        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
         - download-dataset # re-enable for fresh install
         - setup-largeprimes
       $CMD$:
@@ -26,9 +26,12 @@ twopc:
       player_count: 2
       protocol_setup: "lowgear-party"
 
-      compiler_args: ['-F', "256", '-C', '--budget', '10000'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+      compiler_args: ['-F', "256", '-C', '--budget', '10000', '-Y'] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
 
       script_name: "test_ec"
+
+#      program_args:
+#        b: 100000
 
       script_args:
         debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info

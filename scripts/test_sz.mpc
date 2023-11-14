@@ -4,36 +4,40 @@ program.options_from_args()
 
 from Compiler import ml, library
 
-from Compiler.script_utils import config
-from Compiler.types import sfix, sint, Array
-
-
+from Compiler.script_utils import config, input_consistency
+from Compiler.types import sfix, sint, Array, cint
+import numpy as np
 # USE TRUNC_PR ??
 
 class SchwartzZippelConfig(config.BaseAuditModel):
-    n_samples: int = 10 # -1 = all
+    n_samples: int = 60000 # -1 = all
+    # n_samples: int = 200 # -1 = all
     # n_samples: int = -1 # -1 = all
     n_threads: int = 1
 
 cfg: SchwartzZippelConfig = config.from_program_args(program.args, SchwartzZippelConfig)
 
+compile_array = np.repeat(4, cfg.n_samples)
+
 # inputs
-inputs_x = Array(cfg.n_samples, sint)
-for i in range(cfg.n_samples):
-    inputs_x[i] = sint(4)
-
-
+# inputs_x = Array(cfg.n_samples, sint)
+# @for_range_opt(cfg.n_samples)
+# def _(i):
+# # for i in range(cfg.n_samples):
+#     inputs_x[i] = sint(4)
 library.start_timer(timer_id=100)
 
-rho = sint(5)
-output_sum = inputs_x[0]
+inputs_x = sfix.input_tensor_via(0, compile_array)
 
-# main loop
-@for_range_opt(1, cfg.n_samples)
-def _(i):
-    output_sum.update(output_sum + (inputs_x[i] * rho))
-    rho.update(rho * rho)
+print_ln("%s", inputs_x[0].reveal())
 
 library.stop_timer(timer_id=100)
 
-print_ln("output_sum: %s", output_sum.reveal())
+# inputs_x.write_to_file()
+
+library.start_timer(timer_id=101)
+
+input_consistency.compute_and_output_poly(inputs_x, 0)
+
+library.stop_timer(timer_id=101)
+
