@@ -29,6 +29,8 @@ This module provides the following functionalities:
     This is the entrypoint of the Experiment Runner
 
 """
+import sys
+
 import python_utils.config_def as config_def
 import python_utils.runner_defs as runner_defs
 import python_utils.output_capture as out_cap
@@ -123,13 +125,17 @@ def run_consistency_check(task_config, output_prefix):
     print(f"Running consistency check with command: {executable_str}")
 
     import subprocess
-    subprocess.run(
+    result_gen_commitments = subprocess.run(
         executable_str,
         shell=True,
         cwd=task_config.consistency_args.abs_path_to_code_dir,
         check=True,
-        capture_output=True
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE,
+        text=True
     )
+    print(result_gen_commitments.stdout, file=sys.stdout)
+    print(result_gen_commitments.stderr, file=sys.stderr)
 
     # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     # output_file = f"{output_prefix}-P{task_config.player_id}-0"
@@ -152,13 +158,18 @@ def run_consistency_check(task_config, output_prefix):
     print(f"Running consistency check with command: {executable_str}")
 
     import subprocess
-    subprocess.run(
+    result_prove_verify = subprocess.run(
         executable_str,
         shell=True,
         cwd=task_config.consistency_args.abs_path_to_code_dir,
         check=True,
-        capture_output=True
+        # capture_output=True,
+        stdout = subprocess.PIPE,
+        stderr = subprocess.PIPE,
+        text=True
     )
+    print(result_prove_verify.stdout, file=sys.stdout)
+    print(result_prove_verify.stderr, file=sys.stderr)
 
 
 
