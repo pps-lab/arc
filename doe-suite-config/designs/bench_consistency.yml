@@ -20,16 +20,16 @@ kzg:
       init_roles:
 #        - setup-base
         - setup-consistency
-        - setup-largeprimes
+#        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
     mpc:
-      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`compute`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
       player_count: 3
       protocol_setup: "lowgear-party"
