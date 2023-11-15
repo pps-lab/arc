@@ -90,6 +90,8 @@ class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     hosts_file: str
     pc: typing.Literal['kzg', 'ipa', 'ped']
     abs_path_to_code_dir: str
+    pp_args: int
+    prover_party: typing.Optional[int] = None
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     """Defines the relevant model for the configuration received via the config.json file"""

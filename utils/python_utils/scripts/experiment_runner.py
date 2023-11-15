@@ -112,6 +112,27 @@ def run_consistency_check(task_config, output_prefix):
         print("No consistency check arguments specified. Skipping consistency check.")
         return
 
+    # GEN PP
+    executable = f"target/release/gen_pp_{task_config.consistency_args.pc}"
+    args = {
+        "num-args": task_config.consistency_args.pp_args,
+    }
+    args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+    executable_str = f"{executable} {args_str}"
+    print(f"Generating public parameters with command: {executable_str}")
+
+    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+    consistency_gen_pp_output_file = open(os.path.join(result_dir_path, "consistency_gen_commitments.log"), "w+")
+    import subprocess
+    subprocess.run(
+        executable_str,
+        shell=True,
+        cwd=task_config.consistency_args.abs_path_to_code_dir,
+        check=True,
+        stdout=consistency_gen_pp_output_file,
+        stderr=consistency_gen_pp_output_file,
+    )
+
     # GEN COMMITMENTS
     executable = f"target/release/gen_commitments_{task_config.consistency_args.pc}"
     args = {
@@ -124,21 +145,17 @@ def run_consistency_check(task_config, output_prefix):
     executable_str = f"{executable} {args_str}"
     print(f"Running consistency check with command: {executable_str}")
 
-    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
     consistency_gen_commitments_output_file = open(os.path.join(result_dir_path, "consistency_gen_commitments.log"), "w+")
-
     import subprocess
-    result_gen_commitments = subprocess.run(
+    subprocess.run(
         executable_str,
         shell=True,
         cwd=task_config.consistency_args.abs_path_to_code_dir,
         check=True,
         stdout=consistency_gen_commitments_output_file,
         stderr=consistency_gen_commitments_output_file,
-        # text=True
     )
-    # print(result_gen_commitments.stdout, file=sys.stdout)
-    # print(result_gen_commitments.stderr, file=sys.stderr)
+
 
     # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     # output_file = f"{output_prefix}-P{task_config.player_id}-0"
@@ -155,6 +172,8 @@ def run_consistency_check(task_config, output_prefix):
         "party": task_config.player_id,
         "mpspdz-output-file": result_file_path,
     }
+    if task_config.consistency_args.prover_party is not None:
+        args['prover-party'] = task_config.consistency_args.prover_party
     args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
     executable_str = f"{executable} {args_str}"
     print(f"Running consistency check with command: {executable_str}")
