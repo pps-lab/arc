@@ -125,7 +125,7 @@ def run_consistency_check(task_config, output_prefix):
     print(f"Running consistency check with command: {executable_str}")
 
     result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-    consistency_gen_commitments_output_file = open(os.path.join(result_dir_path, "consistency.log"), "w+")
+    consistency_gen_commitments_output_file = open(os.path.join(result_dir_path, "consistency_gen_commitments.log"), "w+")
 
     import subprocess
     result_gen_commitments = subprocess.run(
@@ -159,7 +159,7 @@ def run_consistency_check(task_config, output_prefix):
     executable_str = f"{executable} {args_str}"
     print(f"Running consistency check with command: {executable_str}")
 
-    consistency_prove_verify_output_file = open(os.path.join(result_dir_path, "consistency.log"), "w+")
+    consistency_prove_verify_output_file = open(os.path.join(result_dir_path, "consistency_prove_verify.log"), "w+")
     import subprocess
     result_prove_verify = subprocess.run(
         executable_str,
