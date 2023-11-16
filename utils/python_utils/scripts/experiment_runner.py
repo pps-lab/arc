@@ -122,7 +122,7 @@ def run_consistency_check(task_config, output_prefix):
     print(f"Generating public parameters with command: {executable_str}")
 
     result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-    consistency_gen_pp_output_file = open(os.path.join(result_dir_path, "consistency_gen_commitments.log"), "w+")
+    consistency_gen_pp_output_file = open(os.path.join(result_dir_path, "consistency_gen_pp.log"), "w+")
     import subprocess
     subprocess.run(
         executable_str,
@@ -140,6 +140,7 @@ def run_consistency_check(task_config, output_prefix):
         "party": task_config.player_id,
         "player-input-binary-path": f"{task_config.abs_path_to_code_dir}/MP-SPDZ/Player-Data/Input-Binary-P{task_config.player_id}-0",
         "save": "",
+        "d": "",
     }
     args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
     executable_str = f"{executable} {args_str}"
@@ -171,6 +172,7 @@ def run_consistency_check(task_config, output_prefix):
         "hosts": task_config.consistency_args.hosts_file,
         "party": task_config.player_id,
         "mpspdz-output-file": result_file_path,
+        "d": "",
     }
     if task_config.consistency_args.prover_party is not None:
         args['prover-party'] = task_config.consistency_args.prover_party
