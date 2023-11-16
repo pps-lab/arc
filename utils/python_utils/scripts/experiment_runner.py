@@ -140,7 +140,7 @@ def run_consistency_check(task_config, output_prefix):
         "party": task_config.player_id,
         "player-input-binary-path": f"{task_config.abs_path_to_code_dir}/MP-SPDZ/Player-Data/Input-Binary-P{task_config.player_id}-0",
         "save": "",
-        "d": "",
+        "debug": "",
     }
     args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
     executable_str = f"{executable} {args_str}"
@@ -172,7 +172,7 @@ def run_consistency_check(task_config, output_prefix):
         "hosts": task_config.consistency_args.hosts_file,
         "party": task_config.player_id,
         "mpspdz-output-file": result_file_path,
-        "d": "",
+        "debug": "",
     }
     if task_config.consistency_args.prover_party is not None:
         args['prover-party'] = task_config.consistency_args.prover_party
