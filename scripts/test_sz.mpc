@@ -23,6 +23,7 @@ for i in range(cfg.n_input_parties):
 
     library.start_timer(timer_id=200 + i)
 
+    # TODO: Check if this is much slower than reading input via sint?
     inputs_x = sfix.input_tensor_via(i, compile_array)
 
     print_ln("%s", inputs_x[0].reveal())

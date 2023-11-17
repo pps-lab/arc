@@ -62,6 +62,7 @@
   tags:
     - rust
 
+# TODO: enable parallel here
 - name: Compile project
   ansible.builtin.shell: |
     source ~/.bashrc

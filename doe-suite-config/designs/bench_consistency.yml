@@ -11,11 +11,12 @@ $SUITE_VARS$:
 #  _stdout_path: "stdout.log"
 #  cmd_prove_verify: "{{ exp_consistency_dir }}/target/release/prove_verify_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --mpspdz-output-file [% my_run._stdout_path %]"
 
-kzg:
+compare_pvc_wan:
+  # Two players, only one player proofs
   n_repetitions: 1
   host_types:
     consistency:
-      n: 3
+      n: 2
       check_status: True
       init_roles:
 #        - setup-base
@@ -25,7 +26,6 @@ kzg:
       $CMD$:
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
 
@@ -34,11 +34,13 @@ kzg:
       hosts_file: "{{ exp_consistency_hosts_file }}"
       pc:
         $FACTOR$: [ kzg, ipa, ped] # kzg, ipa, ped
+      pp_args: 2097152
+      prover_party: 0
 
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
-      player_count: 3
+      player_count: 2
       protocol_setup: "lowgear-party"
 
       compiler_args: [ '-P', "8444461749428370424248824938781546531375899335154063827935233455917409239041", '-C', '--budget', '10000', '-Y' ] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
@@ -47,22 +49,83 @@ kzg:
 
       script_args:
         # inference specific
-        n_samples: 262000
-        n_input_parties: 3
+#        n_samples: 262000
+        n_samples: 2097152
+        n_input_parties: 2
 
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
 
+#compare_pvc_lan:
+
+compare_pvc_lan:
+  # Two players, only one player proofs
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 2
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+        - setup-largeprimes
+      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+
+  base_experiment:
+    consistency_args:
+      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+      hosts_file: "{{ exp_consistency_hosts_file }}"
+      pc:
+        $FACTOR$: [ kzg, ipa, ped] # kzg, ipa, ped
+      pp_args: 2097152
+      prover_party: 0
+
+    mpc:
+      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+      abs_path_to_code_dir: "{{ exp_code_dir }}"
+      player_count: 2
+      protocol_setup: "lowgear-party"
+
+      compiler_args: [ '-P', "8444461749428370424248824938781546531375899335154063827935233455917409239041", '-C', '--budget', '10000', '-Y' ] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+
+      script_name: "test_sz"
+
+      script_args:
+        # inference specific
+        #        n_samples: 262000
+        n_samples: 2097152
+        n_input_parties: 2
+
+      stage: # "compile" in run and then in next run "run"
+        $FACTOR$: [ compile, run ] # ensure that this is last factor
+
+# scale to more parties?
 
 
 $ETL$:
   extract_mpspdz:
-    experiments: "*"
+    experiments:
+      - compare_pvc_wan
+      - compare_pvc_lan
     extractors:
-      MpSpdzStderrExtractor:  {}
+      MpSpdzStderrExtractor: {}
       MpSpdzResultExtractor: {}
-      IgnoreExtractor: {}
+      IgnoreExtractor: { file_regex: ["^consistency.*\\.log$", "^stdout\\.log$"] }
     transformers: []
+    loaders:
+      CsvSummaryLoader:
+        output_dir: etl_results
+  extract_consistency:
+    experiments:
+      - compare_pvc_wan
+      - compare_pvc_lan
+    extractors:
+      ConsistencyExtractor: { }
+      IgnoreExtractor: { file_regex: ["^stdout\\.log$", "^stderr\\.log$", "^result-.*\\.txt$"] }
+    transformers: [ ]
     loaders:
       CsvSummaryLoader:
         output_dir: etl_results

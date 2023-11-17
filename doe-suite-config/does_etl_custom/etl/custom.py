@@ -22,6 +22,11 @@ class MyTransformer(Transformer):
         return df
 
 
+class MyTransformer2(Transformer):
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+        print(f"MyTransformer: do nothing  ({df.info()})")
+        return df
+
 class MyLoader(Loader):
     def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> None:
         print(f"MyLoader: do nothing  ({df.info()})")

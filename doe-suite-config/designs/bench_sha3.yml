@@ -29,7 +29,7 @@ kzg:
 
   base_experiment:
     mpc:
-      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`compute`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
       player_count: 2
       protocol_setup: "lowgear-party"
