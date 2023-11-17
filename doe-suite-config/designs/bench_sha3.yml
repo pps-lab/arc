@@ -56,5 +56,4 @@ $ETL$:
       IgnoreExtractor: {}
     transformers: []
     loaders:
-      CsvSummaryLoader:
-        output_dir: etl_results
+      CsvSummaryLoader: {}

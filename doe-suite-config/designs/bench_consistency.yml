@@ -116,8 +116,7 @@ $ETL$:
       IgnoreExtractor: { file_regex: ["^consistency.*\\.log$", "^stdout\\.log$"] }
     transformers: []
     loaders:
-      CsvSummaryLoader:
-        output_dir: etl_results
+      CsvSummaryLoader: {}
   extract_consistency:
     experiments:
       - compare_pvc_wan
@@ -127,5 +126,4 @@ $ETL$:
       IgnoreExtractor: { file_regex: ["^stdout\\.log$", "^stderr\\.log$", "^result-.*\\.txt$"] }
     transformers: [ ]
     loaders:
-      CsvSummaryLoader:
-        output_dir: etl_results
+      CsvSummaryLoader: {}

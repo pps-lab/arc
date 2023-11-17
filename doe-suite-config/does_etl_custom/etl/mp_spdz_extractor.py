@@ -10,9 +10,9 @@ import json
 
 class MpSpdzStderrExtractor(Extractor):
     
-    def file_regex_default(self):
+    def default_file_regex():
         return ["^stderr\\.log$"]
-    
+
     def extract(self, path: str, options: Dict) -> List[Dict]:
         with open(path, "r") as f:
             content = f.read()
@@ -63,15 +63,19 @@ class MpSpdzStderrExtractor(Extractor):
                     timer_number = int(timer_number)
                 return (timer_number,timer_value)
             mapped_timer_results = list(map(map_timer, time_results))
-            dicts += [{'timer_number': t_num, 'timer_value': t_val, 'player_number': player_num} for (t_num,t_val) in mapped_timer_results]
+            dicts += [{'stat': f"spdz_timer_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,t_val) in mapped_timer_results]
 
-            dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
+            additional_values = { "player_number": player_num, "player_data_sent": party_data_sent, "player_round_number": party_round_number, "global_data_sent": global_data_sent}
+
+            for label, value in additional_values.items():
+                dicts += [{'stat': f"spdz_{label}", 'stat_value': value, 'player_number': player_num}]
+            # dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
         print(dicts)
         return dicts
 
 
 class MpSpdzResultExtractor(Extractor):
-    def file_regex_default(self):
+    def default_file_regex():
         return ["^result-P[0-9]+-[0-9]+\\.txt$"]
     
     def _process(self, path: str, options: Dict, line: str) -> Dict:

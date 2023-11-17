@@ -13,7 +13,7 @@ class ConsistencyExtractor(Extractor):
     # transformer specific parameters with default values (see pydantic)
     # arg: str = None
 
-    def file_regex_default(self):
+    def default_file_regex():
         return [r"consistency_.*\.log$"]
 
     def extract(self, path: str, options: Dict) -> List[Dict]:
@@ -36,20 +36,20 @@ class ConsistencyExtractor(Extractor):
         # group 1 is the timer name
         # group 2 is the time value in microseconds
         time_results = list(map(lambda x: {
-            "timer": self.remove_trailing_dots(x.group(1)), "timer_value": self.parse_time_to_millis(x.group(2))
+            "stat": f"cc_{self.remove_trailing_dots(x.group(1))}", "stat_value": self.parse_time_to_sec(x.group(2))
         }, time_results))
         return time_results
 
-    def parse_time_to_millis(self, time_str) -> float:
-        return int(time_str) / 1000.0
+    def parse_time_to_sec(self, time_str) -> float:
+        return int(time_str) / 1000000.0
 
     def extract_stats(self, content) -> List[Dict]:
-        time_regex = r"^STAT \(name=(.*)\) \(value=(\d*)\)$"
+        time_regex = r"^STATS \(name=(.*)\) \(value=(\d*)\)$"
         time_matcher = re.compile(time_regex, re.MULTILINE)
         time_results = list(time_matcher.finditer(content))
 
         time_results = list(map(lambda x: {
-            "stat": self.remove_trailing_dots(x.group(1)), "stat_value": self.parse_time_to_millis(x.group(2))
+            "stat": f"cc_{self.remove_trailing_dots(x.group(1))}", "stat_value": x.group(2)
         }, time_results))
         return time_results
 
