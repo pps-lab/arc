@@ -24,6 +24,18 @@ class ConsistencyExtractor(Extractor):
 
         timer_data = self.extract_timers(content)
         stats_data = self.extract_stats(content)
+
+        # prefix each key with {filename}
+        filename = path.split("/")[-1]
+        # remove .log extension
+        assert filename.endswith(".log"), f"Filename {filename} does not end with .log. It is probably an invalid format."
+        filename = filename[:-4]
+
+        for d in timer_data:
+            d["stat"] = f"{filename}_{d['stat']}"
+        for d in stats_data:
+            d["stat"] = f"{filename}_{d['stat']}"
+
         print(timer_data)
         print(stats_data)
         return timer_data + stats_data
@@ -36,7 +48,7 @@ class ConsistencyExtractor(Extractor):
         # group 1 is the timer name
         # group 2 is the time value in microseconds
         time_results = list(map(lambda x: {
-            "stat": f"cc_{self.remove_trailing_dots(x.group(1))}", "stat_value": self.parse_time_to_sec(x.group(2))
+            "stat": f"{self.remove_trailing_dots(x.group(1))}", "stat_value": self.parse_time_to_sec(x.group(2))
         }, time_results))
         return time_results
 
@@ -49,7 +61,7 @@ class ConsistencyExtractor(Extractor):
         time_results = list(time_matcher.finditer(content))
 
         time_results = list(map(lambda x: {
-            "stat": f"cc_{self.remove_trailing_dots(x.group(1))}", "stat_value": x.group(2)
+            "stat": f"{self.remove_trailing_dots(x.group(1))}", "stat_value": x.group(2)
         }, time_results))
         return time_results
 
