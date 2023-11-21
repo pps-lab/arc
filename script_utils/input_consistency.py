@@ -3,6 +3,32 @@
 from Compiler.types import sfix, sint, Array, cint
 from Compiler.library import print_ln, for_range_opt
 
+def compute_and_output_poly_array(inputs: list, player_input_id):
+    """
+
+    :type inputs: Array of sint/sfix
+    :param
+    """
+    # concatenate all inputs into one array
+    l = 0
+    for i in range(len(inputs)):
+        l += inputs[i].total_size()
+
+    full_arr = Array(l, sint)
+    idx = 0
+
+    for i in range(len(inputs)):
+        arr = inputs[i].to_array()
+        if arr.value_type == sfix:
+            arr = convert_array_sint(arr)
+        full_arr.assign(arr, idx)
+        idx += arr.length
+
+    print(f"complete array for player {player_input_id} length: ", full_arr.length)
+
+    compute_and_output_poly(full_arr, player_input_id)
+
+
 def compute_and_output_poly(inputs, player_input_id):
     """
 

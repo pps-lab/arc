@@ -61,7 +61,7 @@ class AdultInputLoader(AbstractInputLoader):
         return layers
 
 
-    def _load_model(self, input_shape, batch_size):
+    def _load_model(self, input_shape, batch_size, input_via):
 
         # layers = self.model_layers()
         #
@@ -73,7 +73,7 @@ class AdultInputLoader(AbstractInputLoader):
         # return model
 
         pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
-        layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=0)
+        layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
 
         model = ml.SGD(layers)
 

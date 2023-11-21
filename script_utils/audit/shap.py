@@ -52,7 +52,7 @@ def audit(input_loader, config, debug: bool):
         # z_coalitions = MultiArray([num_samples, num_features], regint)
         lib.start_timer(101)
         z_coalitions, kernelWeights = build_subsets_order(num_samples, num_features)
-        print("z_coalitions", z_coalitions)
+        # print("z_coalitions", z_coalitions)
 
         # construct array num_samples * n_train_samples size
         # its so big because we take the marginal distribution
@@ -144,11 +144,13 @@ def audit(input_loader, config, debug: bool):
         secret_xty = z_coalitions_kernelWeights_runtime.transpose().dot(prediction_results_ex)
         print("secret_xty", secret_xty)
         print("runtime_xtxinv", runtime_xtxinv)
-        print_ln("runtime_xtxinv %s", runtime_xtxinv)
-        print_ln("secret_xty %s", secret_xty.reveal_nested())
+        if debug:
+            print_ln("runtime_xtxinv %s", runtime_xtxinv)
+            print_ln("secret_xty %s", secret_xty.reveal_nested())
         secret_params = runtime_xtxinv.dot(secret_xty)
-        print_ln("SECRET PARAMS %s", secret_params.reveal_nested())
-        print_ln("SUM %s", sum(secret_params.reveal_nested()))
+        if debug:
+            print_ln("SECRET PARAMS %s", secret_params.reveal_nested())
+            print_ln("SUM %s", sum(secret_params.reveal_nested()))
         # print_ln("SUM %s", )
 
     return {}, {}
@@ -376,7 +378,7 @@ def build_subsets_order(num_samples, num_features):
     weight_vector[:num_paired_subset_sizes] *= 2
     weight_vector /= np.sum(weight_vector)
 
-    print(f"weight_vector = {weight_vector}")
+    # print(f"weight_vector = {weight_vector}")
     print(f"num_subset_sizes = {num_subset_sizes}")
     print(f"num_paired_subset_sizes = {num_paired_subset_sizes}")
     print(f"num_features = {num_features}")

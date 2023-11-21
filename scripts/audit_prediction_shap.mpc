@@ -14,8 +14,7 @@ from Compiler.script_utils import config
 
 
 class AuditConfig(config.BaseAuditModel):
-    K: int = 25 # knn K
-    mod_zscore_threshold: float = 2.5
+    test_var: int = 1
 
 program.options_from_args()
 cfg = config.from_program_args(program.args, AuditConfig)

@@ -1,6 +1,6 @@
 
 import pandas as pd
-from typing import Dict, List
+from typing import Dict, List, Union
 
 from doespy.etl.etl_util import expand_factors, escape_tuple_str
 from doespy.etl.steps.transformers import Transformer
@@ -79,16 +79,21 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
 
     symbol_cols: List[str]
     symbol_cols_values: Dict[str, List[str]]
+    symbol_cols_labels: Dict[str, List[str]]
+    symbol_cols_title: str
 
     color_cols: List[str]
-    color_cols_values: Dict[str, List[str]]
+    color_cols_values: Dict[str, List[Union[str, None]]]
+    color_cols_labels: Dict[str, List[str]]
+    color_cols_title: str
 
     y_col: str
     x_col: str
     annotation_col: str
+    annotation_labels: Dict[str, str]
 
     symbols = ['o', 'v']
-    colors = []
+    colors = [['royalblue', 'deepskyblue'], ['red', 'lightcoral']]
 
     def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> None:
         if df.empty:
@@ -109,6 +114,7 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
             # filter out non-relevant results
             df = df[df[col].isin(allowed)]
             # convert to categorical
+            # df[col] = df[col].fillna('None')
             df[col] = pd.Categorical(df[col], ordered=True, categories=allowed)
 
         df.sort_values(by=self.plot_cols + self.color_cols + self.symbol_cols, inplace=True)
@@ -140,17 +146,10 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
 
             fig, ax = plt.subplots(1, 1, figsize=(10, 6))
 
-            for index, row in df.iterrows():
-                # marker = 'o' if row['Setting'] == 'WAN' else 'v'  # Circle for WAN, square for LAN
-                # if row['Type'] == 'Com' and row['Setting'] == 'WAN':
-                #     color = COLOR_COM
-                # elif row['Type'] == 'Com':
-                #     color = COLOR_COM_LAN
-                # else:
-                #     color = COLOR_HASH
-                # #     color = COLOR_COM if row['Type'] == 'Com' else COLOR_HASH  # Blue for Com, red for Hash
-                # ax.scatter(row[self.x_col], row[self.y_col], c=color, marker=marker, s=75)
+            for index, row in df_plot.iterrows():
+                print(row)
                 marker = None
+                symbol_index = 0
                 if len(self.symbol_cols) > 0:
                     symbol_index = self.symbol_cols_values[self.symbol_cols[0]].index(row[self.symbol_cols[0]])
                     marker = self.symbols[symbol_index]
@@ -158,13 +157,13 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
                 color = None
                 if len(self.color_cols) > 0:
                     color_index = self.color_cols_values[self.color_cols[0]].index(row[self.color_cols[0]])
-                    color = self.colors[color_index]
+                    color = self.colors[color_index][symbol_index]
                 ax.scatter(row[self.x_col], row[self.y_col], marker=marker, color=color, s=75)
 
                 # if row['Type'] == 'Com' and row['Setting'] == 'LAN':
                 #     pass
                 # else:
-                ax.annotate(row[self.annotation_col], (row[self.x_col], row[self.y_col]), textcoords="offset points", xytext=(0,10), ha='center')
+                ax.annotate(self.annotation_labels[row[self.annotation_col]], (row[self.x_col], row[self.y_col]), textcoords="offset points", xytext=(0,10), ha='center')
 
 
             # Add titles and labels
@@ -194,18 +193,30 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
             if len(self.symbol_cols) > 0:
                 symbol_lines = []
                 for i in range(len(self.symbol_cols_values[self.symbol_cols[0]])):
-                    symbol_lines.append(mlines.Line2D([], [], color='gray', marker=self.symbols[i], linestyle='None', markersize=10, label=f'{self.symbol_cols_values[self.symbol_cols[0]][i]}'))
-                symbol_legend = ax.legend(handles=symbol_lines, title='Network', loc='upper left', bbox_to_anchor=(1, 1.02))
+                    symbol_lines.append(mlines.Line2D([], [], color='gray', marker=self.symbols[i], linestyle='None', markersize=10, label=f'{self.symbol_cols_labels[self.symbol_cols[0]][i]}'))
+                symbol_legend = ax.legend(handles=symbol_lines, title=self.symbol_cols_title, loc='upper left', bbox_to_anchor=(1, 1.02))
                 symbol_legend._legend_box.align = "left"
                 ax.add_artist(symbol_legend)
 
             if len(self.color_cols) > 0:
                 color_lines = []
                 for i in range(len(self.color_cols_values[self.color_cols[0]])):
-                    color_lines.append(mlines.Line2D([], [], color=self.colors[i], marker='o', linestyle='None', markersize=10, label=f'{self.color_cols_values[self.color_cols[0]][i]}'))
-                color_legend = ax.legend(handles=color_lines, title='Network', loc='upper left', bbox_to_anchor=(1, 1.02))
+                    color_lines.append(mlines.Line2D([], [], color=self.colors[i][0], marker='o', linestyle='None', markersize=10, label=f'{self.color_cols_labels[self.color_cols[0]][i]}'))
+                color_legend = ax.legend(handles=color_lines, title=self.color_cols_title, loc='upper left', bbox_to_anchor=(1, .8))
                 color_legend._legend_box.align = "left"
                 ax.add_artist(color_legend)
+
+            plt.subplots_adjust(right=0.65)
+
+            # Extra margin on the x-axis
+            # x_min, x_max = df_plot[self.x_col].min(), df_plot[self.x_col].max()
+            # x_range = x_max - x_min
+            # plt.xlim([x_min, x_max + 10 * x_range])
+            #
+            # # Extra margin on the y-axis
+            # y_min, y_max = df_plot[self.y_col].astype(float).min(), df_plot[self.y_col].astype(float).max()
+            # y_range = y_max - y_min
+            # plt.ylim([3.0, y_max + 7000])
 
             filename = f"consistency_compare_{escape_tuple_str(idx)}"
             self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)
