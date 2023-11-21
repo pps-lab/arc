@@ -4,7 +4,7 @@ from Compiler.library import print_ln
 from Compiler.types import sint, sfix
 from Compiler.script_utils import input_consistency
 
-from ml import FixConv2d, Dense
+from Compiler.ml import FixConv2d, Dense
 
 
 class AbstractInputLoader(ABC):
@@ -245,7 +245,6 @@ class AbstractInputLoader(ABC):
         output_matrices = []
 
         for layer in layers:
-            print(type(layer))
             if isinstance(layer, FixConv2d):
                 print(layer)
                 output_matrices.append(layer.weights)

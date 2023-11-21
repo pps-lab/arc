@@ -32,7 +32,7 @@ knn:
       abs_path_to_code_dir: "{{ exp_consistency_dir }}"
       hosts_file: "{{ exp_consistency_hosts_file }}"
       pc: kzg
-      pp_args: 2097152
+      pp_args: 1796300 # max of input sizes we need
 
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
