@@ -127,6 +127,7 @@ class AbstractInputLoader(ABC):
                 self._model = self._load_model(input_shape=self._train_samples.shape, batch_size=batch_size, input_via=0)
                 # parse weights from model layers
                 weights = self._extract_model_weights(self._model)
+                print("weights", weights)
                 input_consistency_array.extend(weights)
 
                 # print_ln("  loading model weights...")
@@ -244,7 +245,7 @@ class AbstractInputLoader(ABC):
         output_matrices = []
 
         for layer in layers:
-            # print(type(layer))
+            print(type(layer))
             if isinstance(layer, FixConv2d):
                 print(layer)
                 output_matrices.append(layer.weights)
