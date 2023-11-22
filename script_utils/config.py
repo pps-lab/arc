@@ -29,6 +29,8 @@ class BaseAuditModel(BaseModel):
 
     audit_trigger_idx: int = None
 
+    # Whether to check parties' inputs for consistency
+    consistency_check: bool = True
     class Config:
         extra = "allow"
         smart_union = True

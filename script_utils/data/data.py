@@ -8,19 +8,19 @@ import glob, os, shutil
 import numpy as np
 
 
-def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate):
+def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check):
 
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
     _clean_dataset_folder()
 
     if dataset.lower().startswith("mnist"):
         _prepare_dataset(dataset, emulate)
-        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate)
+        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     elif dataset.lower().startswith("cifar"):
         _prepare_dataset(dataset, emulate)
-        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate)
+        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     elif dataset.lower().startswith("adult"):
-        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate)
+        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il

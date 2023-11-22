@@ -1,16 +1,15 @@
 from abc import ABC, abstractmethod
 from typing import List
-from Compiler.library import print_ln
+from Compiler.library import print_ln, start_timer, stop_timer
 from Compiler.types import sint, sfix
-from Compiler.script_utils import input_consistency
+from Compiler.script_utils import input_consistency, timers
 
 from Compiler.ml import FixConv2d, Dense
-
 
 class AbstractInputLoader(ABC):
 
     @abstractmethod
-    def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, batch_size: int, emulate: bool, debug: bool):
+    def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
         pass
 
     @abstractmethod
@@ -62,7 +61,7 @@ class AbstractInputLoader(ABC):
         return len(self._audit_trigger_samples)
 
 
-    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
+    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
 
         self._batch_size = batch_size
         self._train_index = {}
@@ -152,7 +151,11 @@ class AbstractInputLoader(ABC):
                 self._test_samples.assign(test_samples_loaded)
                 input_consistency_array.append(test_samples_loaded)
 
-            input_consistency.compute_and_output_poly_array(input_consistency_array, party_id)
+
+            if consistency_check:
+                start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+                input_consistency.compute_and_output_poly_array(input_consistency_array, party_id)
+                stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
     def _load_input_data(self, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
@@ -241,7 +244,6 @@ class AbstractInputLoader(ABC):
 
         layers = model.layers
         print("extract")
-
         output_matrices = []
 
         for layer in layers:
