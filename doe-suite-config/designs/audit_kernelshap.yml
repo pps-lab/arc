@@ -20,6 +20,7 @@ knn:
       init_roles:
         - setup-base
         - setup-consistency
+        - download-dataset
 #        - setup-largeprimes
         - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:

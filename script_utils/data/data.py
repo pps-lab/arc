@@ -13,6 +13,9 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
     _clean_dataset_folder()
 
+    if not debug:
+        n_test_samples = 0
+
     if dataset.lower().startswith("mnist"):
         _prepare_dataset(dataset, emulate)
         il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
@@ -25,6 +28,30 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
 
+def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, n_target_test_samples):
+
+    n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
+    _clean_dataset_folder()
+
+    # total_train_samples = sum(n_train_samples)
+    if n_target_test_samples > n_test_samples:
+        raise ValueError(f"n_target_test_samples ({n_target_test_samples}) cannot be larger than n_test_samples ({n_test_samples}), not enough test samples available!")
+
+    n_test_samples = n_target_test_samples
+    n_train_samples = []
+    n_trigger_samples = 0
+
+    if dataset.lower().startswith("mnist"):
+        _prepare_dataset(dataset, emulate)
+        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+    elif dataset.lower().startswith("cifar"):
+        _prepare_dataset(dataset, emulate)
+        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+    elif dataset.lower().startswith("adult"):
+        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+    else:
+        raise ValueError(f"Dataset {dataset} not supported yet!")
+    return il
 
 
 def _load_dataset_args(dataset):

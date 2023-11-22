@@ -1,6 +1,7 @@
 from Compiler.script_utils import output_utils
 
 from Compiler.script_utils.data import data
+from Compiler.script_utils.data import AbstractInputLoader
 
 
 from Compiler import ml
@@ -13,11 +14,11 @@ from Compiler.script_utils import config, timers
 
 
 
-class AuditConfig(config.BaseAuditModel):
-    test_var: int = 1
+class InferenceConfig(config.BaseAuditModel):
+    n_samples: int = 1 # -1 = all
 
 program.options_from_args()
-cfg = config.from_program_args(program.args, AuditConfig)
+cfg = config.from_program_args(program.args, InferenceConfig)
 
 if not cfg.emulate:
     program.use_trunc_pr = cfg.trunc_pr
@@ -27,7 +28,8 @@ if not cfg.emulate:
 ml.set_n_threads(cfg.n_threads)
 
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
-input_loader: data.AbstractInputLoader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check)
+input_loader: AbstractInputLoader = data.get_inference_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx,
+                                                                    batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check, n_target_test_samples=cfg.n_samples)
 library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 
 # expect 91 * (13136) + 13136 + (91 * 32) + 2*32 + 1
@@ -35,19 +37,15 @@ library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 library.start_timer(timer_id=timers.TIMER_INFERENCE)
 
 # eval here
-inf_samples = input_loader
+inf_samples, inf_labels = input_loader.test_dataset() # train dataset in case we dont have test dataset
+
+inf_samples = inf_samples.get_part(0, cfg.n_samples)
+inf_labels = inf_labels.get_part(0, cfg.n_samples)
 
 model = input_loader.model()
-prediction_results = model.eval(z_samples, batch_size=config.batch_size)
-
+prediction_results = model.eval(inf_samples, batch_size=cfg.batch_size)
 
 library.stop_timer(timer_id=timers.TIMER_INFERENCE)
 
-print("Done with audit, outputting results")
-
 # REVEALING MIGHT TAKE A LOT OF COMPILATION TIME / OVERHEAD
-for k, v in result.items():
-    output_utils.output_value(name=k, value=v)
-
-for k, v in debug_output.items():
-    output_utils.output_value_debug(name=k, value=v, repeat=False)
+print_ln(prediction_results)

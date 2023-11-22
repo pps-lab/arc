@@ -70,9 +70,10 @@ class AbstractInputLoader(ABC):
         POS_SAMPLES = 0
         POS_LABELS = 1
 
+        input_consistency_array_per_party = {}
+
         party_id_last = len(n_train_samples) -1
         for party_id, n_samples in enumerate(n_train_samples):
-
             input_consistency_array = []
 
             # [BELOW IS NOT USED]
@@ -104,31 +105,6 @@ class AbstractInputLoader(ABC):
             start += n_samples
 
 
-            if party_id == 0:
-
-                print_ln("  loading %s trigger mislabels...", self.audit_trigger_size())
-                audit_trigger_mislabels_loaded = sint.input_tensor_via(0, backdoor_dataset[POS_LABELS])
-                self._audit_trigger_mislabels.assign(audit_trigger_mislabels_loaded)
-                input_consistency_array.append(audit_trigger_mislabels_loaded)
-
-                print_ln("  loading %s trigger samples...", self.audit_trigger_size())
-
-                audit_trigger_samples_loaded = sfix.input_tensor_via(0, backdoor_dataset[POS_SAMPLES])
-                self._audit_trigger_samples.assign(audit_trigger_samples_loaded)
-                input_consistency_array.append(audit_trigger_samples_loaded)
-
-                if audit_trigger_idx is not None:
-                    print("Selecting lower audit trigger")
-                    self._audit_trigger_mislabels = self._audit_trigger_mislabels.get_part(audit_trigger_idx, 1)
-                    self._audit_trigger_samples = self._audit_trigger_samples.get_part(audit_trigger_idx, 1)
-
-                # first build model and then set weights from input
-                self._model = self._load_model(input_shape=self._train_samples.shape, batch_size=batch_size, input_via=0)
-                # parse weights from model layers
-                weights = self._extract_model_weights(self._model)
-                print("weights", weights)
-                input_consistency_array.extend(weights)
-
                 # print_ln("  loading model weights...")
                 # for i, var in enumerate(self._model.trainable_variables):
                 #     print_ln("    loading trainable_variable %s", i)
@@ -136,26 +112,69 @@ class AbstractInputLoader(ABC):
                 #     var.input_from(0)
 
             # last party contains test set
-            elif party_id == party_id_last and debug:
-                # in case of debug mode, the test set is also available, otherwise this is not available
-
-                print_ln("  loading %s test labels...", self.test_dataset_size())
-                # self._test_labels.input_from(load_party_id)
-                test_labels_loaded = sint.input_tensor_via(party_id, test_dataset[POS_LABELS])
-                self._test_labels.assign(test_labels_loaded)
-                input_consistency_array.append(test_labels_loaded)
-
-                print_ln("  loading %s test samples...", self.test_dataset_size())
-                # self._test_samples.input_from(load_party_id)
-                test_samples_loaded = sfix.input_tensor_via(party_id, test_dataset[POS_SAMPLES])
-                self._test_samples.assign(test_samples_loaded)
-                input_consistency_array.append(test_samples_loaded)
+            # if True:
+            #     pass
+            # elif party_id == party_id_last and debug:
+            #     # in case of debug mode, the test set is also available, otherwise this is not available
 
 
-            if consistency_check:
-                start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+            input_consistency_array_per_party[party_id] = input_consistency_array
+
+        def insert_or_append(d, party_id, arr):
+            if party_id in d:
+                d[party_id].append(arr)
+            else:
+                d[party_id] = [arr]
+
+        print("Backdoor_dataset", backdoor_dataset)
+        # LOADING TRIGGER WEIGHTS AND MODEL
+        # load model for party 0
+        if self._audit_trigger_mislabels.length > 0:
+            print_ln("  loading %s trigger mislabels...", self.audit_trigger_size())
+            audit_trigger_mislabels_loaded = sint.input_tensor_via(0, backdoor_dataset[POS_LABELS])
+            self._audit_trigger_mislabels.assign(audit_trigger_mislabels_loaded)
+            insert_or_append(input_consistency_array_per_party, 0, audit_trigger_mislabels_loaded)
+
+            print_ln("  loading %s trigger samples...", self.audit_trigger_size())
+
+            audit_trigger_samples_loaded = sfix.input_tensor_via(0, backdoor_dataset[POS_SAMPLES])
+            self._audit_trigger_samples.assign(audit_trigger_samples_loaded)
+            insert_or_append(input_consistency_array_per_party, 0, audit_trigger_samples_loaded)
+
+            if audit_trigger_idx is not None:
+                print("Selecting lower audit trigger")
+                self._audit_trigger_mislabels = self._audit_trigger_mislabels.get_part(audit_trigger_idx, 1)
+                self._audit_trigger_samples = self._audit_trigger_samples.get_part(audit_trigger_idx, 1)
+
+        if self._test_labels.length > 0:
+            print_ln("  loading %s test labels...", self.test_dataset_size())
+            # self._test_labels.input_from(load_party_id)
+            test_labels_loaded = sint.input_tensor_via(party_id_last, test_dataset[POS_LABELS])
+            self._test_labels.assign(test_labels_loaded)
+            input_consistency_array.append(test_labels_loaded)
+
+            print_ln("  loading %s test samples...", self.test_dataset_size())
+            # self._test_samples.input_from(load_party_id)
+            test_samples_loaded = sfix.input_tensor_via(party_id_last, test_dataset[POS_SAMPLES])
+            self._test_samples.assign(test_samples_loaded)
+            input_consistency_array.append(test_samples_loaded)
+
+        # first build model and then set weights from input
+        print_ln("  loading model weights...")
+        self._model = self._load_model(input_shape=self._train_samples.shape, batch_size=batch_size, input_via=0)
+        # parse weights from model layers
+        weights = self._extract_model_weights(self._model)
+        insert_or_append(input_consistency_array_per_party, 0, weights)
+
+
+        # LOADING TEST SAMPLES
+
+
+        if consistency_check:
+            start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+            for party_id, n_samples in enumerate(n_train_samples):
                 input_consistency.compute_and_output_poly_array(input_consistency_array, party_id)
-                stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+            stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
     def _load_input_data(self, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):

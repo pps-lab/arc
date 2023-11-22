@@ -29,9 +29,8 @@ class CifarInputLoader(AbstractInputLoader):
         self._audit_trigger_samples = sfix.Tensor([n_trigger_samples, 32, 32, 3])
         self._audit_trigger_mislabels =  sint.Tensor([n_trigger_samples, 10])
 
-        if debug:
-            self._test_samples = MultiArray([n_test_samples, 32, 32, 3], sfix)
-            self._test_labels = MultiArray([n_test_samples, 10], sint)
+        self._test_samples = MultiArray([n_test_samples, 32, 32, 3], sfix)
+        self._test_labels = MultiArray([n_test_samples, 10], sint)
 
         train_datasets, backdoor_dataset, test_dataset = self._load_dataset_pytorch(dataset, n_train_samples, debug=debug)
         self._load_input_data_pytorch(train_datasets, backdoor_dataset, test_dataset,
