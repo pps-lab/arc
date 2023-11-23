@@ -38,24 +38,22 @@ $ETL$:
 
     loaders:
       CsvSummaryLoader: { }
-      TwoDimensionalScatterPlotLoader:
+      BarPlotLoader:
         plot_cols: [ 'mpc.script_name', 'host_idx' ]
         plot_cols_values:
           mpc.script_name: [ 'test_sz' ]
           host_idx: [ 0 ] # only plot one party
 
-        x_col: commitment_size_bytes
-        y_col: verification_time_s
-        annotation_col: consistency_args.pc
+        bar_cols: [ consistency_args.pc ]
+        bar_cols_values:
+          'consistency_args.pc': [ pvc, sha3, lowmc, cerebro, kzg, ipa ]
 
-        symbol_cols: [ 'exp_name' ]
-        symbol_cols_values: { 'exp_name': [ 'compare_pvc_lan', 'compare_pvc_wan' ] }
-        symbol_cols_title: 'Network'
-        symbol_cols_labels: { exp_name: [ 'LAN', 'WAN' ] }
-        color_cols: [ 'com_type' ]
-        color_cols_values: { com_type: [ com, hash ] }
-        color_cols_title: 'Commitment Type'
-        color_cols_labels: { com_type: [ 'Cryptographic Commitment', 'Collision-resistant Hash' ] }
+        group_cols: [ exp_name ]
+        group_cols_values:
+          exp_name: [ compare_pvc_lan, compare_pvc_wan ]
+
+        metric_cols: [verification_time_s, global_data_sent_mb, commitment_size_bytes]
+        annotation_col: consistency_args.pc
 
         annotation_labels:
           pvc: 'PVC'
@@ -65,6 +63,3 @@ $ETL$:
           kzg: 'Ours (KZG)'
           ped: 'Pedersen'
           ipa: 'Ours (IPA)'
-
-
-
