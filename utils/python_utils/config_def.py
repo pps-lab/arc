@@ -34,6 +34,8 @@ class ProtocolChoices(enum.Enum):
     PS_REP_BIN_PARTY_X = "malicious_bin_3"
     SHAMIR_PARTY_X = "shamir_semi_honest_n"
     MALICIOUS_SHAMIR_PARTY_X = "shamir_malicious_n"
+    ATLAS_PARTY_X = "atlas_n"
+    MAL_ATLAS_PARTY_X = "mal_atlas_n"
 
     SY_REP_RING_PARTY = "sy-rep-ring-party"
     SPDZ2K_PARTY = "spdz2k-party"

@@ -169,6 +169,8 @@ class BaseRunner(abc.ABC):
 
 class CompilerArguments(enum.Enum):
     """Provides a named mapping between the concrete MPC protocol VM runners and required compiler flags for MPC script compilation for the given MPC protocol."""
+
+    # These are only used if no compiler_args are specific.
     EMULATE_X = ['-R', '64']
     REPLICATED_RING_PARTY_X = ['-R', "64"]
     REP4_RING_PARTY_X = ['-R', "64", '-Z', '4', '-C']  # edabits  -> need -C for vectorization
@@ -177,6 +179,8 @@ class CompilerArguments(enum.Enum):
     PS_REP_BIN_PARTY_X = ['-B', '64']
     SHAMIR_PARTY_X = ["-F", "64"]
     MALICIOUS_SHAMIR_PARTY_X = ["-F", "64"]
+    ATLAS_PARTY_X = ["-F", "64"]
+    MAL_ATLAS_PARTY_X = ["-F", "64"]
 
     SY_REP_RING_PARTY = ['-R', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
@@ -400,6 +404,33 @@ class MaliciousShamirPartyRunner(ScriptBaseRunner):
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
         ]
 
+class AtlasPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './shamir-party.x'"""
+    def _program(self):
+        return "./atlas-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+
+class MaliciousAtlasPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './shamir-party.x'"""
+    def _program(self):
+        return "./mal-atlas-party.x"
+
+    def _args(self):
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+
+
 class MascotPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './malicious-shamir-party.x'"""
     def _program(self):
@@ -469,6 +500,8 @@ class ProtocolRunners(enum.Enum):
     REPLICATED_BIN_PARTY_X=ReplicatedBinPartyRunner
     PS_REP_BIN_PARTY_X=PsReplicatedBinPartyRunner
     SHAMIR_PARTY_X=ShamirPartyRunner
+    ATLAS_PARTY_X=AtlasPartyRunner
+    MAL_ATLAS_PARTY_X=MaliciousAtlasPartyRunner
     MALICIOUS_SHAMIR_PARTY_X=MaliciousShamirPartyRunner
     SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
     MASCOT_PARTY=MascotPartyRunner
