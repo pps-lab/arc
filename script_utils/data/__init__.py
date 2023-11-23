@@ -30,6 +30,9 @@ class AbstractInputLoader(ABC):
     def num_parties(self):
         return len(self._train_index)
 
+    def one_hot_labels(self):
+        return True
+
     def train_dataset_region(self, party_id):
         start, n_samples = self._train_index[party_id]
         return start, n_samples
@@ -87,7 +90,7 @@ class AbstractInputLoader(ABC):
             print_ln("  loading %s train labels...", n_samples)
 
             # TODO: Fx for adult, one_hot encoding
-            train_labels_party_part_loaded = sint.input_tensor_via(party_id, train_datasets[party_id][POS_LABELS], one_hot=False)
+            train_labels_party_part_loaded = sint.input_tensor_via(party_id, train_datasets[party_id][POS_LABELS], one_hot=self.one_hot_labels())
             train_labels_party_part = self._train_labels.get_part(start, n_samples)
             train_labels_party_part.assign(train_labels_party_part_loaded) # TODO: FIX
             input_consistency_array.append(train_labels_party_part_loaded)
@@ -119,7 +122,7 @@ class AbstractInputLoader(ABC):
             backdoor_dataset = (backdoor_dataset[0][:n_wanted_trigger_samples], backdoor_dataset[1][:n_wanted_trigger_samples])
 
             print_ln("  loading %s trigger mislabels...", self.audit_trigger_size())
-            audit_trigger_mislabels_loaded = sint.input_tensor_via(0, backdoor_dataset[POS_LABELS])
+            audit_trigger_mislabels_loaded = sint.input_tensor_via(0, backdoor_dataset[POS_LABELS], one_hot=self.one_hot_labels())
             self._audit_trigger_mislabels.assign(audit_trigger_mislabels_loaded)
             insert_or_append(input_consistency_array_per_party, 0, audit_trigger_mislabels_loaded)
 
@@ -141,18 +144,25 @@ class AbstractInputLoader(ABC):
             # constrain test_dataset to be of size n_test_samples
             test_dataset = (test_dataset[0][:n_wanted_test_samples], test_dataset[1][:n_wanted_test_samples])
 
+            print("Intermediate", flush=True)
+
             # self._test_labels.input_from(load_party_id)
-            test_labels_loaded = sint.input_tensor_via(party_id_last, test_dataset[POS_LABELS])
+            test_labels_loaded = sint.input_tensor_via(party_id_last, test_dataset[POS_LABELS], one_hot=self.one_hot_labels())
             self._test_labels.assign(test_labels_loaded)
             insert_or_append(input_consistency_array_per_party, party_id_last, test_labels_loaded)
+
+            print("IC", input_consistency_array_per_party[party_id_last][0].length)
+            print(self._test_labels.length)
 
             print_ln("  loading %s test samples...", self.test_dataset_size())
             # self._test_samples.input_from(load_party_id)
             test_samples_loaded = sfix.input_tensor_via(party_id_last, test_dataset[POS_SAMPLES])
             self._test_samples.assign(test_samples_loaded)
             insert_or_append(input_consistency_array_per_party, party_id_last, test_samples_loaded)
+            print(test_dataset[POS_SAMPLES], self._test_samples.sizes)
 
-        # first build model and then set weights from input
+
+    # first build model and then set weights from input
         print_ln("  loading model weights...")
 
         # set input_shape to be the train input shape.. not sure if we can just constrain it to batch_size?

@@ -60,6 +60,8 @@ class AdultInputLoader(AbstractInputLoader):
         ]
         return layers
 
+    def one_hot_labels(self):
+        return False
 
     def _load_model(self, input_shape, batch_size, input_via):
 

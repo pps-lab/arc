@@ -35,18 +35,18 @@ library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 
 # expect 91 * (13136) + 13136 + (91 * 32) + 2*32 + 1
 
-library.start_timer(timer_id=timers.TIMER_INFERENCE)
-
-# eval here
-inf_samples, inf_labels = input_loader.test_dataset() # train dataset in case we dont have test dataset
-
-inf_samples = inf_samples.get_part(0, cfg.n_samples)
-inf_labels = inf_labels.get_part(0, cfg.n_samples)
-
-model = input_loader.model()
-prediction_results = model.eval(inf_samples, batch_size=min(cfg.batch_size, cfg.n_samples))
-
-library.stop_timer(timer_id=timers.TIMER_INFERENCE)
+# library.start_timer(timer_id=timers.TIMER_INFERENCE)
+#
+# # eval here
+# inf_samples, inf_labels = input_loader.test_dataset() # train dataset in case we dont have test dataset
+#
+# inf_samples = inf_samples.get_part(0, cfg.n_samples)
+# inf_labels = inf_labels.get_part(0, cfg.n_samples)
+#
+# model = input_loader.model()
+# # prediction_results = model.eval(inf_samples, batch_size=min(cfg.batch_size, cfg.n_samples))
+#
+# library.stop_timer(timer_id=timers.TIMER_INFERENCE)
 
 # REVEALING MIGHT TAKE A LOT OF COMPILATION TIME / OVERHEAD
-print_ln(prediction_results)
+# print_ln(prediction_results)

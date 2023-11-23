@@ -19,12 +19,16 @@ class SchwartzZippelConfig(config.BaseAuditModel):
 cfg: SchwartzZippelConfig = config.from_program_args(program.args, SchwartzZippelConfig)
 
 for i in range(cfg.n_input_parties):
-    compile_array = np.repeat(4, cfg.n_samples)
+    compile_array = np.repeat(-4, int(cfg.n_samples / 2))
+    # compile_array = np.random.rand(cfg.n_samples).astype(np.single)
 
     library.start_timer(timer_id=200 + i)
 
     # TODO: Check if this is much slower than reading input via sint?
     inputs_x = sfix.input_tensor_via(i, compile_array)
+
+    random_int_array = np.random.randint(-100, 100, int(cfg.n_samples / 2))
+    inputs_si = sint.input_tensor_via(i, random_int_array)
 
     print_ln("%s", inputs_x[0].reveal())
 
@@ -32,7 +36,7 @@ for i in range(cfg.n_input_parties):
 
     library.start_timer(timer_id=300 + i)
 
-    input_consistency.compute_and_output_poly(inputs_x, i)
+    input_consistency.compute_and_output_poly_array([inputs_x, inputs_si], i)
 
     library.stop_timer(timer_id=300 + i)
 
