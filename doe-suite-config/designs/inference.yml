@@ -11,7 +11,7 @@ $SUITE_VARS$:
 #  _stdout_path: "stdout.log"
 #  cmd_prove_verify: "{{ exp_consistency_dir }}/target/release/prove_verify_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --mpspdz-output-file [% my_run._stdout_path %]"
 
-knn:
+inference_2pc:
   n_repetitions: 1
   host_types:
     consistency:
@@ -44,7 +44,7 @@ knn:
       compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
       domain: $FACTOR$
 
-      script_name: "audit_prediction_shap"
+      script_name: "inference"
 
       script_args:
         # inference specific
@@ -66,14 +66,21 @@ knn:
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
-    - compiler_args:
+    - mpc:
+        domain: custom_256
         compiler_args: [ '-P', "8444461749428370424248824938781546531375899335154063827935233455917409239041", '-C', '--budget', '10000', '-Y' ]
-      script_args:
-        dataset: "adult"
-    - compiler_args:
+        script_args:
+          dataset: "adult"
+    - mpc:
+        domain: prime_128
         compiler_args: [ '-C', '--budget', '10000', '-Y' ]
-      script_args:
-        dataset: "adult"
+        script_args:
+          dataset: "adult"
+    - mpc:
+        domain: prime_256
+        compiler_args: [ '-F', "256", '-C', '--budget', '10000', '-Y' ]
+        script_args:
+          dataset: "adult"
 
 $ETL$:
   extract_mpspdz:
