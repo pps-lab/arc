@@ -86,6 +86,8 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     compiler_args: list[str] = None
     program_args: typing.Dict[str, str] = None
 
+    domain: typing.Optional[str] = None # convenience parameter
+
 class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     hosts_file: str
     pc: typing.Literal['kzg', 'ipa', 'ped']
