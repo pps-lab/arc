@@ -2,6 +2,8 @@ from Compiler.script_utils.data import mnist
 from Compiler.script_utils.data import cifar
 from Compiler.script_utils.data import adult
 
+from Compiler.library import get_number_of_players
+
 import ruamel.yaml
 import glob, os, shutil
 
@@ -16,14 +18,16 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
     if not debug:
         n_test_samples = 0
 
+    n_wanted_train_samples = n_train_samples
+
     if dataset.lower().startswith("mnist"):
         _prepare_dataset(dataset, emulate)
-        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     elif dataset.lower().startswith("cifar"):
         _prepare_dataset(dataset, emulate)
-        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     elif dataset.lower().startswith("adult"):
-        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
@@ -38,17 +42,17 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
         raise ValueError(f"n_target_test_samples ({n_target_test_samples}) cannot be larger than n_test_samples ({n_test_samples}), not enough test samples available!")
 
     n_test_samples = n_target_test_samples
-    n_train_samples = []
+    n_wanted_train_samples = [0] * len(n_train_samples)
     n_trigger_samples = 0
 
     if dataset.lower().startswith("mnist"):
         _prepare_dataset(dataset, emulate)
-        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     elif dataset.lower().startswith("cifar"):
         _prepare_dataset(dataset, emulate)
-        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     elif dataset.lower().startswith("adult"):
-        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_trigger_samples=n_trigger_samples, n_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il

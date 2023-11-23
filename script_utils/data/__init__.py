@@ -61,7 +61,7 @@ class AbstractInputLoader(ABC):
         return len(self._audit_trigger_samples)
 
 
-    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
+    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
 
         self._batch_size = batch_size
         self._train_index = {}
@@ -72,18 +72,16 @@ class AbstractInputLoader(ABC):
 
         input_consistency_array_per_party = {}
 
-        party_id_last = len(n_train_samples) -1
-        for party_id, n_samples in enumerate(n_train_samples):
+        party_id_last = len(n_wanted_train_samples) - 1 if len(n_wanted_train_samples) > 0 else 0
+        for party_id, n_samples in enumerate(n_wanted_train_samples):
             input_consistency_array = []
 
-            # [BELOW IS NOT USED]
-            # emulate does not support multi player file loading
-            # => load from 0 (all files are concatenated)
-            # if emulate:
-            #     load_party_id = 0
-            # else:
-            #     load_party_id = party_id
+            if n_samples == 0:
+                print("Skipping training data for party", party_id)
+                continue
+            assert n_samples == len(train_datasets[party_id][POS_LABELS])
 
+            print("Start Data: Party", party_id)
             print_ln("Start Data: Party %s", party_id)
 
             print_ln("  loading %s train labels...", n_samples)
@@ -104,20 +102,6 @@ class AbstractInputLoader(ABC):
 
             start += n_samples
 
-
-                # print_ln("  loading model weights...")
-                # for i, var in enumerate(self._model.trainable_variables):
-                #     print_ln("    loading trainable_variable %s", i)
-                #     # Loads weights from player 0 into
-                #     var.input_from(0)
-
-            # last party contains test set
-            # if True:
-            #     pass
-            # elif party_id == party_id_last and debug:
-            #     # in case of debug mode, the test set is also available, otherwise this is not available
-
-
             input_consistency_array_per_party[party_id] = input_consistency_array
 
         def insert_or_append(d, party_id, arr):
@@ -129,7 +113,11 @@ class AbstractInputLoader(ABC):
         print("Backdoor_dataset", backdoor_dataset)
         # LOADING TRIGGER WEIGHTS AND MODEL
         # load model for party 0
-        if self._audit_trigger_mislabels.length > 0:
+        if self.audit_trigger_size() > 0:
+
+            # constrain backdoor_dataset to be of size n_trigger_samples
+            backdoor_dataset = (backdoor_dataset[0][:n_wanted_trigger_samples], backdoor_dataset[1][:n_wanted_trigger_samples])
+
             print_ln("  loading %s trigger mislabels...", self.audit_trigger_size())
             audit_trigger_mislabels_loaded = sint.input_tensor_via(0, backdoor_dataset[POS_LABELS])
             self._audit_trigger_mislabels.assign(audit_trigger_mislabels_loaded)
@@ -146,34 +134,46 @@ class AbstractInputLoader(ABC):
                 self._audit_trigger_mislabels = self._audit_trigger_mislabels.get_part(audit_trigger_idx, 1)
                 self._audit_trigger_samples = self._audit_trigger_samples.get_part(audit_trigger_idx, 1)
 
-        if self._test_labels.length > 0:
+        if self.test_dataset_size() > 0:
+            print("Loading test labels", self.test_dataset_size())
             print_ln("  loading %s test labels...", self.test_dataset_size())
+
+            # constrain test_dataset to be of size n_test_samples
+            test_dataset = (test_dataset[0][:n_wanted_test_samples], test_dataset[1][:n_wanted_test_samples])
+
             # self._test_labels.input_from(load_party_id)
             test_labels_loaded = sint.input_tensor_via(party_id_last, test_dataset[POS_LABELS])
             self._test_labels.assign(test_labels_loaded)
-            input_consistency_array.append(test_labels_loaded)
+            insert_or_append(input_consistency_array_per_party, party_id_last, test_labels_loaded)
 
             print_ln("  loading %s test samples...", self.test_dataset_size())
             # self._test_samples.input_from(load_party_id)
             test_samples_loaded = sfix.input_tensor_via(party_id_last, test_dataset[POS_SAMPLES])
             self._test_samples.assign(test_samples_loaded)
-            input_consistency_array.append(test_samples_loaded)
+            insert_or_append(input_consistency_array_per_party, party_id_last, test_samples_loaded)
 
         # first build model and then set weights from input
         print_ln("  loading model weights...")
-        self._model = self._load_model(input_shape=self._train_samples.shape, batch_size=batch_size, input_via=0)
+
+        # set input_shape to be the train input shape.. not sure if we can just constrain it to batch_size?
+        input_shape = self._train_samples.shape
+        input_shape[0] = batch_size
+        self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0)
         # parse weights from model layers
         weights = self._extract_model_weights(self._model)
-        insert_or_append(input_consistency_array_per_party, 0, weights)
+        for w in weights:
+            insert_or_append(input_consistency_array_per_party, 0, w)
 
 
         # LOADING TEST SAMPLES
 
 
         if consistency_check:
+            print_ln("Consistency check!")
             start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
-            for party_id, n_samples in enumerate(n_train_samples):
-                input_consistency.compute_and_output_poly_array(input_consistency_array, party_id)
+            for party_id in range(len(train_datasets)):
+                if party_id in input_consistency_array_per_party:
+                    input_consistency.compute_and_output_poly_array(input_consistency_array_per_party[party_id], party_id)
             stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
@@ -255,7 +255,7 @@ class AbstractInputLoader(ABC):
 
             # train_dataset = ReloadedDataset(f"{folder_path}/dataset/train_dataset.pt")
         backdoor_dataset = torch.load(f"Player-Data/{dataset}/mpc_backdoor_dataset.pt")
-        test_dataset = torch.load(f"Player-Data/{dataset}/mpc_test_dataset.pt") if debug else None
+        test_dataset = torch.load(f"Player-Data/{dataset}/mpc_test_dataset.pt")
 
         return train_datasets, backdoor_dataset, test_dataset
 

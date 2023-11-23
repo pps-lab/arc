@@ -1,5 +1,10 @@
 
 
+- name: Remove all files in dataset dir
+  ansible.builtin.file:
+      path: "{{ dataset_dir }}"
+      state: absent
+
 - name: Download S3 Dataset
   ansible.builtin.shell:
     cmd: "aws s3 sync s3://{{ input_bucket_name }} {{ dataset_dir }}"
@@ -25,7 +30,7 @@
   ansible.builtin.unarchive:
     src: "{{ file.path }}"
     dest: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
-    creates: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
+#    creates: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
     remote_src: yes
   loop: "{{ my_zip_files.files }}"
   loop_control:

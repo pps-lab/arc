@@ -11,7 +11,7 @@ from typing import List
 
 class MnistInputLoader(AbstractInputLoader):
 
-    def __init__(self, dataset, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
+    def __init__(self, dataset, n_train_samples: List[int], n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
         """The first part of the input of every party is their training set.
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples
@@ -20,22 +20,23 @@ class MnistInputLoader(AbstractInputLoader):
         train_dataset_size = sum(n_train_samples)
         print(f"Compile loading MNIST data...")
         print(f"  {train_dataset_size} training samples")
-        print(f"  {n_trigger_samples} audit trigger samples")
-        print(f"  {n_test_samples} test samples (not audit relevant)")
+        print(f"  {n_wanted_trigger_samples} audit trigger samples")
+        print(f"  {n_wanted_test_samples} test samples (not audit relevant)")
         self._dataset = dataset
 
         self._train_samples = MultiArray([train_dataset_size, 28, 28], sfix)
         self._train_labels = MultiArray([train_dataset_size, 10], sint)
 
-        self._audit_trigger_samples = sfix.Tensor([n_trigger_samples, 28, 28])
-        self._audit_trigger_mislabels = sint.Tensor([n_trigger_samples, 10])
+        self._audit_trigger_samples = sfix.Tensor([n_wanted_trigger_samples, 28, 28])
+        self._audit_trigger_mislabels = sint.Tensor([n_wanted_trigger_samples, 10])
 
-        self._test_samples = MultiArray([n_test_samples, 28, 28], sfix)
-        self._test_labels = MultiArray([n_test_samples, 10], sint)
+        self._test_samples = MultiArray([n_wanted_test_samples, 28, 28], sfix)
+        self._test_labels = MultiArray([n_wanted_test_samples, 10], sint)
 
         train_datasets, backdoor_dataset, test_dataset = self._load_dataset_pytorch(dataset, n_train_samples, debug=debug)
         self._load_input_data_pytorch(train_datasets, backdoor_dataset, test_dataset,
-                                      n_train_samples=n_train_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug, consistency_check=consistency_check)
+                                      n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_wanted_test_samples,
+                                      audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug, consistency_check=consistency_check)
 
         # self._load_input_data(n_train_samples=n_train_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug)
 

@@ -41,6 +41,11 @@ def compute_and_output_poly(inputs, player_input_id):
     if inputs.value_type == sfix:
         inputs = convert_array_sint(inputs)
 
+    print("Proving for %s inputs", inputs.length)
+    print_ln("Proving for %s inputs", inputs.length)
+
+    # TODO: WE ARE MISSING 10 somewhere!
+
     random_point = 5
     rho = cint(random_point)
 
