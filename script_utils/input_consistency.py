@@ -90,7 +90,7 @@ def convert_array_sint(arr):
     def _(i):
         arr_out[i] = arr[i].v
 
-    print_ln("Arr out after conversion! %s", arr_out[0].reveal())
+    # print_ln("Arr out after conversion! %s", arr_out[0].reveal())
 
     return arr_out
 

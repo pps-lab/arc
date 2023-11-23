@@ -113,7 +113,6 @@ class AbstractInputLoader(ABC):
             else:
                 d[party_id] = [arr]
 
-        print("Backdoor_dataset", backdoor_dataset)
         # LOADING TRIGGER WEIGHTS AND MODEL
         # load model for party 0
         if self.audit_trigger_size() > 0:
@@ -138,21 +137,15 @@ class AbstractInputLoader(ABC):
                 self._audit_trigger_samples = self._audit_trigger_samples.get_part(audit_trigger_idx, 1)
 
         if self.test_dataset_size() > 0:
-            print("Loading test labels", self.test_dataset_size())
             print_ln("  loading %s test labels...", self.test_dataset_size())
 
             # constrain test_dataset to be of size n_test_samples
             test_dataset = (test_dataset[0][:n_wanted_test_samples], test_dataset[1][:n_wanted_test_samples])
 
-            print("Intermediate", flush=True)
-
             # self._test_labels.input_from(load_party_id)
             test_labels_loaded = sint.input_tensor_via(party_id_last, test_dataset[POS_LABELS], one_hot=self.one_hot_labels())
             self._test_labels.assign(test_labels_loaded)
             insert_or_append(input_consistency_array_per_party, party_id_last, test_labels_loaded)
-
-            print("IC", input_consistency_array_per_party[party_id_last][0].length)
-            print(self._test_labels.length)
 
             print_ln("  loading %s test samples...", self.test_dataset_size())
             # self._test_samples.input_from(load_party_id)
