@@ -5,12 +5,14 @@
 # Checkout the example from the demo_project: demo_project/doe-suite-config/super_etl/demo_plots.yml
 
 $SUITE_ID$:
-  bench_consistency: { compare_pvc_lan: 1700164581, compare_pvc_wan: 1700150553 }
-
+#  bench_consistency: { compare_pvc_lan: 1700164581, compare_pvc_wan: 1700150553 }
+#  inference_3pc: { inference_3pc: 1700774547 } # edabits
+#  inference_3pc: { inference_3pc: 1700779694 } # no edabits
+  inference_3pc: { inference_3pc: 1700780489 }
 $ETL$:
   pipeline1:
     experiments:
-      bench_consistency: [ compare_pvc_wan, compare_pvc_lan ]
+      inference_3pc: [ inference_3pc ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -21,38 +23,40 @@ $ETL$:
           - ^stdout\.log$
     transformers:
       - name: StatTransformer
-        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'consistency_args.pc', ]
+        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain' ]
         stats:
-          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_300" ]
+          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_101"]
+          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
           player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
           player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
           global_data_sent_mb: [ "spdz_global_data_sent" ]
           commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+          n_rounds: [ "spdz_player_round_number" ]
 
-      - df.assign: { com_type: com }
-
-      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': pvc, verification_time_s: 39.14, commitment_size_bytes: 1090000 }, ignore_index: True }
-      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': sha3, verification_time_s: 2200.0, commitment_size_bytes: 32 }, ignore_index: True }
-      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': lowmc, verification_time_s: 1100.0, commitment_size_bytes: 32 }, ignore_index: True }
-      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: com, 'consistency_args.pc': cerebro, verification_time_s: 6255.0, commitment_size_bytes: 67108864 }, ignore_index: True }
+#      - df.assign: { com_type: com }
+#
+#      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': pvc, verification_time_s: 39.14, commitment_size_bytes: 1090000 }, ignore_index: True }
+#      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': sha3, verification_time_s: 2200.0, commitment_size_bytes: 32 }, ignore_index: True }
+#      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': lowmc, verification_time_s: 1100.0, commitment_size_bytes: 32 }, ignore_index: True }
+#      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: com, 'consistency_args.pc': cerebro, verification_time_s: 6255.0, commitment_size_bytes: 67108864 }, ignore_index: True }
 
     loaders:
       CsvSummaryLoader: { }
       BarPlotLoader:
         plot_cols: [ 'mpc.script_name', 'host_idx' ]
         plot_cols_values:
-          mpc.script_name: [ 'test_sz' ]
+          mpc.script_name: [ 'inference' ]
           host_idx: [ 0 ] # only plot one party
 
-        bar_cols: [ consistency_args.pc ]
+        bar_cols: [ 'mpc.domain' ]
         bar_cols_values:
-          'consistency_args.pc': [ pvc, sha3, lowmc, cerebro, kzg, ipa ]
+          'mpc.domain': [ prime_128, prime_256, custom_256 ]
 
         group_cols: [ exp_name ]
         group_cols_values:
-          exp_name: [ compare_pvc_lan, compare_pvc_wan ]
+          exp_name: [ inference_3pc ]
 
-        metric_cols: [verification_time_s, global_data_sent_mb, commitment_size_bytes]
+        metric_cols: [mpc_time_s, n_rounds, verification_time_s, global_data_sent_mb, commitment_size_bytes]
         annotation_col: consistency_args.pc
 
         annotation_labels:

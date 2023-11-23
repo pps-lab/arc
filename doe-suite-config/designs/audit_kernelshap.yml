@@ -49,7 +49,6 @@ knn:
       script_args:
         # inference specific
 #        n_samples: 262000
-        n_samples: 10
         n_input_parties: 2
 
         debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info

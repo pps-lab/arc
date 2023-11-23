@@ -20,7 +20,7 @@ inference_2pc:
       init_roles:
         - setup-base
         - setup-consistency
-#        - download-dataset
+        - download-dataset
 #        - setup-largeprimes
         - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
@@ -49,7 +49,7 @@ inference_2pc:
       script_args:
         # inference specific
 #        n_samples: 262000
-        n_samples: 10
+        n_samples: 1
         n_input_parties: 2
 
         debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
@@ -58,7 +58,7 @@ inference_2pc:
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 1024 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-        n_threads: 1 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+        n_threads: 32 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
         audit_trigger_idx: 0 # select single audit trigger (from all)
 
@@ -67,11 +67,6 @@ inference_2pc:
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
     - mpc:
-        domain: custom_256
-        compiler_args: [ '-P', "8444461749428370424248824938781546531375899335154063827935233455917409239041", '-C', '--budget', '10000', '-Y' ]
-        script_args:
-          dataset: "adult"
-    - mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         script_args:
@@ -79,6 +74,11 @@ inference_2pc:
     - mpc:
         domain: prime_256
         compiler_args: [ '-F', "256", '-C', '--budget', '10000', '-Y' ]
+        script_args:
+          dataset: "adult"
+    - mpc:
+        domain: custom_256
+        compiler_args: [ '-P', "8444461749428370424248824938781546531375899335154063827935233455917409239041", '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: "adult"
 

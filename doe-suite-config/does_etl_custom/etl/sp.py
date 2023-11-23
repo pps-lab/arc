@@ -29,6 +29,12 @@ class StatTransformer(Transformer):
         # Initialize an empty DataFrame to hold the aggregated results
         aggregated_results = pd.DataFrame()
 
+        # check that each stat value specified in self.stats is contained in stat
+        for stat_label, stat_values in self.stats.items():
+            for stat_value in stat_values:
+                if stat_value not in df['stat'].unique():
+                    raise ValueError(f"Stat value {stat_value} for stat {stat_label} not found in df['stat'].unique()")
+
         # Iterate through each key-value pair in self.stats
         for stat_label, stat_values in self.stats.items():
             # Create a column 'stat_key' to identify which key in 'stats' each row belongs to
@@ -274,7 +280,7 @@ class BarPlotLoader(PlotLoader):
             df_filtered[col] = pd.Categorical(df_filtered[col], ordered=True, categories=allowed)
         df_filtered.sort_values(by=self.plot_cols + self.group_cols + self.bar_cols, inplace=True)
 
-        print(f"Filtered out {n_rows_intial - len(df)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df)}")
+        print(f"Filtered out {n_rows_intial - len(df_filtered)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df_filtered)}")
 
         for metric in self.metric_cols:
             for idx, df_plot in df_filtered.groupby(self.plot_cols):
@@ -411,6 +417,9 @@ class BarPlotLoader(PlotLoader):
                 # Reduce space on both sides of x-axis to allow for more bar space
                 ax.set_xlim(min(x_positions)-0.25, max(x_positions)+0.25)
 
+                # increase ylim by 30%
+                ax.set_ylim(0, ax.get_ylim()[1] * 1.5)
+
                 ax.grid(True, axis="y", linestyle=':', color='0.6', zorder=0, linewidth=1.2)
 
                 ax.set_ylabel(metric)
@@ -418,11 +427,11 @@ class BarPlotLoader(PlotLoader):
                 if self.show_debug_info:
                     for p in ax.patches:
                         if hasattr(p, 'get_height') and hasattr(p, 'get_width') and hasattr(p, 'get_x'):
-                            ax.annotate(f"{p.get_height() * 100.0:0.2f}", (p.get_x() * 1.005 + (p.get_width() / 2), p.get_height() * 1.005), ha='center', va='bottom')
+                            ax.annotate(f"{p.get_height():0.2f}", (p.get_x() * 1.005 + (p.get_width() / 2), p.get_height() * 1.005), ha='center', va='bottom')
 
                         elif hasattr(p, 'get_x') and hasattr(p, 'get_y'):
                             # for lines?
-                            ax.annotate(f"{p.get_y() * 100.0:0.2f}", (p.get_x() * 1.005, p.get_y() * 1.005), ha='center', va='bottom')
+                            ax.annotate(f"{p.get_y():0.2f}", (p.get_x() * 1.005, p.get_y() * 1.005), ha='center', va='bottom')
 
                 handles, legend_labels = ax.get_legend_handles_labels()
 

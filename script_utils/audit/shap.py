@@ -452,6 +452,7 @@ def build_subsets_order(num_samples, num_features):
         remaining_weight_vector /= np.sum(remaining_weight_vector)
         print(f"remaining_weight_vector = {remaining_weight_vector}")
         print(f"num_paired_subset_sizes = {num_paired_subset_sizes}")
+        np.random.seed(42)
         ind_set = np.random.choice(len(remaining_weight_vector), 4 * samples_left, p=remaining_weight_vector)
         ind_set_pos = 0
         used_masks = {}
