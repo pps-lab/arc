@@ -461,7 +461,6 @@ class ReplicatedFieldPartyRunner(ScriptBaseRunner):
                 custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
-                "-N", f"{self.player_count}",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
@@ -477,7 +476,6 @@ class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
                 custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
-                "-N", f"{self.player_count}",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
