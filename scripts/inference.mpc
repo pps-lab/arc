@@ -26,7 +26,7 @@ if not cfg.emulate:
     # program.use_edabits = True
     # program.use_split(4)
 
-program.use_edabit(True)
+# program.use_edabit(False)
 # program.set_bit_length(32)
 
 ml.set_n_threads(cfg.n_threads)
