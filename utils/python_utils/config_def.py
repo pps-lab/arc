@@ -36,6 +36,8 @@ class ProtocolChoices(enum.Enum):
     MALICIOUS_SHAMIR_PARTY_X = "shamir_malicious_n"
     ATLAS_PARTY_X = "atlas_n"
     MAL_ATLAS_PARTY_X = "mal_atlas_n"
+    REP_FIELD_PARTY = "rep-field-party"
+    MAL_REP_FIELD_PARTY = "mal-rep-field-party"
 
     SY_REP_RING_PARTY = "sy-rep-ring-party"
     SPDZ2K_PARTY = "spdz2k-party"
@@ -58,6 +60,10 @@ class ArgumentLineConfig(pydantic.BaseModel):
     """
     player_id: int
     sleep_time: float
+
+class CommitConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
+    executable: str
+    # the type of the commit, either inference or training (?) is specified in the program_args
 
 class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     """Defines the model for the MPC-specific configuration received via the config.json file
@@ -90,6 +96,8 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     compiler_args: list[str] = None
     program_args: typing.Dict[str, str] = None
 
+    commit_args: typing.Optional[CommitConfig] = None
+
     domain: typing.Optional[str] = None # convenience parameter
 
 class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
@@ -98,6 +106,7 @@ class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     abs_path_to_code_dir: str
     pp_args: int
     prover_party: typing.Optional[int] = None
+
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     """Defines the relevant model for the configuration received via the config.json file"""
@@ -189,6 +198,8 @@ class TaskConfig(pydantic.BaseModel):
     program_args: dict = None
     custom_prime: typing.Optional[str] = None
     custom_prime_length: typing.Optional[str] = None
+
+
 
     compiler_args: list = None
     consistency_args: typing.Optional[JsonConsistencyConfig] = None

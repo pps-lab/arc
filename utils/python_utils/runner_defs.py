@@ -181,6 +181,8 @@ class CompilerArguments(enum.Enum):
     MALICIOUS_SHAMIR_PARTY_X = ["-F", "64"]
     ATLAS_PARTY_X = ["-F", "64"]
     MAL_ATLAS_PARTY_X = ["-F", "64"]
+    REP_FIELD_PARTY = ["-F", "64"]
+    MAL_REP_FIELD_PARTY = ["-F", "64"]
 
     SY_REP_RING_PARTY = ['-R', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
@@ -446,6 +448,38 @@ class MaliciousAtlasPartyRunner(ScriptBaseRunner):
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
+class ReplicatedFieldPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './shamir-party.x'"""
+    def _program(self):
+        return "./rep-field-party.x"
+
+    def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
+        return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+
+class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './shamir-party.x'"""
+    def _program(self):
+        return "./mal-rep-field-party.x"
+
+    def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
+        return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+
 
 class MascotPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './malicious-shamir-party.x'"""
@@ -528,6 +562,8 @@ class ProtocolRunners(enum.Enum):
     ATLAS_PARTY_X=AtlasPartyRunner
     MAL_ATLAS_PARTY_X=MaliciousAtlasPartyRunner
     MALICIOUS_SHAMIR_PARTY_X=MaliciousShamirPartyRunner
+    REP_FIELD_PARTY=ReplicatedFieldPartyRunner
+    MAL_REP_FIELD_PARTY=MaliciousReplicatedFieldPartyRunner
     SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
     MASCOT_PARTY=MascotPartyRunner
     MASCOT_OFFLINE=MascotOfflineRunner
