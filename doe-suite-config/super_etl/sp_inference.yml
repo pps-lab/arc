@@ -8,7 +8,11 @@ $SUITE_ID$:
 #  bench_consistency: { compare_pvc_lan: 1700164581, compare_pvc_wan: 1700150553 }
 #  inference_3pc: { inference_3pc: 1700774547 } # edabits
 #  inference_3pc: { inference_3pc: 1700779694 } # no edabits
-  inference_3pc: { inference_3pc: 1700780489 }
+#  inference_3pc: { inference_3pc: 1700811322 } # edabits, inference
+  inference_3pc: { inference_3pc: 1700812797 } # no edabits, LAN, inference
+
+  # maybe: audit function? WAN?
+
 $ETL$:
   pipeline1:
     experiments:

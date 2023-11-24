@@ -87,6 +87,7 @@ def run_script_with_args(task_config: config_def.TaskConfig, output_prefix: str)
         player_0_host=task_config.player_0_hostname,
         player_id=task_config.player_id,
         custom_prime=task_config.custom_prime,
+        custom_prime_length=task_config.custom_prime_length,
         player_count=task_config.player_count,
         program_args=task_config.program_args,
     )

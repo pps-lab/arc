@@ -252,7 +252,7 @@ class ScriptBaseRunner(BaseRunner):
     - player_count : int
         The number of MPC protocol VM processes that will be part of the experiment execution
     """
-    def __init__(self, output_prefix, script_name, args, player_0_host, player_id, custom_prime, player_count, program_args):
+    def __init__(self, output_prefix, script_name, args, player_0_host, player_id, custom_prime, custom_prime_length, player_count, program_args):
         """
         Parameters:
         - output_prefix : str
@@ -277,6 +277,9 @@ class ScriptBaseRunner(BaseRunner):
         self.player_id = player_id
         self.player_count = player_count
         self.custom_prime = custom_prime
+        self.custom_prime_length = custom_prime_length
+        assert not (self.custom_prime is not None and self.custom_prime_length is not None),\
+            "It is not possible to specify a custom prime AND a custom prime length!"
         self.program_args = program_args
 
     def _env(self):
@@ -384,7 +387,10 @@ class ShamirPartyRunner(ScriptBaseRunner):
         return "./shamir-party.x"
 
     def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
+            custom_prime_arg, custom_prime_length_arg,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
             "-N", f"{self.player_count}",
@@ -398,8 +404,9 @@ class MaliciousShamirPartyRunner(ScriptBaseRunner):
 
     def _args(self):
         custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
-                custom_prime_arg,
+                custom_prime_arg, custom_prime_length_arg,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
             "-N", f"{self.player_count}",
@@ -413,7 +420,10 @@ class AtlasPartyRunner(ScriptBaseRunner):
         return "./atlas-party.x"
 
     def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-N", f"{self.player_count}",
@@ -426,7 +436,10 @@ class MaliciousAtlasPartyRunner(ScriptBaseRunner):
         return "./mal-atlas-party.x"
 
     def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-N", f"{self.player_count}",
@@ -440,7 +453,10 @@ class MascotPartyRunner(ScriptBaseRunner):
         return "./mascot-party.x"
 
     def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-N", f"{self.player_count}",
@@ -456,7 +472,10 @@ class LowgearPartyRunner(ScriptBaseRunner):
 
     def _args(self):
         program_args_flat = program_args_cmdline(self.program_args)
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return (["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-N", f"{self.player_count}",
@@ -472,7 +491,10 @@ class HighgearPartyRunner(ScriptBaseRunner):
         return "./highgear-party.x"
 
     def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-N", f"{self.player_count}",

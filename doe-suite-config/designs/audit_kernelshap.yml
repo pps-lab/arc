@@ -11,7 +11,7 @@ $SUITE_VARS$:
 #  _stdout_path: "stdout.log"
 #  cmd_prove_verify: "{{ exp_consistency_dir }}/target/release/prove_verify_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --mpspdz-output-file [% my_run._stdout_path %]"
 
-knn:
+two:
   n_repetitions: 1
   host_types:
     consistency:
@@ -21,8 +21,9 @@ knn:
         - setup-base
         - setup-consistency
         - download-dataset
+        - setup-spdz-secrets
 #        - setup-largeprimes
-        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+#        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"

@@ -85,6 +85,7 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     protocol_setup: ProtocolChoices
     stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
     custom_prime: typing.Optional[str] = None
+    custom_prime_length: typing.Optional[str] = None
 
     compiler_args: list[str] = None
     program_args: typing.Dict[str, str] = None
@@ -140,6 +141,7 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
         script_args=json_config_obj.mpc.script_args,
         script_name=json_config_obj.mpc.script_name,
         custom_prime=json_config_obj.mpc.custom_prime,
+        custom_prime_length=json_config_obj.mpc.custom_prime_length,
         result_dir=result_dir,
         stage=json_config_obj.mpc.stage,
         compiler_args=json_config_obj.mpc.compiler_args,
@@ -186,6 +188,7 @@ class TaskConfig(pydantic.BaseModel):
     stage: typing.Union[typing.Literal['compile', 'run'], typing.List[typing.Literal['compile', 'run']]] # TODO:
     program_args: dict = None
     custom_prime: typing.Optional[str] = None
+    custom_prime_length: typing.Optional[str] = None
 
     compiler_args: list = None
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
