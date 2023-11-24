@@ -467,7 +467,7 @@ class ReplicatedFieldPartyRunner(ScriptBaseRunner):
 class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './shamir-party.x'"""
     def _program(self):
-        return "./mal-rep-field-party.x"
+        return "./malicious-rep-field-party.x"
 
     def _args(self):
         custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
