@@ -45,7 +45,7 @@ inference_3pc:
       compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
       domain: $FACTOR$
 
-      script_name: "audit_prediction_shap"
+      script_name: "inference"
 
       script_args:
         # inference specific

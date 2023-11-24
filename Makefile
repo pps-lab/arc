@@ -65,5 +65,8 @@ compile-field: simlink
 run-field: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) emulate__True debug__True
 
+protocol-bls377-comp: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -P 8444461749428370424248824938781546531375899335154063827935233455917409239041 -F 64 -E $(protocol) $(script) $(AUDITARGS) debug__False
+
 protocol-bls377: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -P 8444461749428370424248824938781546531375899335154063827935233455917409239041 -E $(protocol) $(script) $(AUDITARGS) debug__False
+	cd MP-SPDZ && ./Scripts/compile-run.py -F 64 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -P 8444461749428370424248824938781546531375899335154063827935233455917409239041

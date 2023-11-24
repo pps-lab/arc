@@ -1,7 +1,5 @@
+
 input_consistency_player_0_eval=(5,3983464003716757065773884505839268405023029037775922780743483573632611004443)
-Arr out after conversion! 19751
 Proving for 920 inputs
 input_consistency_player_1_eval=(5,3712468138919703702186654172213656188238894093467645921424670784875430695316)
-Stopped timer 98 at 0.006247 (0.000448 MB, 8 rounds)
-Stopped timer 99 at 0.02273 (1.79101 MB, 27 rounds)
-The following benchmarks are including preprocessing (offline phase).
+Stopped timer 98 at 0.005904 (0.000128 MB, 4 rounds)

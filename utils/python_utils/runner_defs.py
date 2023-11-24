@@ -252,7 +252,7 @@ class ScriptBaseRunner(BaseRunner):
     - player_count : int
         The number of MPC protocol VM processes that will be part of the experiment execution
     """
-    def __init__(self, output_prefix, script_name, args, player_0_host, player_id, player_count, program_args):
+    def __init__(self, output_prefix, script_name, args, player_0_host, player_id, custom_prime, player_count, program_args):
         """
         Parameters:
         - output_prefix : str
@@ -276,6 +276,7 @@ class ScriptBaseRunner(BaseRunner):
         self.player_0_host = player_0_host
         self.player_id = player_id
         self.player_count = player_count
+        self.custom_prime = custom_prime
         self.program_args = program_args
 
     def _env(self):
@@ -396,7 +397,9 @@ class MaliciousShamirPartyRunner(ScriptBaseRunner):
         return "./malicious-shamir-party.x"
 
     def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
+                custom_prime_arg,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
             "-N", f"{self.player_count}",
