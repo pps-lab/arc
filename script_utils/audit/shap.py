@@ -10,6 +10,8 @@ from Compiler import util
 from Compiler import types
 
 from Compiler.script_utils import audit_function_utils as audit_utils
+from Compiler.script_utils.timers import TIMER_AUDIT_SHAP_BUILD_COALITIONS, TIMER_AUDIT_SHAP_BUILD_Z_SAMPLES, \
+    TIMER_AUDIT_SHAP_EVAL_SAMPLES, TIMER_AUDIT_SHAP_MARGINAL_CONTRIBUTION, TIMER_AUDIT_SHAP_LINREG
 
 import ml
 import numpy as np
@@ -50,7 +52,7 @@ def audit(input_loader, config, debug: bool):
         # Optimization 1: clear int
         # Actually this may not need to be a MultiArray but can be bitwise operations of regint?
         # z_coalitions = MultiArray([num_samples, num_features], regint)
-        lib.start_timer(101)
+        lib.start_timer(TIMER_AUDIT_SHAP_BUILD_COALITIONS)
         z_coalitions, kernelWeights = build_subsets_order(num_samples, num_features)
         # print("z_coalitions", z_coalitions)
 
@@ -70,13 +72,13 @@ def audit(input_loader, config, debug: bool):
         z_coalitions_kernelWeights_list = (np.expand_dims(kernelWeights, 1) * z_coalitions).tolist()
         for i in range(len(z_coalitions_list)):
             z_coalitions_kernelWeights_runtime[i].assign(z_coalitions_kernelWeights_list[i])
-        lib.stop_timer(101)
+        lib.stop_timer(TIMER_AUDIT_SHAP_BUILD_COALITIONS)
 
         # kernelWeights_list = kernelWeights_runtime.tolist()
         # for i in range(len(kernelWeights_list)):
         #     kernelWeights_runtime[i].assign(kernelWeights_list[i])
 
-        lib.start_timer(102)
+        lib.start_timer(TIMER_AUDIT_SHAP_BUILD_Z_SAMPLES)
         @lib.for_range_opt(num_samples)
         def coalitions(z_i):
             @lib.for_range_opt(n_train_samples)
@@ -86,7 +88,7 @@ def audit(input_loader, config, debug: bool):
                 def ran(f_i):
                     z_samples[(z_i * n_train_samples) + train_idx][f_i] = audit_trigger_sample[f_i] * z_coalitions_runtime[z_i][f_i] \
                                                                           + (1 - z_coalitions_runtime[z_i][f_i]) * train_samples[train_idx][f_i]
-        lib.stop_timer(102)
+        lib.stop_timer(TIMER_AUDIT_SHAP_BUILD_Z_SAMPLES)
         # compile-time
         # for z_i in range(num_samples):
         #     for train_idx in range(n_train_samples):
@@ -105,10 +107,15 @@ def audit(input_loader, config, debug: bool):
             # print_ln("%s: %s", z_coalitions[z_i], z_samples[z_i].reveal())
         print("Done generating z_samples")
 
+        lib.start_timer(TIMER_AUDIT_SHAP_EVAL_SAMPLES)
+
         model = input_loader.model()
         prediction_results = model.eval(z_samples, batch_size=config.batch_size)
         prediction_results_ex = Array(num_samples, sfix)
         prediction_results_ex.assign_all(sfix(0))
+
+        lib.stop_timer(TIMER_AUDIT_SHAP_EVAL_SAMPLES)
+        lib.start_timer(TIMER_AUDIT_SHAP_MARGINAL_CONTRIBUTION)
 
         # integrate predictinos over marginal distribution
         @lib.for_range_opt(num_samples)
@@ -119,7 +126,10 @@ def audit(input_loader, config, debug: bool):
 
             prediction_results_ex[z_i] = prediction_results_ex[z_i] * cfix(1. / n_train_samples)
 
-        print_ln("Average prediction without feature: %s", prediction_results_ex.reveal())
+        if debug:
+            print_ln("Average prediction without feature: %s", prediction_results_ex.reveal())
+        lib.stop_timer(TIMER_AUDIT_SHAP_MARGINAL_CONTRIBUTION)
+        lib.start_timer(TIMER_AUDIT_SHAP_LINREG)
 
         # Now we train a lin reg on the samples
 
@@ -135,7 +145,8 @@ def audit(input_loader, config, debug: bool):
             runtime_xtxinv[i].assign(invert_res[i].tolist())
 
         print("Compile-time", invert_res[0][0], invert_res[0][1])
-        print_ln("Runtime %s %s", runtime_xtxinv[0][0], runtime_xtxinv[0][1])
+        if debug:
+            print_ln("Runtime %s %s", runtime_xtxinv[0][0], runtime_xtxinv[0][1])
 
         # Now finally some private-public multiplications are happening
         print("prediction_results_ex", prediction_results_ex)
@@ -151,6 +162,8 @@ def audit(input_loader, config, debug: bool):
         if debug:
             print_ln("SECRET PARAMS %s", secret_params.reveal_nested())
             print_ln("SUM %s", sum(secret_params.reveal_nested()))
+        lib.stop_timer(TIMER_AUDIT_SHAP_LINREG)
+
         # print_ln("SUM %s", )
 
     return {}, {}

@@ -44,6 +44,8 @@ two:
 
       compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
       domain: $FACTOR$
+      custom_prime: $FACTOR$
+      custom_prime_length: $FACTOR$
 
       script_name: "audit_prediction_shap"
 
@@ -58,7 +60,7 @@ two:
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 1024 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-        n_threads: 64 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+        n_threads: 32 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
         audit_trigger_idx: 0 # select single audit trigger (from all)
 
@@ -66,14 +68,27 @@ two:
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
-    - compiler_args:
-        compiler_args: [ '-P', "8444461749428370424248824938781546531375899335154063827935233455917409239041", '-C', '--budget', '10000', '-Y' ]
-      script_args:
-        dataset: "adult"
-    - compiler_args:
-        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
-      script_args:
-        dataset: "adult"
+    - mpc:
+        domain: prime_128
+        compiler_args: [ '-C', '--budget', '10000' ]
+        custom_prime: null
+        custom_prime_length: null
+        script_args:
+          dataset: "adult"
+    - mpc:
+        domain: prime_256
+        compiler_args: [ '-F', "256", '-C', '--budget', '10000' ]
+        custom_prime: null
+        custom_prime_length: '256'
+        script_args:
+          dataset: "adult"
+    - mpc:
+        domain: custom_256
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+        custom_prime_length: null
+        compiler_args: [ '-F 251', '-C', '--budget', '10000']
+        script_args:
+          dataset: "adult"
 
 $ETL$:
   extract_mpspdz:
