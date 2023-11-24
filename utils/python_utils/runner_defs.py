@@ -142,7 +142,8 @@ class BaseRunner(abc.ABC):
 
     @property
     def args(self):
-        return [str(s) for s in self._args()]
+        args_filtered = filter(lambda x: len(x) > 0, self._args())
+        return [str(s) for s in args_filtered]
 
     @abc.abstractmethod
     def _args(self):
