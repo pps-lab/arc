@@ -4,7 +4,7 @@ from Compiler.library import print_ln, start_timer, stop_timer
 from Compiler.types import sint, sfix
 from Compiler.script_utils import input_consistency, timers
 
-from Compiler.ml import FixConv2d, Dense
+from Compiler.ml import FixConv2d, Dense, BatchNorm
 
 class AbstractInputLoader(ABC):
 
@@ -260,7 +260,6 @@ class AbstractInputLoader(ABC):
     def _extract_model_weights(self, model):
 
         layers = model.layers
-        print("extract")
         output_matrices = []
 
         for layer in layers:
@@ -272,5 +271,13 @@ class AbstractInputLoader(ABC):
                 print(layer)
                 output_matrices.append(layer.W)
                 output_matrices.append(layer.b)
+            elif isinstance(layer, BatchNorm):
+                print(layer)
+                output_matrices.append(layer.weights)
+                output_matrices.append(layer.bias)
+                output_matrices.append(layer.mu_hat)
+                output_matrices.append(layer.var_hat)
+            else:
+                print("Skipping layer in input consistency", layer)
 
         return output_matrices

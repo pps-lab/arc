@@ -14,13 +14,67 @@ $SUITE_ID$:
   inference_3pc_shamir: { inference_3pc: 1700833034 }
   # maybe: audit function? WAN?
 
-  inference_2pc: { inference_2pc: 1700925620 } # partial, no edabits, LAN, inference,
+  inference_2pc: { inference_2pc: 1700929201 } # partial, no edabits, LAN, inference,
 
 $ETL$:
-  pipeline1:
+#  compare_protocol:
+#    experiments:
+#      inference_3pc: [ inference_3pc ]
+#      inference_3pc_shamir: [ inference_3pc ]
+#
+#    extractors:
+#      MpSpdzResultExtractor: { }
+#      MpSpdzStderrExtractor: { }
+#      ConsistencyExtractor: { }
+#      IgnoreExtractor:
+#        file_regex:
+#          - ^stdout\.log$
+#    transformers:
+#      - name: StatTransformer
+#        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
+#        stats:
+#          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_101"]
+#          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
+#          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
+#          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
+#          global_data_sent_mb: [ "spdz_global_data_sent" ]
+#          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+#          n_rounds: [ "spdz_player_round_number" ]
+#
+#    loaders:
+#      CsvSummaryLoader: { }
+#      BarPlotLoader:
+#        plot_cols: [ 'mpc.script_name', 'host_idx' ]
+#        plot_cols_values:
+#          mpc.script_name: [ 'inference' ]
+#          host_idx: [ 0 ] # only plot one party
+#
+#        bar_cols: [ 'mpc.domain' ]
+#        bar_cols_values:
+#          'mpc.domain': [ prime_128, custom_256 ]
+#          'mpc.protocol_setup': [ 'mal-rep-field-party', 'shamir_malicious_n' ]
+#
+#        group_cols: [ mpc.script_args.dataset,  'mpc.protocol_setup']
+#        group_cols_values:
+#           'mpc.script_args.dataset': [ adult, "mnist_full_3party", "cifar_alexnet_3party" ]
+#           'mpc.protocol_setup': [ 'mal-rep-field-party', 'shamir_malicious_n' ]
+#
+#        metric_cols: [mpc_time_s, n_rounds, verification_time_s, global_data_sent_mb, commitment_size_bytes]
+#        annotation_col: consistency_args.pc
+#
+#        annotation_labels:
+#          pvc: 'PVC'
+#          sha3: 'SHA3'
+#          lowmc: 'LowMCHash'
+#          cerebro: 'Cerebro'
+#          kzg: 'Ours (KZG)'
+#          ped: 'Pedersen'
+#          ipa: 'Ours (IPA)'
+
+  compare_setting:
     experiments:
       inference_3pc: [ inference_3pc ]
-      inference_3pc_shamir: [ inference_3pc ]
+      inference_2pc: [ inference_2pc ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -52,12 +106,11 @@ $ETL$:
         bar_cols: [ 'mpc.domain' ]
         bar_cols_values:
           'mpc.domain': [ prime_128, custom_256 ]
-          'mpc.protocol_setup': [ 'mal-rep-field-party', 'shamir_malicious_n' ]
 
-        group_cols: [ mpc.script_args.dataset,  'mpc.protocol_setup']
+        group_cols: [ mpc.script_args.dataset ]
         group_cols_values:
-           'mpc.script_args.dataset': [ adult, "mnist_full_3party", "cifar_alexnet_3party" ]
-           'mpc.protocol_setup': [ 'mal-rep-field-party', 'shamir_malicious_n' ]
+          'mpc.script_args.dataset': [ adult, "mnist_full_3party", "cifar_alexnet_3party", "mnist_full_2party", "cifar_alexnet_2party",  ]
+          'mpc.protocol_setup': [ 'mal-rep-field-party', 'lowgear-party' ]
 
         metric_cols: [mpc_time_s, n_rounds, verification_time_s, global_data_sent_mb, commitment_size_bytes]
         annotation_col: consistency_args.pc

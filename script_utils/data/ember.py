@@ -23,7 +23,7 @@ class EmberInputLoader(AbstractInputLoader):
         self._dataset = dataset
 
         train_dataset_size = sum(n_wanted_train_samples)
-        print(f"Compile loading Adult data...")
+        print(f"Compile loading Ember data...")
         print(f"  {train_dataset_size} training samples")
         print(f"  {n_wanted_trigger_samples} audit trigger samples")
         print(f"  {n_wanted_test_samples} test samples (not audit relevant)")
@@ -77,6 +77,10 @@ class EmberInputLoader(AbstractInputLoader):
         # test_path = torch.load(f"Player-Data/{self._dataset}/model_last.pt.tar")
 
         pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
+
+        layers = pt_model
+        # print(layers[2].weight, layers[2].bias, layers[2].running_mean, layers[2].running_var)
+
         layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
 
         model = ml.SGD(layers)

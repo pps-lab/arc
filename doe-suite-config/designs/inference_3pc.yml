@@ -73,6 +73,19 @@ inference_3pc:
         compiler_args: [ '-C', '--budget', '10000']
         custom_prime: null
         script_args:
+          dataset: ember_3party
+    - mpc:
+        domain: custom_256
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+        compiler_args: [ '-F 251', '-C', '--budget', '10000']
+        script_args:
+          dataset: ember_3party
+
+    - mpc:
+        domain: prime_128
+        compiler_args: [ '-C', '--budget', '10000']
+        custom_prime: null
+        script_args:
           dataset: mnist_full_3party
     - mpc:
         domain: custom_256
@@ -100,13 +113,13 @@ inference_3pc:
         compiler_args: [ '-C', '--budget', '10000' ]
         custom_prime: null
         script_args:
-          dataset: adult
+          dataset: adult_3p
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000']
         script_args:
-          dataset: adult
+          dataset: adult_3p
 
 $ETL$:
   extract_mpspdz:

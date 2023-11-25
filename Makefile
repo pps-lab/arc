@@ -53,26 +53,26 @@ protocol-debug: simlink
 train-debug: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) 10 16 -- -v
 
-compile-256: simlink
-	cd MP-SPDZ && ./compile.py -F 256 $(script) --budget 10000 $(AUDITARGS) emulate__True debug__False
-
-protocol-256: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -F 256 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -lgp 256
+ring: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) $(AUDITARGS) emulate__True debug__False
 
 compile-field: simlink
 	cd MP-SPDZ && ./compile.py $(script) $(AUDITARGS) emulate__True debug__True
 
-run-field: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(AUDITARGS) emulate__True debug__True
+compile-field-256: simlink
+	cd MP-SPDZ && ./compile.py -F 256 $(script) --budget 10000 $(AUDITARGS) emulate__True debug__False
 
-run-ring: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) $(AUDITARGS) emulate__True debug__False -- --batch-size 500
+field-256: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -F 256 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -lgp 256
 
-run-field-opt: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__True n_threads__32 -- -lgp 128
+field: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__True -- -lgp 128
 
-protocol-bls377-comp: simlink
+field-bls377: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -F 251 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -P 8444461749428370424248824938781546531375899335154063827935233455917409239041
+
+field-bls377-slow: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -P 8444461749428370424248824938781546531375899335154063827935233455917409239041 -F 64 -E $(protocol) $(script) $(AUDITARGS) debug__False
 
-protocol-bls377: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -F 251 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -P 8444461749428370424248824938781546531375899335154063827935233455917409239041
+field: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__True batch_size__16 -- -lgp 128
