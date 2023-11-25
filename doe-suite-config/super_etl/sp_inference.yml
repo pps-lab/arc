@@ -10,7 +10,7 @@ $SUITE_ID$:
 #  inference_3pc: { inference_3pc: 1700779694 } # no edabits
 #  inference_3pc: { inference_3pc: 1700811322 } # edabits, inference
 #  inference_3pc: { inference_3pc: 1700812797 } # no edabits, LAN, inference
-  inference_3pc: {  inference_3pc: 1700846104  } # edabits, LAN, inference, multi, mal_shamir
+  inference_3pc: {  inference_3pc: 1700910563  } # edabits, LAN, inference, multi, mal_shamir
   inference_3pc_shamir: { inference_3pc: 1700833034 }
   # maybe: audit function? WAN?
 

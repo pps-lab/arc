@@ -18,11 +18,12 @@ inference_2pc:
       n: 2
       check_status: True
       init_roles:
-        - setup-base
-        - setup-consistency
+#        - setup-base
+#        - setup-consistency
         - download-dataset
-#        - setup-largeprimes
-        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+#        - setup-spdz-secrets
+      #        - setup-largeprimes
+#        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
       - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
@@ -39,7 +40,7 @@ inference_2pc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
       player_count: 2
-      protocol_setup: "lowgear"
+      protocol_setup: "lowgear-party"
 
       compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
       domain: $FACTOR$
@@ -72,13 +73,13 @@ inference_2pc:
         compiler_args: [ '-C', '--budget', '10000' ]
         custom_prime: null
         script_args:
-          dataset: mnist_full_3party
+          dataset: mnist_full_2party
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
         script_args:
-          dataset: mnist_full_3party
+          dataset: mnist_full_2party
 
 
     - mpc:
@@ -86,13 +87,13 @@ inference_2pc:
         compiler_args: [ '-C', '--budget', '10000' ]
         custom_prime: null
         script_args:
-          dataset: cifar_alexnet_3party
+          dataset: cifar_alexnet_2party
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
         script_args:
-          dataset: cifar_alexnet_3party
+          dataset: cifar_alexnet_2party
 
     - mpc:
         domain: prime_128

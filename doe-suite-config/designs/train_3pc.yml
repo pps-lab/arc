@@ -17,10 +17,10 @@ inference_3pc:
     consistency:
       n: 3
       check_status: True
-      init_roles:
+      init_roles: []
 #        - setup-base
 #        - setup-consistency
-        - download-dataset
+#        - download-dataset
         #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
@@ -59,7 +59,7 @@ inference_3pc:
         dataset: $FACTOR$
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
-        batch_size: 1024 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+        batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
         n_threads: 32 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
         audit_trigger_idx: 0 # select single audit trigger (from all)
@@ -100,13 +100,13 @@ inference_3pc:
         compiler_args: [ '-C', '--budget', '10000' ]
         custom_prime: null
         script_args:
-          dataset: adult
+          dataset: adult_3p
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000']
         script_args:
-          dataset: adult
+          dataset: adult_3p
 
 $ETL$:
   extract_mpspdz:

@@ -155,7 +155,7 @@ class AbstractInputLoader(ABC):
 
         # set input_shape to be the train input shape.. not sure if we can just constrain it to batch_size?
         input_shape = self._train_samples.shape
-        input_shape[0] = batch_size
+        input_shape[0] = batch_size if input_shape[0] == 0 else input_shape[0]
         self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0)
         # parse weights from model layers
         weights = self._extract_model_weights(self._model)
