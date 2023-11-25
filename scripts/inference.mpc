@@ -26,8 +26,8 @@ if not cfg.emulate:
     # program.use_edabits = True
     # program.use_split(4)
 
-program.use_edabit(False)
-program.use_dabit = False
+# program.use_edabit(False)
+# program.use_dabit = False
 # program.use_split(3)
 
 # program.set_bit_length(32)
