@@ -11,21 +11,22 @@ $SUITE_VARS$:
 #  _stdout_path: "stdout.log"
 #  cmd_prove_verify: "{{ exp_consistency_dir }}/target/release/prove_verify_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --mpspdz-output-file [% my_run._stdout_path %]"
 
-inference_2pc:
+inference_3pc:
   n_repetitions: 1
   host_types:
     consistency:
-      n: 2
+      n: 3
       check_status: True
       init_roles:
-        - setup-base
-        - setup-consistency
+#        - setup-base
+#        - setup-consistency
         - download-dataset
-#        - setup-largeprimes
-        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+        #        - setup-largeprimes
+#        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
 
@@ -38,20 +39,20 @@ inference_2pc:
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
-      player_count: 2
-      protocol_setup: "lowgear"
+      player_count: 3
+      protocol_setup: "mal-rep-field-party"
 
       compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
       domain: $FACTOR$
       custom_prime: $FACTOR$
 
-      script_name: "inference"
+      script_name: "training"
 
       script_args:
         # inference specific
         #        n_samples: 262000
         n_samples: 1
-        n_input_parties: 2
+        n_input_parties: 3
 
         debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
@@ -69,28 +70,28 @@ inference_2pc:
   factor_levels:
     - mpc:
         domain: prime_128
-        compiler_args: [ '-C', '--budget', '10000' ]
+        compiler_args: [ '-C', '--budget', '10000']
         custom_prime: null
         script_args:
           dataset: mnist_full_3party
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
+        compiler_args: [ '-F 251', '-C', '--budget', '10000']
         script_args:
           dataset: mnist_full_3party
 
 
     - mpc:
         domain: prime_128
-        compiler_args: [ '-C', '--budget', '10000' ]
+        compiler_args: [ '-C', '--budget', '10000']
         custom_prime: null
         script_args:
           dataset: cifar_alexnet_3party
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
+        compiler_args: [ '-F 251', '-C', '--budget', '10000']
         script_args:
           dataset: cifar_alexnet_3party
 
@@ -103,7 +104,7 @@ inference_2pc:
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
+        compiler_args: [ '-F 251', '-C', '--budget', '10000']
         script_args:
           dataset: adult
 
