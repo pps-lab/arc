@@ -1,7 +1,4 @@
-from Compiler.script_utils.data import mnist
-from Compiler.script_utils.data import cifar
-from Compiler.script_utils.data import adult
-
+from Compiler.script_utils.data import mnist, cifar, adult, ember
 from Compiler.library import get_number_of_players
 
 import ruamel.yaml
@@ -54,6 +51,8 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
         il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     elif dataset.lower().startswith("adult"):
         il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
+    elif dataset.lower().startswith("ember"):
+        il = ember.EmberInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il

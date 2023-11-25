@@ -12,14 +12,14 @@ import torch
 import numpy as np
 import time
 
-class AdultInputLoader(AbstractInputLoader):
+class EmberInputLoader(AbstractInputLoader):
 
     def __init__(self, dataset, n_train_samples: List[int], n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
         """The first part of the input of every party is their training set.
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples
         """
-        INPUT_FEATURES = 91
+        INPUT_FEATURES = 2351
         self._dataset = dataset
 
         train_dataset_size = sum(n_wanted_train_samples)
@@ -74,9 +74,23 @@ class AdultInputLoader(AbstractInputLoader):
         #
         # return model
 
+        # test_path = torch.load(f"Player-Data/{self._dataset}/model_last.pt.tar")
+
         pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
         layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
 
         model = ml.SGD(layers)
 
         return model
+
+    def _load_auditing_attack_data(self, dataset, n_train_samples, debug):
+
+        import torch
+
+        train_dataset = torch.load(f"Player-Data/{dataset}/train_dataset.pt")
+        backdoor_dataset = torch.load(f"Player-Data/{dataset}/backdoor_dataset.pt")
+        test_dataset = torch.load(f"Player-Data/{dataset}/test_dataset.pt")
+
+        train_datasets = [train_dataset]
+
+        return train_datasets, backdoor_dataset, test_dataset

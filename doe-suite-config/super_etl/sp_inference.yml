@@ -14,6 +14,8 @@ $SUITE_ID$:
   inference_3pc_shamir: { inference_3pc: 1700833034 }
   # maybe: audit function? WAN?
 
+  inference_2pc: { inference_2pc: 1700925620 } # partial, no edabits, LAN, inference,
+
 $ETL$:
   pipeline1:
     experiments:

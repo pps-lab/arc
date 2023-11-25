@@ -17,10 +17,10 @@ inference_2pc:
     consistency:
       n: 2
       check_status: True
-      init_roles:
+      init_roles: []
 #        - setup-base
 #        - setup-consistency
-        - download-dataset
+#        - download-dataset
 #        - setup-spdz-secrets
       #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -70,41 +70,41 @@ inference_2pc:
   factor_levels:
     - mpc:
         domain: prime_128
-        compiler_args: [ '-C', '--budget', '10000' ]
+        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
         script_args:
           dataset: mnist_full_2party
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
+        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: mnist_full_2party
 
 
     - mpc:
         domain: prime_128
-        compiler_args: [ '-C', '--budget', '10000' ]
+        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
         script_args:
           dataset: cifar_alexnet_2party
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
+        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: cifar_alexnet_2party
 
     - mpc:
         domain: prime_128
-        compiler_args: [ '-C', '--budget', '10000' ]
+        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
         script_args:
           dataset: adult
     - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000' ]
+        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: adult
 
