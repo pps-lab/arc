@@ -131,10 +131,6 @@ class AbstractInputLoader(ABC):
             self._audit_trigger_samples.assign(audit_trigger_samples_loaded)
             insert_or_append(input_consistency_array_per_party, 0, audit_trigger_samples_loaded)
 
-            if audit_trigger_idx is not None:
-                print("Selecting lower audit trigger")
-                self._audit_trigger_mislabels = self._audit_trigger_mislabels.get_part(audit_trigger_idx, 1)
-                self._audit_trigger_samples = self._audit_trigger_samples.get_part(audit_trigger_idx, 1)
 
         if self.test_dataset_size() > 0:
             print_ln("  loading %s test labels...", self.test_dataset_size())
@@ -152,7 +148,6 @@ class AbstractInputLoader(ABC):
             test_samples_loaded = sfix.input_tensor_via(party_id_last, test_dataset[POS_SAMPLES])
             self._test_samples.assign(test_samples_loaded)
             insert_or_append(input_consistency_array_per_party, party_id_last, test_samples_loaded)
-            print(test_dataset[POS_SAMPLES], self._test_samples.sizes)
 
 
     # first build model and then set weights from input

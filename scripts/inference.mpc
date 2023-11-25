@@ -15,7 +15,7 @@ from Compiler.script_utils import config, timers
 
 
 class InferenceConfig(config.BaseAuditModel):
-    n_samples: int = 10 # -1 = all
+    n_samples: int = 1 # -1 = all
 
 program.options_from_args()
 cfg = config.from_program_args(program.args, InferenceConfig)
@@ -46,9 +46,12 @@ inf_samples = inf_samples.get_part(0, cfg.n_samples)
 inf_labels = inf_labels.get_part(0, cfg.n_samples)
 
 model = input_loader.model()
+model.summary()
 prediction_results = model.eval(inf_samples, batch_size=min(cfg.batch_size, cfg.n_samples))
+# n_correct, avg_loss = model.reveal_correctness(data=inf_samples, truth=inf_labels, batch_size=input_loader.batch_size(), running=True)
+# print_ln("  n_correct=%s  n_samples=%s  avg_loss=%s", n_correct, len(inf_samples), avg_loss)
 
 library.stop_timer(timer_id=timers.TIMER_INFERENCE)
 
-# if debug:
-# print_ln(prediction_results)
+# if cfg.debug:
+#     print_ln(prediction_results.reveal(), inf_labels.reveal())

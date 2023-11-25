@@ -286,7 +286,7 @@ class BarPlotLoader(PlotLoader):
             for idx, df_plot in df_filtered.groupby(self.plot_cols):
                 print(f"Creating Workload {idx} plot")
 
-                setup_plt()
+                setup_plt(width=16)
                 fig, ax = plt.subplots(1, 1)
                 # fig.tight_layout()
 
@@ -305,7 +305,7 @@ class BarPlotLoader(PlotLoader):
                 # Drawing the utility bar/scatter #
                 ###################################
                 # Create bar chart
-                bar_width = 0.25
+                bar_width = 0.95
 
                 # setup index map
                 index_map = {}
@@ -448,7 +448,7 @@ class BarPlotLoader(PlotLoader):
                         ax.legend(labels=labels, handles=handles, loc='upper right', bbox_to_anchor=(1.0, 1.0))
 
                 # plt.tight_layout()
-                plt.subplots_adjust(left=0.2)
+                plt.subplots_adjust(left=0.2, bottom=0.2)
 
                 filename = f"metrics_compare_{metric}_{escape_tuple_str(idx)}"
                 self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)

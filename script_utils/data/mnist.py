@@ -17,7 +17,7 @@ class MnistInputLoader(AbstractInputLoader):
         - Party1 also contains the test samples
         """
 
-        train_dataset_size = sum(n_train_samples)
+        train_dataset_size = sum(n_wanted_train_samples)
         print(f"Compile loading MNIST data...")
         print(f"  {train_dataset_size} training samples")
         print(f"  {n_wanted_trigger_samples} audit trigger samples")

@@ -9,14 +9,16 @@ $SUITE_ID$:
 #  inference_3pc: { inference_3pc: 1700774547 } # edabits
 #  inference_3pc: { inference_3pc: 1700779694 } # no edabits
 #  inference_3pc: { inference_3pc: 1700811322 } # edabits, inference
-  inference_3pc: { inference_3pc: 1700812797 } # no edabits, LAN, inference
-
+#  inference_3pc: { inference_3pc: 1700812797 } # no edabits, LAN, inference
+  inference_3pc: {  inference_3pc: 1700846104  } # edabits, LAN, inference, multi, mal_shamir
+  inference_3pc_shamir: { inference_3pc: 1700833034 }
   # maybe: audit function? WAN?
 
 $ETL$:
   pipeline1:
     experiments:
       inference_3pc: [ inference_3pc ]
+      inference_3pc_shamir: [ inference_3pc ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -27,7 +29,7 @@ $ETL$:
           - ^stdout\.log$
     transformers:
       - name: StatTransformer
-        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain' ]
+        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
         stats:
           mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_101"]
           verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
@@ -47,11 +49,13 @@ $ETL$:
 
         bar_cols: [ 'mpc.domain' ]
         bar_cols_values:
-          'mpc.domain': [ prime_128, prime_256, custom_256 ]
+          'mpc.domain': [ prime_128, custom_256 ]
+          'mpc.protocol_setup': [ 'mal-rep-field-party', 'shamir_malicious_n' ]
 
-        group_cols: [ exp_name ]
+        group_cols: [ mpc.script_args.dataset,  'mpc.protocol_setup']
         group_cols_values:
-          exp_name: [ inference_3pc ]
+           'mpc.script_args.dataset': [ adult, "mnist_full_3party", "cifar_alexnet_3party" ]
+           'mpc.protocol_setup': [ 'mal-rep-field-party', 'shamir_malicious_n' ]
 
         metric_cols: [mpc_time_s, n_rounds, verification_time_s, global_data_sent_mb, commitment_size_bytes]
         annotation_col: consistency_args.pc
