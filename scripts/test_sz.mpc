@@ -19,7 +19,7 @@ class SchwartzZippelConfig(config.BaseAuditModel):
 cfg: SchwartzZippelConfig = config.from_program_args(program.args, SchwartzZippelConfig)
 
 for i in range(cfg.n_input_parties):
-    compile_array = np.repeat(-4, int(cfg.n_samples))
+    compile_array = np.repeat(4, int(cfg.n_samples))
     # compile_array = np.random.rand(cfg.n_samples).astype(np.single)
 
     library.start_timer(timer_id=200 + i)
