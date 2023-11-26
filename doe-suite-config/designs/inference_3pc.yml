@@ -18,8 +18,8 @@ inference_3pc:
       n: 3
       check_status: True
       init_roles:
-#        - setup-base
-#        - setup-consistency
+        - setup-base
+        - setup-consistency
         - download-dataset
         #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -35,6 +35,11 @@ inference_3pc:
       hosts_file: "{{ exp_consistency_hosts_file }}"
       pc: kzg
       pp_args: 1796300 # max of input sizes we need
+
+    commit_args:
+      commitments:
+        size_x: 2351
+        size_y: 1
 
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"

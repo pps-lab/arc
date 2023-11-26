@@ -67,7 +67,7 @@
   ansible.builtin.shell: |
     source ~/.bashrc
     . "$HOME/.cargo/env"
-    cargo build --release
+    cargo build --release --features parallel
   args:
     chdir: "{{ exp_consistency_dir }}"
     executable: /bin/bash

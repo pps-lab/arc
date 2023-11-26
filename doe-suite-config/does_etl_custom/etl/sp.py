@@ -250,6 +250,8 @@ class BarPlotLoader(PlotLoader):
     annotation_col: str
     annotation_labels: Dict[str, str]
 
+    log_y: bool = False
+
     show_debug_info: bool = True
 
     symbols = ['o', 'v']
@@ -417,8 +419,13 @@ class BarPlotLoader(PlotLoader):
                 # Reduce space on both sides of x-axis to allow for more bar space
                 ax.set_xlim(min(x_positions)-0.25, max(x_positions)+0.25)
 
-                # increase ylim by 30%
-                ax.set_ylim(0, ax.get_ylim()[1] * 1.5)
+
+                if self.log_y:
+                    ax.set_yscale('log')
+                else:
+                    # increase ylim by 30%
+                    ax.set_ylim(0, ax.get_ylim()[1] * 1.5)
+
 
                 ax.grid(True, axis="y", linestyle=':', color='0.6', zorder=0, linewidth=1.2)
 
@@ -448,7 +455,7 @@ class BarPlotLoader(PlotLoader):
                         ax.legend(labels=labels, handles=handles, loc='upper right', bbox_to_anchor=(1.0, 1.0))
 
                 # plt.tight_layout()
-                plt.subplots_adjust(left=0.2, bottom=0.2)
+                plt.subplots_adjust(left=0.05, bottom=0.2)
 
                 filename = f"metrics_compare_{metric}_{escape_tuple_str(idx)}"
                 self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)

@@ -26,7 +26,7 @@ class MpSpdzStderrExtractor(Extractor):
         regex2 = r"Global data sent = ([\d\.e\+]+) MB \(all parties\)"
         matcher2 = re.compile(regex2)
         results2 = list(matcher2.finditer(content))
-        time_regex = r"^Time([0-9]+)? = ([0-9]+\.[0-9]+|[0-9]+) seconds.*$"
+        time_regex = r"^Time([0-9]+)? = ([0-9]+\.[0-9]+|[0-9]+) seconds \((.+) MB, (\d+) rounds\)$"
         time_matcher = re.compile(time_regex, re.MULTILINE)
         time_results = list(time_matcher.finditer(content)) 
         dicts = []
@@ -57,13 +57,18 @@ class MpSpdzStderrExtractor(Extractor):
             def map_timer(x):
                 timer_number = x.group(1)
                 timer_value = float(x.group(2))
+                timer_mb = float(x.group(3))
+                timer_rounds = int(x.group(4))
                 if timer_number is None:
                     timer_number = -1
                 else:
                     timer_number = int(timer_number)
-                return (timer_number,timer_value)
+                print("OH OH", (timer_number,timer_value,timer_mb,timer_rounds))
+                return (timer_number,timer_value,timer_mb,timer_rounds)
             mapped_timer_results = list(map(map_timer, time_results))
-            dicts += [{'stat': f"spdz_timer_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,t_val) in mapped_timer_results]
+            dicts += [{'stat': f"spdz_timer_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,t_val,_,_) in mapped_timer_results]
+            dicts += [{'stat': f"spdz_timer_bw_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,_,t_val,_) in mapped_timer_results]
+            dicts += [{'stat': f"spdz_timer_rounds_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,_,_,t_val) in mapped_timer_results]
 
             additional_values = { "player_number": player_num, "player_data_sent": party_data_sent, "player_round_number": party_round_number, "global_data_sent": global_data_sent}
 

@@ -5,9 +5,9 @@ $SUITE_VARS$:
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
 
-  mpc:
-    script_args:
-      n_threads: 24
+#  mpc:
+#    script_args:
+#      n_threads: 24
 #
 #  _player_input_binary_path: "{{ mpspdz_dir }}/Player-Data/Input-Binary-P0-0"
 #  cmd_gen_commitments: "{{ exp_consistency_dir }}/target/release/gen_commitments_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --player-input-binary-path [% my_run._player_input_binary_path %] --save"
@@ -21,10 +21,10 @@ inference_2pc:
     consistency:
       n: 2
       check_status: True
-      init_roles: []
+      init_roles:
 #        - setup-base
 #        - setup-consistency
-#        - download-dataset
+        - download-dataset
 #        - setup-spdz-secrets
       #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -64,7 +64,7 @@ inference_2pc:
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 1024 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-#        n_threads: $FACTOR$ #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+        n_threads: $FACTOR$ #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
         audit_trigger_idx: 0 # select single audit trigger (from all)
 
@@ -72,12 +72,30 @@ inference_2pc:
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
+
+    - mpc:
+        domain: prime_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+        custom_prime: null
+        script_args:
+          dataset: ember_2party
+          n_threads: 32
+
+    - mpc:
+        domain: custom_256
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
+        script_args:
+          dataset: ember_2party
+          n_threads: 32
+
     - mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
         script_args:
           dataset: mnist_full_2party
+          n_threads: 32
 
     - mpc:
         domain: custom_256
@@ -85,6 +103,7 @@ inference_2pc:
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: mnist_full_2party
+          n_threads: 32
 
 
     - mpc:
@@ -93,6 +112,7 @@ inference_2pc:
         custom_prime: null
         script_args:
           dataset: cifar_alexnet_2party
+          n_threads: 32
 
     - mpc:
         domain: custom_256
@@ -100,6 +120,7 @@ inference_2pc:
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: cifar_alexnet_2party
+          n_threads: 16
 
 
     - mpc:
@@ -108,6 +129,7 @@ inference_2pc:
         custom_prime: null
         script_args:
           dataset: adult_2p
+          n_threads: 32
 
     - mpc:
         domain: custom_256
@@ -115,6 +137,7 @@ inference_2pc:
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: adult_2p
+          n_threads: 32
 
 
 $ETL$:
