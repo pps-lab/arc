@@ -171,7 +171,7 @@ class AbstractInputLoader(ABC):
             start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
             for party_id in range(len(train_datasets)):
                 if party_id in input_consistency_array_per_party:
-                    input_consistency.compute_and_output_poly_array(input_consistency_array_per_party[party_id], party_id)
+                    input_consistency.compute_and_output_poly_array(input_consistency_array_per_party[party_id], party_id, 1)
             stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
@@ -247,7 +247,9 @@ class AbstractInputLoader(ABC):
         train_datasets = []
         for party_idx, train_sample_len in enumerate(n_train_samples):
             train_dataset = torch.load(f"Player-Data/{dataset}/mpc_train_{party_idx}_dataset.pt")
-            assert train_dataset[0].shape[0] == train_sample_len
+            if train_dataset[0].shape[0] > train_sample_len:
+                train_dataset = (train_dataset[0][:train_sample_len], train_dataset[1][:train_sample_len])
+            # assert train_dataset[0].shape[0] == train_sample_len
 
             train_datasets.append(train_dataset)
 

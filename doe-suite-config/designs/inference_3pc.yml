@@ -34,7 +34,7 @@ inference_3pc:
       abs_path_to_code_dir: "{{ exp_consistency_dir }}"
       hosts_file: "{{ exp_consistency_hosts_file }}"
       pc: kzg
-      pp_args: 1796300 # max of input sizes we need
+      pp_args: $FACTOR$ # max of input sizes we need
 
     commit_args:
       commitments:
@@ -73,26 +73,34 @@ inference_3pc:
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
-    - mpc:
+    - consistency_args:
+        pp_args: 17634601
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000']
         custom_prime: null
         script_args:
           dataset: ember_3party
-    - mpc:
+    - consistency_args:
+        pp_args: 17634601
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000']
         script_args:
           dataset: ember_3party
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000']
         custom_prime: null
         script_args:
           dataset: mnist_full_3party
-    - mpc:
+    - consistency_args:
+        pp_args: 400842
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000']
@@ -100,26 +108,34 @@ inference_3pc:
           dataset: mnist_full_3party
 
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000']
         custom_prime: null
         script_args:
           dataset: cifar_alexnet_3party
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000']
         script_args:
           dataset: cifar_alexnet_3party
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000' ]
         custom_prime: null
         script_args:
           dataset: adult_3p
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000']

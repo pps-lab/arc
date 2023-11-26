@@ -1,11 +1,11 @@
 
 
 from Compiler.types import sfix, sint, Array, cint
-from Compiler.library import print_ln, for_range_opt
+from Compiler.library import print_ln, for_range_opt, for_range_multithread
 
 import ruamel.yaml
 
-def compute_and_output_poly_array(inputs: list, player_input_id):
+def compute_and_output_poly_array(inputs: list, player_input_id, n_threads):
     """
 
     :type inputs: Array of sint/sfix
@@ -44,11 +44,11 @@ def compute_and_output_poly_array(inputs: list, player_input_id):
 
     print(f"complete array for player {player_input_id} length: ", full_arr.length)
 
-    compute_and_output_poly(full_arr, player_input_id)
+    compute_and_output_poly(full_arr, player_input_id, n_threads)
     write_format_to_file(fmt, player_input_id)
 
 
-def compute_and_output_poly(inputs, player_input_id):
+def compute_and_output_poly(inputs, player_input_id, n_threads):
     """
 
     :type inputs: Array of sint/sfix
@@ -68,16 +68,32 @@ def compute_and_output_poly(inputs, player_input_id):
     random_point = 5
     rho = cint(random_point)
 
-    # print_ln("input_consistency_player_%s_random_point=%s", player_input_id, random_point)
     output_sum = inputs[0]
 
     # main loop
+    # @for_range_multithread(n_threads, 1, inputs.length)
     @for_range_opt(1, inputs.length)
     def _(i):
         output_sum.update(output_sum + (inputs[i] * rho))
         rho.update(rho * random_point)
 
     print_ln("input_consistency_player_%s_eval=(%s,%s)", player_input_id, random_point, output_sum.reveal())
+
+
+def compute_and_output_poly_mem(inputs, player_input_id, n_threads):
+    """
+
+    :type inputs: Array of sint/sfix
+    :param
+    """
+
+    # TODO: What we could do here is first compute parts of rho with binary search, i.e., to achieve rho
+    # such that we get n_threads starting points where we can start with the computation of the polynomial in parallel
+
+
+
+    pass
+
 
 
 def convert_array_sint(arr):

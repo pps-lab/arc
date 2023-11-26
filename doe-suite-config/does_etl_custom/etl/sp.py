@@ -1,3 +1,4 @@
+import typing
 from math import ceil
 
 import pandas as pd
@@ -44,7 +45,7 @@ class StatTransformer(Transformer):
             # Filter out rows that do not match any stat key
             df_filtered = df[df[stat_key].notna()]
 
-            # Group by 'groupby_columns' and 'stat_key', then sum 'stat_value'
+            # Group by 'groupby_columns' and 'stat_key', then ensure we have a single 'stat_value' and select it
             grouped = df_filtered.groupby(groupby_columns + [stat_key])['stat_value'].sum().reset_index()
 
             # Pivot the table to have separate columns for each stat_key
@@ -82,6 +83,44 @@ class StatTransformer(Transformer):
         selected_rows = df.groupby(self.groupby_columns).apply(check_single_row_per_group)[additional_cols].reset_index()
 
         return selected_rows
+
+class GroupByAppendTransformer(Transformer):
+
+    groupby_columns: List[str]
+
+    metrics: Dict[str, list]
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+        groupby_columns = expand_factors(df, self.groupby_columns)
+
+        # group by groupby_columns and aggregate metrics. Concatenate the result as columns to the original df
+        df_res = df.groupby(groupby_columns).agg(self.metrics).reset_index()
+        df = df.merge(df_res, on=groupby_columns, how='outer')
+
+        return df
+
+class AddTransformer(Transformer):
+
+    result_col: str
+    add_cols: List[typing.Any]
+    divisors: List[int]
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        print(df)
+
+        if len(self.divisors) == 0:
+            self.divisors = [1] * len(self.add_cols)
+
+        for i, add_col in enumerate(self.add_cols):
+            if isinstance(add_col, list):
+                self.add_cols[i] = tuple(add_col)
+
+        df_temp = df[self.add_cols].copy()
+        df_temp = df_temp.div(self.divisors)
+        df[self.result_col] = df_temp.sum(axis=1)
+
+        return df
 
 class TwoDimensionalScatterPlotLoader(PlotLoader):
 
@@ -260,6 +299,8 @@ class BarPlotLoader(PlotLoader):
     def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> None:
         if df.empty:
             return
+
+        print(df)
 
         output_dir = self.get_output_dir(etl_info)
 

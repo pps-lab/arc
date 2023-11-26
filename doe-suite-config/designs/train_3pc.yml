@@ -17,10 +17,10 @@ inference_3pc:
     consistency:
       n: 3
       check_status: True
-      init_roles: []
-#        - setup-base
-#        - setup-consistency
-#        - download-dataset
+      init_roles:
+        - setup-base
+        - setup-consistency
+        - download-dataset
         #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
@@ -40,7 +40,7 @@ inference_3pc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
       player_count: 3
-      protocol_setup: "mal-rep-field-party"
+      protocol_setup: "rep-field-party"
 
       compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
       domain: $FACTOR$
@@ -60,7 +60,7 @@ inference_3pc:
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 16 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-        n_threads: 8 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+        n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
         audit_trigger_idx: 0 # select single audit trigger (from all)
 

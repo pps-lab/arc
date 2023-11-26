@@ -36,7 +36,7 @@ for i in range(cfg.n_input_parties):
 
     library.start_timer(timer_id=300 + i)
 
-    input_consistency.compute_and_output_poly_array([inputs_x], i)
+    input_consistency.compute_and_output_poly_array([inputs_x], i, cfg.n_threads)
 
     library.stop_timer(timer_id=300 + i)
 

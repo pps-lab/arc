@@ -22,8 +22,8 @@ inference_2pc:
       n: 2
       check_status: True
       init_roles:
-#        - setup-base
-#        - setup-consistency
+        - setup-base
+        - setup-consistency
         - download-dataset
 #        - setup-spdz-secrets
       #        - setup-largeprimes
@@ -38,7 +38,7 @@ inference_2pc:
       abs_path_to_code_dir: "{{ exp_consistency_dir }}"
       hosts_file: "{{ exp_consistency_hosts_file }}"
       pc: kzg
-      pp_args: 1796300 # max of input sizes we need
+      pp_args: $FACTOR$ # max of input sizes we need
 
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -73,15 +73,18 @@ inference_2pc:
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
 
-    - mpc:
+    - consistency_args:
+        pp_args: 17634601
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
         script_args:
           dataset: ember_2party
           n_threads: 32
-
-    - mpc:
+    - consistency_args:
+        pp_args: 17634601
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
@@ -89,7 +92,9 @@ inference_2pc:
           dataset: ember_2party
           n_threads: 32
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
@@ -97,7 +102,9 @@ inference_2pc:
           dataset: mnist_full_2party
           n_threads: 32
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
@@ -106,7 +113,9 @@ inference_2pc:
           n_threads: 32
 
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
@@ -114,7 +123,9 @@ inference_2pc:
           dataset: cifar_alexnet_2party
           n_threads: 32
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
@@ -123,7 +134,9 @@ inference_2pc:
           n_threads: 16
 
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: prime_128
         compiler_args: [ '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
@@ -131,7 +144,9 @@ inference_2pc:
           dataset: adult_2p
           n_threads: 32
 
-    - mpc:
+    - consistency_args:
+        pp_args: 431080
+      mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
