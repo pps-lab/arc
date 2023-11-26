@@ -452,7 +452,7 @@ class MaliciousAtlasPartyRunner(ScriptBaseRunner):
 class ReplicatedFieldPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './shamir-party.x'"""
     def _program(self):
-        return "./rep-field-party.x"
+        return "./replicated-field-party.x"
 
     def _args(self):
         custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
