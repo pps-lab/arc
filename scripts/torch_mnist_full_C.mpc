@@ -99,15 +99,15 @@ X = sfix.Matrix(n_test, n_features)
 
 if not ('no_acc' in program.args and 'no_loss' in program.args):
     layers[-1].Y.assign_all(0)
-    layers[0].X.assign_all(sfix(0))
+    layers[0].X.assign_all(0)
     Y.assign_all(0)
-    X.assign_all(sfix(0))
+    X.assign_all(0)
 
 optim = ml.Optimizer.from_args(program, layers)
 optim.summary()
 optim.run_by_args(program, n_epochs, batch_size, False, False)
 
-optim.reset()
+# optim.reset()
 
 # optim.run(batch_size=batch_size)
 #
