@@ -311,6 +311,7 @@ class ReplicatedRingPartyRunner(ScriptBaseRunner):
         return ["-OF", self.output_prefix,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
+                "-v",
             f"{self.player_id}",
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
@@ -325,6 +326,7 @@ class Replicated4RingPartyRunner(ScriptBaseRunner):
         return ["-OF", self.output_prefix,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
+                "-v",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
@@ -339,6 +341,7 @@ class BrainPartyRunner(ScriptBaseRunner):
         return ["-OF", self.output_prefix,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
+                "-v",
             f"{self.player_id}",
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
@@ -353,6 +356,7 @@ class ReplicatedBinPartyRunner(ScriptBaseRunner):
         return ["-OF", self.output_prefix,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
+                "-v",
             f"{self.player_id}",
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
@@ -366,6 +370,7 @@ class PsReplicatedBinPartyRunner(ScriptBaseRunner):
         return ["-OF", self.output_prefix,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
+                "-v",
             f"{self.player_id}",
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
         ]
@@ -380,6 +385,7 @@ class SyReplicatedBinPartyRunner(ScriptBaseRunner):
         return ["-OF", self.output_prefix,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
+                "-v",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
                 ]
@@ -396,6 +402,7 @@ class ShamirPartyRunner(ScriptBaseRunner):
             custom_prime_arg, custom_prime_length_arg,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
+                "-v",
             "-N", f"{self.player_count}",
             f"{self.player_id}",
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
@@ -412,6 +419,7 @@ class MaliciousShamirPartyRunner(ScriptBaseRunner):
                 custom_prime_arg, custom_prime_length_arg,
             "-h", f"{self.player_0_host}",
             "-pn", "12300",
+                "-v",
             "-N", f"{self.player_count}",
             f"{self.player_id}",
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
@@ -429,6 +437,7 @@ class AtlasPartyRunner(ScriptBaseRunner):
                 custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
+                "-v",
                 "-N", f"{self.player_count}",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
@@ -445,6 +454,7 @@ class MaliciousAtlasPartyRunner(ScriptBaseRunner):
                 custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
+                "-v",
                 "-N", f"{self.player_count}",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
@@ -461,6 +471,7 @@ class ReplicatedFieldPartyRunner(ScriptBaseRunner):
                 custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
+                "-v",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
@@ -476,6 +487,7 @@ class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
                 custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
+                "-v",
                 f"{self.player_id}",
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
 
