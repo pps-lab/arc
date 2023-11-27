@@ -56,12 +56,12 @@ model.summary()
 model.layers[-1].Y.address = train_labels.address
 model.layers[0].X.address = train_samples.address
 
-n_test = 10000
-n_features = 784
-Y = sint.Array(n_test)
-X = sfix.Matrix(n_test, n_features)
-Y.assign_all(0)
-X.assign_all(0)
+# n_test = 10000
+# n_features = 784
+# Y = sint.Array(n_test)
+# X = sfix.Matrix(n_test, n_features)
+# Y.assign_all(0)
+# X.assign_all(0)
 # model.run(batch_size=cfg.batch_size)
 # model.run_by_args()
 
@@ -69,7 +69,7 @@ X.assign_all(0)
 # program.args.append('print_losses')
 program.args.append('no_loss')
 
-program.use_trunc_pr = True
+# program.use_trunc_pr = True
 
 # optim = ml.Optimizer.from_args(program, model.layers)
 # optim.print_losses = True
