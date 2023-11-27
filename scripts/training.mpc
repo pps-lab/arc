@@ -80,7 +80,7 @@ program.args.append('no_loss')
 # model.print_losses = True
 
 
-model.run_by_args(program, cfg.n_epochs, cfg.batch_size, False, False)
+model.run_by_args(program, cfg.n_epochs, cfg.batch_size, False, False, reset=False)
 
 # model.fit(
 #     train_samples,
