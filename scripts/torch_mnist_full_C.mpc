@@ -104,6 +104,8 @@ if not ('no_acc' in program.args and 'no_loss' in program.args):
     Y.assign_all(0)
     X.assign_all(0)
 
+program.args.append('no_loss')
+
 optim = ml.Optimizer.from_args(program, layers)
 optim.summary()
 optim.run_by_args(program, n_epochs, batch_size, False, False)
