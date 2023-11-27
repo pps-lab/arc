@@ -105,5 +105,8 @@ if not ('no_acc' in program.args and 'no_loss' in program.args):
 
 optim = ml.Optimizer.from_args(program, layers)
 optim.summary()
-optim.run(batch_size=batch_size)
 # optim.run_by_args(program, n_epochs, batch_size, X, Y, acc_batch_size=N)
+
+optim.reset()
+
+optim.run(batch_size=batch_size)
