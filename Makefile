@@ -66,7 +66,7 @@ field-256: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -F 256 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -lgp 256
 
 field: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__True -- -lgp 128
+	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__False -- -lgp 128 -v
 
 field-bls377: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -F 251 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -P 8444461749428370424248824938781546531375899335154063827935233455917409239041
@@ -74,5 +74,3 @@ field-bls377: simlink
 field-bls377-slow: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -P 8444461749428370424248824938781546531375899335154063827935233455917409239041 -F 64 -E $(protocol) $(script) $(AUDITARGS) debug__False
 
-field: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__True batch_size__16 -- -lgp 128

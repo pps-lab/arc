@@ -290,6 +290,7 @@ class BarPlotLoader(PlotLoader):
     annotation_labels: Dict[str, str]
 
     log_y: bool = False
+    bar_width: float = 0.95
 
     show_debug_info: bool = True
 
@@ -348,7 +349,7 @@ class BarPlotLoader(PlotLoader):
                 # Drawing the utility bar/scatter #
                 ###################################
                 # Create bar chart
-                bar_width = 0.95
+                bar_width = self.bar_width
 
                 # setup index map
                 index_map = {}

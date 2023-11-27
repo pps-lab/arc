@@ -131,7 +131,7 @@ inference_2pc:
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y' ]
         script_args:
           dataset: cifar_alexnet_2party
-          n_threads: 16
+          n_threads: 8
 
 
     - consistency_args:
