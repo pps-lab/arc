@@ -98,9 +98,9 @@ Y = sint.Matrix(n_test, 10)
 X = sfix.Matrix(n_test, n_features)
 
 if not ('no_acc' in program.args and 'no_loss' in program.args):
-    layers[-1].Y.assign_all(sfix(0))
+    layers[-1].Y.assign_all(0)
     layers[0].X.assign_all(sfix(0))
-    Y.assign_all(sfix(0))
+    Y.assign_all(0)
     X.assign_all(sfix(0))
 
 optim = ml.Optimizer.from_args(program, layers)
