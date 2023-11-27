@@ -311,11 +311,11 @@ class ReplicatedRingPartyRunner(ScriptBaseRunner):
         program_args_flat = program_args_cmdline(self.program_args)
         return ["-OF", self.output_prefix,
             "-h", f"{self.player_0_host}",
-                program_args_flat,
             "-pn", "12300",
                 "-v",
-            f"{self.player_id}",
-            script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+            f"{self.player_id}"] + program_args_flat + [
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+            ]
 
 
 class Replicated4RingPartyRunner(ScriptBaseRunner):
@@ -472,12 +472,12 @@ class ReplicatedFieldPartyRunner(ScriptBaseRunner):
         custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
                 custom_prime_arg, custom_prime_length_arg,
-                program_args_flat,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-v",
-                f"{self.player_id}",
-                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+                f"{self.player_id}"] + program_args_flat + [
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+        ]
 
 class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './shamir-party.x'"""
@@ -490,12 +490,12 @@ class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
         custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
                 custom_prime_arg, custom_prime_length_arg,
-                program_args_flat,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-v",
-                f"{self.player_id}",
-                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)]
+                f"{self.player_id}"] + program_args_flat + [
+            script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+        ]
 
 
 class MascotPartyRunner(ScriptBaseRunner):
