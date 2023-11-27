@@ -53,10 +53,12 @@ print(train_samples.sizes, "TRAIN")
 model = input_loader.model()
 model.summary()
 
-model.layers[-1].Y.address = train_samples.address
+model.layers[-1].Y.address = train_labels.address
 model.layers[0].X.address = train_samples.address
 
 model.run(batch_size=cfg.batch_size)
+# model.run_by_args(program, cfg.n_epochs, cfg.batch_size, X, Y, acc_batch_size=N)
+
 # model.fit(
 #     train_samples,
 #     train_labels,
