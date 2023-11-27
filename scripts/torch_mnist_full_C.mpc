@@ -92,6 +92,7 @@ if 'no_relu' in program.args:
 print(layers)
 
 # program.use_split(3)
+program.use_trunc_pr = True
 
 Y = sint.Matrix(n_test, 10)
 X = sfix.Matrix(n_test, n_features)
