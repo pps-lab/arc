@@ -65,7 +65,8 @@ X.assign_all(0)
 # model.run(batch_size=cfg.batch_size)
 
 print(program.args)
-# program.args += 'no_loss'
+program.args += 'print_losses'
+program.args += 'no_loss'
 
 program.use_trunc_pr = True
 
