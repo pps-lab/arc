@@ -57,6 +57,8 @@ model.summary()
 model.layers[-1].Y.address = train_labels.address
 model.layers[0].X.address = train_samples.address
 
+print(model.layers)
+
 # n_test = 10000
 # n_features = 784
 # Y = sint.Array(n_test)
