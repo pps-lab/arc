@@ -40,10 +40,11 @@ try:
 except:
     batch_size = min(N, 128)
 
-if 'savemem' in program.args:
-    N = batch_size
-else:
-    N = min(N, max(1000, batch_size))
+# if 'savemem' in program.args:
+#     N = batch_size
+# else:
+#     N = min(N, max(1000, batch_size))
+N = batch_size
 
 try:
     ml.set_n_threads(36)
@@ -92,7 +93,7 @@ if 'no_relu' in program.args:
 print(layers)
 
 # program.use_split(3)
-program.use_trunc_pr = True
+program.use_trunc_pr = False
 
 Y = sint.Matrix(n_test, 10)
 X = sfix.Matrix(n_test, n_features)
