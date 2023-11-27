@@ -63,6 +63,10 @@ X = sfix.Matrix(n_test, n_features)
 Y.assign_all(0)
 X.assign_all(0)
 # model.run(batch_size=cfg.batch_size)
+
+print(program.args)
+program.args += 'no_loss'
+
 model.run_by_args(program, cfg.n_epochs, cfg.batch_size, False, False)
 
 # model.fit(
