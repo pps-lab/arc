@@ -15,7 +15,7 @@ from Compiler.script_utils import config, timers
 
 
 class TrainingConfig(config.BaseAuditModel):
-    n_epochs: int = 10 # -1 = all
+    n_epochs: int = 1 # -1 = all
 
 program.options_from_args()
 cfg = config.from_program_args(program.args, TrainingConfig)
