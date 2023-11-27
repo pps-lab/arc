@@ -308,8 +308,10 @@ class ReplicatedRingPartyRunner(ScriptBaseRunner):
         return "./replicated-ring-party.x"
 
     def _args(self):
+        program_args_flat = program_args_cmdline(self.program_args)
         return ["-OF", self.output_prefix,
             "-h", f"{self.player_0_host}",
+                program_args_flat,
             "-pn", "12300",
                 "-v",
             f"{self.player_id}",
@@ -465,10 +467,12 @@ class ReplicatedFieldPartyRunner(ScriptBaseRunner):
         return "./replicated-field-party.x"
 
     def _args(self):
+        program_args_flat = program_args_cmdline(self.program_args)
         custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
         custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
                 custom_prime_arg, custom_prime_length_arg,
+                program_args_flat,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-v",
@@ -481,10 +485,12 @@ class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
         return "./malicious-rep-field-party.x"
 
     def _args(self):
+        program_args_flat = program_args_cmdline(self.program_args)
         custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
         custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
                 custom_prime_arg, custom_prime_length_arg,
+                program_args_flat,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-v",
