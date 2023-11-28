@@ -81,8 +81,13 @@ program.args.append('no_loss')
 # model.set_learning_rate(10.0)
 # model.print_losses = True
 
+# okay... we need this apparently
+# this determines whether we compute the loss on the forward pass
+model.layers[-1].compute_loss = False
+model.time_layers = True
 
-model.run_by_args(program, cfg.n_epochs, cfg.batch_size, False, False, reset=False)
+# model.run_by_args(program, cfg.n_epochs, cfg.batch_size, False, False, reset=False)
+model.run(batch_size=cfg.batch_size)
 
 # model.fit(
 #     train_samples,
