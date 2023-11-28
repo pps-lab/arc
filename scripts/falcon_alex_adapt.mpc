@@ -1,20 +1,20 @@
 from Compiler.ml import keras
 import Compiler.ml as tf
 
-try:
-    n_epochs = int(program.args[1])
-except (ValueError, IndexError):
-    n_epochs = 10
+# try:
+#     n_epochs = int(program.args[1])
+# except (ValueError, IndexError):
+n_epochs = 1
 
-try:
-    batch_size = int(program.args[2])
-except (ValueError, IndexError):
-    batch_size = 128
+# try:
+#     batch_size = int(program.args[2])
+# except (ValueError, IndexError):
+batch_size = 128
 
-try:
-    n_threads = int(program.args[3])
-except (ValueError, IndexError):
-    n_threads = 36
+# try:
+#     n_threads = int(program.args[3])
+# except (ValueError, IndexError):
+n_threads = 36
 
 #Instantiation
 AlexNet = []
