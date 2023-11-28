@@ -97,6 +97,8 @@ model.compile_by_args(program)
 model.build(training_samples.sizes)
 model.summary()
 
+model.time_layers = True
+
 opt = model.fit(
     training_samples,
     training_labels,
