@@ -30,11 +30,11 @@ inference_3pc:
 
   base_experiment:
 
-    consistency_args:
-      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
-      hosts_file: "{{ exp_consistency_hosts_file }}"
-      pc: kzg
-      pp_args: $FACTOR$ # max of input sizes we need
+#    consistency_args:
+#      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+#      hosts_file: "{{ exp_consistency_hosts_file }}"
+#      pc: kzg
+#      pp_args: $FACTOR$ # max of input sizes we need
 
     commit_args:
       commitments:
@@ -61,13 +61,13 @@ inference_3pc:
         n_samples: 1
         n_input_parties: 3
 
-        debug: True  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
+        debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
         dataset: $FACTOR$
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
-        batch_size: 1024 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-        n_threads: 32 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+        batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+        n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
         audit_trigger_idx: 0 # select single audit trigger (from all)
 
@@ -75,18 +75,14 @@ inference_3pc:
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
-    - consistency_args:
-        pp_args: 17634601
-      mpc:
+    - mpc:
         domain: ring_64
         compiler_args: [ '-C', '--budget', '10000', '-Z', '3', '-R', '64' ]
         custom_prime: null
         protocol_setup: "semi_honest_3"
         script_args:
           dataset: ember_3party
-    - consistency_args:
-        pp_args: 17634601
-      mpc:
+    - mpc:
         domain: custom_256
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
         compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y']
@@ -152,21 +148,4 @@ inference_3pc:
         script_args:
           dataset: adult_3p
 
-$ETL$:
-  extract_mpspdz:
-    experiments: "*"
-    extractors:
-      MpSpdzStderrExtractor: {}
-      MpSpdzResultExtractor: {}
-      IgnoreExtractor: { file_regex: ["^consistency.*\\.log$", "^stdout\\.log$"] }
-    transformers: []
-    loaders:
-      CsvSummaryLoader: {}
-  extract_consistency:
-    experiments: "*"
-    extractors:
-      ConsistencyExtractor: { }
-      IgnoreExtractor: { file_regex: ["^stdout\\.log$", "^stderr\\.log$", "^result-.*\\.txt$"] }
-    transformers: [ ]
-    loaders:
-      CsvSummaryLoader: {}
+$ETL$: {}

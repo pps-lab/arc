@@ -4,12 +4,9 @@ $SUITE_VARS$:
   _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
-#
-#  _player_input_binary_path: "{{ mpspdz_dir }}/Player-Data/Input-Binary-P0-0"
-#  cmd_gen_commitments: "{{ exp_consistency_dir }}/target/release/gen_commitments_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --player-input-binary-path [% my_run._player_input_binary_path %] --save"
-#
-#  _stdout_path: "stdout.log"
-#  cmd_prove_verify: "{{ exp_consistency_dir }}/target/release/prove_verify_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --mpspdz-output-file [% my_run._stdout_path %]"
+
+  $INCLUDE_VARS$: dataset.yml
+
 
 train_3pc:
   n_repetitions: 1
@@ -30,11 +27,11 @@ train_3pc:
 
   base_experiment:
 
-#    consistency_args:
-#      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
-#      hosts_file: "{{ exp_consistency_hosts_file }}"
-#      pc: kzg
-#      pp_args: 1796300 # max of input sizes we need
+    consistency_args:
+      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+      hosts_file: "{{ exp_consistency_hosts_file }}"
+      pc: kzg
+      pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
 
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -96,21 +93,4 @@ train_3pc:
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 
-$ETL$:
-  extract_mpspdz:
-    experiments: "*"
-    extractors:
-      MpSpdzStderrExtractor: {}
-      MpSpdzResultExtractor: {}
-      IgnoreExtractor: { file_regex: ["^consistency.*\\.log$", "^stdout\\.log$"] }
-    transformers: []
-    loaders:
-      CsvSummaryLoader: {}
-  extract_consistency:
-    experiments: "*"
-    extractors:
-      ConsistencyExtractor: { }
-      IgnoreExtractor: { file_regex: ["^stdout\\.log$", "^stderr\\.log$", "^result-.*\\.txt$"] }
-    transformers: [ ]
-    loaders:
-      CsvSummaryLoader: {}
+$ETL$: {}

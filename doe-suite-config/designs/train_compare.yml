@@ -36,6 +36,8 @@ train_3pc:
 #      pc: kzg
 #      pp_args: 1796300 # max of input sizes we need
 
+    # for ember we'll need 1'411'202'352 elements
+
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
       abs_path_to_code_dir: "{{ exp_code_dir }}"
@@ -49,8 +51,8 @@ train_3pc:
 #        b: $FACTOR$
 
 #      script_name: "torch_mnist_full_C"
-#      script_name: "training"
-      script_name: $FACTOR$
+      script_name: "training"
+#      script_name: $FACTOR$
 
       script_args:
         # inference specific
@@ -61,7 +63,7 @@ train_3pc:
 
         debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
-        dataset: $FACTOR$
+        dataset: "ember_3party"
 
         trunc_pr: False
 
@@ -75,23 +77,30 @@ train_3pc:
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
 
-    - mpc: # check if this gets the sam eas the paper
+    - mpc:
         protocol_setup: "semi_honest_3"
         domain: ring
         compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
         custom_prime: null
-        script_args:
-          dataset: cifar_alexnet_3party
-        script_name: torch_mnist_full_C
 
     - mpc:
         protocol_setup: "semi_honest_3"
         domain: ring
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3']
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
-        script_args:
-          dataset: mnist_full_3party
-        script_name: "training"
+
+    - mpc:
+        protocol_setup: "rep-field-party"
+        domain: field_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+        custom_prime: null
+
+    - mpc:
+        protocol_setup: "rep-field-party"
+        domain: custom_256
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
 
 #    - mpc:
 #        protocol_setup: "semi_honest_3"

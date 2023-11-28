@@ -1,0 +1,18 @@
+
+
+
+---
+
+dataset_info:
+  adult_3p:
+    # we could also differentiate between train data + model if the audit function only needs the model
+    max_input_size: 805000 # 804632
+
+  mnist_full_3party:
+    max_input_size: 15926258 # 15925258
+
+  cifar_alexnet_3party:
+    max_input_size: 51510211 # 51500211
+
+  ember_3party:
+    max_input_size: 471267184 # 471263184

@@ -64,7 +64,7 @@ class AbstractInputLoader(ABC):
         return len(self._audit_trigger_samples)
 
 
-    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
+    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool, load_model_weights: bool):
 
         self._batch_size = batch_size
         self._train_index = {}
@@ -158,11 +158,12 @@ class AbstractInputLoader(ABC):
         # print(input_shape, "INPUT SHAPE")
         input_shape[0] = batch_size if input_shape[0] == 0 else input_shape[0]
         # print(input_shape, "INP")
-        self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0)
+        self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0 if load_model_weights else None)
         # parse weights from model layers
-        weights = self._extract_model_weights(self._model)
-        for w in weights:
-            insert_or_append(input_consistency_array_per_party, 0, w)
+        if load_model_weights:
+            weights = self._extract_model_weights(self._model)
+            for w in weights:
+                insert_or_append(input_consistency_array_per_party, 0, w)
 
 
         # LOADING TEST SAMPLES
