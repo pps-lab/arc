@@ -89,7 +89,7 @@ program.args.append('no_loss')
 # okay... we need this apparently
 # this determines whether we compute the loss on the forward pass
 model.layers[-1].compute_loss = False
-model.time_layers = True
+# model.time_layers = True
 
 # model.run_by_args(program, cfg.n_epochs, cfg.batch_size, False, False, reset=False)
 model.run(batch_size=cfg.batch_size)
