@@ -50,6 +50,8 @@ inf_labels = inf_labels.get_part(0, cfg.n_samples)
 
 model = input_loader.model()
 model.summary()
+
+model.layers[-1].compute_loss = False
 prediction_results = model.eval(inf_samples, batch_size=min(cfg.batch_size, cfg.n_samples))
 # n_correct, avg_loss = model.reveal_correctness(data=inf_samples, truth=inf_labels, batch_size=input_loader.batch_size(), running=True)
 # print_ln("  n_correct=%s  n_samples=%s  avg_loss=%s", n_correct, len(inf_samples), avg_loss)
