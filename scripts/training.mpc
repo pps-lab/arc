@@ -35,6 +35,8 @@ if not cfg.emulate:
 
 # program.set_bit_length(32)
 
+program.use_trunc_pr = cfg.trunc_pr
+
 ml.set_n_threads(cfg.n_threads)
 ml.Layer.back_batch_size = cfg.batch_size
 
