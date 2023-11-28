@@ -71,8 +71,8 @@ tf.set_n_threads(n_threads)
 program.options_from_args()
 sfix.set_precision_from_args(program, adapt_ring=True)
 
-# program.args.append('no_loss')
-program.use_trunc_pr = True
+program.args.append('no_loss')
+program.use_trunc_pr = False
 program.args.append('time_layers')
 
 training_samples = MultiArray([50000, 32, 32, 3], sfix)
@@ -96,7 +96,9 @@ model = tf.keras.models.Sequential(AlexNet)
 model.compile_by_args(program)
 
 model.build(training_samples.sizes)
+print("Summ")
 model.summary()
+print(model.opt.layers)
 
 opt = model.fit(
     training_samples,

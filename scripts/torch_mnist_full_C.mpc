@@ -93,7 +93,7 @@ if 'no_relu' in program.args:
 print(layers)
 
 # program.use_split(3)
-program.use_trunc_pr = False
+program.use_trunc_pr = True
 
 Y = sint.Matrix(n_test, 10)
 X = sfix.Matrix(n_test, n_features)
@@ -104,7 +104,7 @@ if not ('no_acc' in program.args and 'no_loss' in program.args):
     Y.assign_all(0)
     X.assign_all(0)
 
-# program.args.append('no_loss')
+program.args.append('no_loss')
 program.args.append('time_layers')
 
 optim = ml.Optimizer.from_args(program, layers)
