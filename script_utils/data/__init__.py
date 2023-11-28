@@ -160,9 +160,9 @@ class AbstractInputLoader(ABC):
         # print(input_shape, "INP")
         self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0)
         # parse weights from model layers
-        # weights = self._extract_model_weights(self._model)
-        # for w in weights:
-        #     insert_or_append(input_consistency_array_per_party, 0, w)
+        weights = self._extract_model_weights(self._model)
+        for w in weights:
+            insert_or_append(input_consistency_array_per_party, 0, w)
 
 
         # LOADING TEST SAMPLES
