@@ -105,7 +105,7 @@ def audit(input_loader, config, debug: bool):
                                                                           # + (1 - z_coalitions[z_i][f_i]) * train_samples[train_idx][f_i]
 
             # print_ln("%s: %s", z_coalitions[z_i], z_samples[z_i].reveal())
-        print("Done generating z_samples")
+        print("Done generating z_samples", z_samples.sizes)
 
         lib.start_timer(TIMER_AUDIT_SHAP_EVAL_SAMPLES)
 
@@ -530,6 +530,7 @@ def invert_compile_time(z_coalitions, kernelWeights):
     tmp = np.transpose(np.transpose(etmp) * np.transpose(kernelWeights))
     print(f"tmp {tmp}")
     etmp_dot = np.dot(np.transpose(tmp), etmp)
+    print(f"etmp_dot {etmp_dot}")
     try:
         tmp2 = np.linalg.inv(etmp_dot)
     except np.linalg.LinAlgError:

@@ -92,6 +92,8 @@ def audit(input_loader, config, debug: bool):
         train_optimizer.layers[-1].Y.address = train_labels_copy.address
         train_optimizer.layers[0].X.address = train_samples.address
 
+        # TODO: Setting compute_loss to False will speed up training significantly!
+        train_optimizer.layers[-1].compute_loss = False
         train_optimizer.run(batch_size=batch_size)
 
         guesses = audit_utils.predict_on_model_copy(input_loader.model_layers(), model, audit_trigger_batch_size,

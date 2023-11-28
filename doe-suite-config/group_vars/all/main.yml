@@ -25,7 +25,7 @@ prj_id: "{{ prj_id_prefix }}_{{ does_project_id_suffix }}"
 # The experiments are mostly run concurrently (apart from the setup and cleanup parts). Thus, the experiment with the most jobs defines the
 # maximal duration. But as experiments usually use fewer than 'job_n_tries' tries, an experiment with few long-running jobs can be the bottleneck too.
 job_n_tries: 1000   # should be max 1000 (otherwise playbook freezes -> unsure why)
-job_check_wait_time: 5
+job_check_wait_time: 60
 
 # if the previous job finished less than 30 seconds before
 etl_minimum_delay_sec: 30

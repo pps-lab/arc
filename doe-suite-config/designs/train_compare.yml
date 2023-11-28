@@ -48,8 +48,9 @@ train_3pc:
 #      program_args:
 #        b: $FACTOR$
 
-      script_name: "torch_mnist_full_C"
+#      script_name: "torch_mnist_full_C"
 #      script_name: "training"
+      script_name: $FACTOR$
 
       script_args:
         # inference specific
@@ -62,6 +63,8 @@ train_3pc:
         emulate: False
         dataset: $FACTOR$
 
+        trunc_pr: False
+
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
         n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
@@ -72,6 +75,15 @@ train_3pc:
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
 
+    - mpc: # check if this gets the sam eas the paper
+        protocol_setup: "semi_honest_3"
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
+        custom_prime: null
+        script_args:
+          dataset: cifar_alexnet_3party
+        script_name: torch_mnist_full_C
+
     - mpc:
         protocol_setup: "semi_honest_3"
         domain: ring
@@ -79,14 +91,34 @@ train_3pc:
         custom_prime: null
         script_args:
           dataset: mnist_full_3party
+        script_name: "training"
 
-    - mpc:
-        protocol_setup: "rep-field-party"
-        domain: ring
-        compiler_args: [ '-C', '--budget', '10000', '-Y']
-        custom_prime: null
-        script_args:
-          dataset: mnist_full_3party
+#    - mpc:
+#        protocol_setup: "semi_honest_3"
+#        domain: ring
+#        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3']
+#        custom_prime: null
+#        script_args:
+#          dataset: cifar_alexnet_3party
+#        script_name: "training"
+
+#    - mpc:
+#        protocol_setup: "semi_honest_3"
+#        domain: ring
+#        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3']
+#        custom_prime: null
+#        script_args:
+#          dataset: cifar_alexnet_3party
+#        script_name: "falcon_alex_adapt"
+#
+
+#    - mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: ring
+#        compiler_args: [ '-C', '--budget', '10000', '-Y']
+#        custom_prime: null
+#        script_args:
+#          dataset: mnist_full_3party
 #    - consistency_args:
 #        pp_args: 431080
 #      mpc:

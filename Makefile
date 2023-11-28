@@ -54,7 +54,7 @@ train-debug: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E rep4-ring $(RING_64) -Z 4 $(script) 10 16 -- -v
 
 ring: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) $(AUDITARGS) emulate__True debug__False
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -Y --budget 1000 -C $(AUDITARGS) emulate__True debug__False
 
 compile-field: simlink
 	cd MP-SPDZ && ./compile.py $(script) $(AUDITARGS) emulate__True debug__True
@@ -66,11 +66,14 @@ field-256: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -F 256 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -lgp 256
 
 field: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__False -- -lgp 128 -v
+	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -Y -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__False -- -lgp 128 -v
 
 field-bls377: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -F 251 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -P 8444461749428370424248824938781546531375899335154063827935233455917409239041
 
 field-bls377-slow: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -P 8444461749428370424248824938781546531375899335154063827935233455917409239041 -F 64 -E $(protocol) $(script) $(AUDITARGS) debug__False
+
+deb: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -Z 3 --budget 1000 -C audit_trigger_idx__0 batch_size__128 consistency_check__False dataset__mnist_full_3party debug__False emulate__False n_input_parties__3 n_threads__36 trunc_pr__True
 

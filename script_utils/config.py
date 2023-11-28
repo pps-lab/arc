@@ -24,7 +24,7 @@ class BaseAuditModel(BaseModel):
     emulate: bool = False
     dataset: str = None
     batch_size: int = 128
-    n_threads: int = 8
+    n_threads: int = 36
     trunc_pr: bool = False
 
     audit_trigger_idx: int = None

@@ -86,18 +86,19 @@ class CifarInputLoader(AbstractInputLoader):
 
     def _load_model(self, input_shape, batch_size, input_via):
 
+        pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
+        layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
 
-        # pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
-        # layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
+        model = ml.SGD(layers)
+
+        return model
+
+        # layers = self.model_layers()
         #
-        # model = ml.SGD(layers)
-
-        layers = self.model_layers()
-
-        model = ml.keras.models.Sequential(layers)
-        optim = ml.keras.optimizers.SGD()
-        model.compile(optimizer=optim)
-        model.build(input_shape=input_shape, batch_size=batch_size)
-        model.opt.reset()
+        # model = ml.keras.models.Sequential(layers)
+        # optim = ml.keras.optimizers.SGD()
+        # model.compile(optimizer=optim)
+        # model.build(input_shape=input_shape, batch_size=batch_size)
+        # model.opt.reset()
 
         return model.opt

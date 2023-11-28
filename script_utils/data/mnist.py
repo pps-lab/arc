@@ -1,6 +1,6 @@
 from Compiler import ml
 from Compiler.types import MultiArray, sfix, sint
-from Compiler.library import print_ln
+from Compiler.library import print_ln, get_program
 
 from Compiler.script_utils.data import AbstractInputLoader
 
@@ -62,16 +62,31 @@ class MnistInputLoader(AbstractInputLoader):
 
     def _load_model(self, input_shape, batch_size, input_via):
 
-        # layers = self.model_layers()
         pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
-        layers = ml.layers_from_torch(pt_model, input_shape, 1000, input_via=input_via)
+        layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
 
         model = ml.SGD(layers)
 
-        # model = ml.keras.models.Sequential(layers)
-        # optim = ml.keras.optimizers.SGD()
-        # model.compile(optimizer=optim)
-        # model.build(input_shape=input_shape, batch_size=batch_size)
-
         return model
+
+        # N = 1000
+        # n_examples = 60000
+        # layers = [
+        #     ml.FixConv2d([n_examples, 28, 28, 1], (20, 5, 5, 1), (20,), [N, 24, 24, 20], (1, 1), 'VALID'),
+        #     ml.MaxPool([N, 24, 24, 20]),
+        #     ml.Relu([N, 12, 12, 20]),
+        #     ml.FixConv2d([N, 12, 12, 20], (50, 5, 5, 20), (50,), [N, 8, 8, 50], (1, 1), 'VALID'),
+        #     ml.MaxPool([N, 8, 8, 50]),
+        #     ml.Relu([N, 4, 4, 50]),
+        #     ml.Dense(N, 800, 500),
+        #     ml.Relu([N, 500]),
+        #     ml.Dense(N, 500, 10),
+        # ]
+        #
+        # layers += [ml.MultiOutput.from_args(get_program(), n_examples, 10)]
+        # optim = ml.Optimizer.from_args(get_program(), layers)
+        #
+        # optim.reset()
+
+        # return optim
 
