@@ -20,7 +20,7 @@ except (ValueError, IndexError):
 AlexNet = []
 
 padding = 'same'
-batchnorm = 'batchnorm' in program.args
+batchnorm = True
 
 #1st Convolutional Layer
 AlexNet.append(keras.layers.Conv2D(filters=96, input_shape=(32,32,3), kernel_size=(11,11), strides=(4,4), padding=9))
@@ -71,18 +71,22 @@ tf.set_n_threads(n_threads)
 program.options_from_args()
 sfix.set_precision_from_args(program, adapt_ring=True)
 
+program.use_trunc_pr = True
+
 training_samples = MultiArray([50000, 32, 32, 3], sfix)
 training_labels = MultiArray([50000, 10], sint)
 
 test_samples = MultiArray([10000, 32, 32, 3], sfix)
 test_labels = MultiArray([10000, 10], sint)
 
-if 'no_acc' not in program.args:
-    training_labels.input_from(0)
-    training_samples.input_from(0)
-
-    test_labels.input_from(0)
-    test_samples.input_from(0)
+training_labels.assign_all(0)
+training_samples.assign_all(0)
+# if 'no_acc' not in program.args:
+#     training_labels.input_from(0)
+#     training_samples.input_from(0)
+#
+#     test_labels.input_from(0)
+#     test_samples.input_from(0)
 
 model = tf.keras.models.Sequential(AlexNet)
 
@@ -91,10 +95,10 @@ model.compile_by_args(program)
 model.build(training_samples.sizes)
 model.summary()
 
-# opt = model.fit(
-#     training_samples,
-#     training_labels,
-#     epochs=n_epochs,
-#     batch_size=batch_size,
-#     validation_data=(test_samples, test_labels)
-# )
+opt = model.fit(
+    training_samples,
+    training_labels,
+    epochs=n_epochs,
+    batch_size=batch_size,
+    validation_data=None
+)
