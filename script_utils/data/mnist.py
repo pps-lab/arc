@@ -64,7 +64,7 @@ class MnistInputLoader(AbstractInputLoader):
 
         # layers = self.model_layers()
         pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
-        layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
+        layers = ml.layers_from_torch(pt_model, input_shape, 1000, input_via=input_via)
 
         model = ml.SGD(layers)
 

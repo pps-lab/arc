@@ -150,12 +150,14 @@ class AbstractInputLoader(ABC):
             insert_or_append(input_consistency_array_per_party, party_id_last, test_samples_loaded)
 
 
-    # first build model and then set weights from input
+        # first build model and then set weights from input
         print_ln("  loading model weights...")
 
         # set input_shape to be the train input shape.. not sure if we can just constrain it to batch_size?
         input_shape = self._train_samples.shape
+        # print(input_shape, "INPUT SHAPE")
         input_shape[0] = batch_size if input_shape[0] == 0 else input_shape[0]
+        # print(input_shape, "INP")
         self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0)
         # parse weights from model layers
         weights = self._extract_model_weights(self._model)
