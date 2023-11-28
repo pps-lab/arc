@@ -108,6 +108,9 @@ program.args.append('no_loss')
 
 optim = ml.Optimizer.from_args(program, layers)
 optim.summary()
+
+optim.time_layers = True
+
 optim.run_by_args(program, n_epochs, batch_size, False, False)
 
 # optim.reset()
