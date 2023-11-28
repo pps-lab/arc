@@ -32,7 +32,7 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
 
-def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, n_target_test_samples):
+def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, n_target_test_samples, load_model_weights=True):
 
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
     _clean_dataset_folder()
