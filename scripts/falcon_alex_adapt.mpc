@@ -71,7 +71,7 @@ tf.set_n_threads(n_threads)
 program.options_from_args()
 sfix.set_precision_from_args(program, adapt_ring=True)
 
-program.args.append('no_loss')
+# program.args.append('no_loss')
 program.use_trunc_pr = True
 
 training_samples = MultiArray([50000, 32, 32, 3], sfix)
@@ -97,7 +97,7 @@ model.compile_by_args(program)
 model.build(training_samples.sizes)
 model.summary()
 
-model.time_layers = True
+model.opt.time_layers = True
 
 opt = model.fit(
     training_samples,
