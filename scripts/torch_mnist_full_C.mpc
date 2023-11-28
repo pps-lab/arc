@@ -40,11 +40,11 @@ try:
 except:
     batch_size = min(N, 128)
 
-# if 'savemem' in program.args:
-#     N = batch_size
-# else:
-#     N = min(N, max(1000, batch_size))
-N = batch_size
+if 'savemem' in program.args:
+    N = batch_size
+else:
+    N = min(N, max(1000, batch_size))
+# N = batch_size
 
 try:
     ml.set_n_threads(36)
