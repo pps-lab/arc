@@ -9,7 +9,7 @@ from Compiler.ml import FixConv2d, Dense, BatchNorm
 class AbstractInputLoader(ABC):
 
     @abstractmethod
-    def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool):
+    def __init__(self, n_train_samples: List[int], n_trigger_samples: int, n_test_samples: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool, load_model_weights: bool = True):
         pass
 
     @abstractmethod
