@@ -50,15 +50,15 @@ class CifarInputLoader(AbstractInputLoader):
     def model_layers(self):
         layers = [
             # 1st Conv Layer
-            ml.keras.layers.Conv2D(filters=96, input_shape=(32,32,3), kernel_size=(7,7), strides=(2,2), padding=2, activation='relu'),
+            ml.keras.layers.Conv2D(filters=96, input_shape=(32,32,3), kernel_size=(11,11), strides=(4,4), padding=9, activation='relu'),
             ml.keras.layers.MaxPooling2D(pool_size=3, strides=(2,2)),
-            #ml.keras.layers.BatchNormalization(),
+            ml.keras.layers.BatchNormalization(),
 
             # 2nd Conv Layer
-            ml.keras.layers.Conv2D(filters=256, kernel_size=(5, 5), strides=(1,1), padding=2, activation='relu'),
+            ml.keras.layers.Conv2D(filters=256, kernel_size=(5, 5), strides=(1,1), padding=1, activation='relu'),
 
-            #ml.keras.layers.BatchNormalization(),
-            ml.keras.layers.MaxPooling2D(pool_size=(3,3), strides=2),
+            ml.keras.layers.BatchNormalization(),
+            ml.keras.layers.MaxPooling2D(pool_size=(2,2), strides=2),
 
             # 3rd Conv Layer
             ml.keras.layers.Conv2D(filters=384, kernel_size=(3,3), strides=(1,1), padding=1, activation='relu'),
@@ -86,15 +86,18 @@ class CifarInputLoader(AbstractInputLoader):
 
     def _load_model(self, input_shape, batch_size, input_via):
 
-        # layers = self.model_layers()
-        pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
-        layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
 
-        model = ml.SGD(layers)
+        # pt_model = torch.load(f"Player-Data/{self._dataset}/mpc_model.pt")
+        # layers = ml.layers_from_torch(pt_model, input_shape, batch_size, input_via=input_via)
+        #
+        # model = ml.SGD(layers)
 
-        # model = ml.keras.models.Sequential(layers)
-        # optim = ml.keras.optimizers.SGD()
-        # model.compile(optimizer=optim)
-        # model.build(input_shape=input_shape, batch_size=batch_size)
+        layers = self.model_layers()
 
-        return model
+        model = ml.keras.models.Sequential(layers)
+        optim = ml.keras.optimizers.SGD()
+        model.compile(optimizer=optim)
+        model.build(input_shape=input_shape, batch_size=batch_size)
+        model.opt.reset()
+
+        return model.opt
