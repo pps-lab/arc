@@ -184,7 +184,7 @@ class CompilerArguments(enum.Enum):
     MAL_ATLAS_PARTY_X = ["-F", "64"]
     REP_FIELD_PARTY = ["-F", "64"]
     MAL_REP_FIELD_PARTY = ["-F", "64"]
-    MAL_REP_FIELD_PARTY = ["-R", "64"]
+    MAL_REP_RING_PARTY = ["-R", "64"]
 
     SY_REP_RING_PARTY = ['-R', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
