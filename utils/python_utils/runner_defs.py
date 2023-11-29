@@ -184,6 +184,7 @@ class CompilerArguments(enum.Enum):
     MAL_ATLAS_PARTY_X = ["-F", "64"]
     REP_FIELD_PARTY = ["-F", "64"]
     MAL_REP_FIELD_PARTY = ["-F", "64"]
+    MAL_REP_FIELD_PARTY = ["-R", "64"]
 
     SY_REP_RING_PARTY = ['-R', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
@@ -497,6 +498,21 @@ class MaliciousReplicatedFieldPartyRunner(ScriptBaseRunner):
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
         ]
 
+class MaliciousReplicatedRingPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './shamir-party.x'"""
+    def _program(self):
+        return "./malicious-rep-ring-party.x"
+
+    def _args(self):
+        program_args_flat = program_args_cmdline(self.program_args)
+        return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-v",
+                f"{self.player_id}"] + program_args_flat + [
+            script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+        ]
+
 
 class MascotPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './malicious-shamir-party.x'"""
@@ -581,6 +597,7 @@ class ProtocolRunners(enum.Enum):
     MALICIOUS_SHAMIR_PARTY_X=MaliciousShamirPartyRunner
     REP_FIELD_PARTY=ReplicatedFieldPartyRunner
     MAL_REP_FIELD_PARTY=MaliciousReplicatedFieldPartyRunner
+    MAL_REP_RING_PARTY=MaliciousReplicatedRingPartyRunner
     SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
     MASCOT_PARTY=MascotPartyRunner
     MASCOT_OFFLINE=MascotOfflineRunner

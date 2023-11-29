@@ -38,6 +38,7 @@ class ProtocolChoices(enum.Enum):
     MAL_ATLAS_PARTY_X = "mal_atlas_n"
     REP_FIELD_PARTY = "rep-field-party"
     MAL_REP_FIELD_PARTY = "mal-rep-field-party"
+    MAL_REP_RING_PARTY = "mal-rep-ring-party"
 
     SY_REP_RING_PARTY = "sy-rep-ring-party"
     SPDZ2K_PARTY = "spdz2k-party"
