@@ -1,4 +1,4 @@
-from Compiler.script_utils.data import mnist, cifar, adult, ember
+from Compiler.script_utils.data import mnist, cifar, adult, ember, mnist_full_A
 from Compiler.library import get_number_of_players
 
 import ruamel.yaml
@@ -18,7 +18,11 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
     n_wanted_train_samples = n_train_samples
     n_wanted_trigger_samples = 1 if audit_trigger_idx is not None else n_trigger_samples
 
-    if dataset.lower().startswith("mnist"):
+    if dataset.lower().startswith("mnist_full_a"):
+        _prepare_dataset(dataset, emulate)
+        il = mnist_full_A.MnistAInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+
+    elif dataset.lower().startswith("mnist"):
         _prepare_dataset(dataset, emulate)
         il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
     elif dataset.lower().startswith("cifar"):
@@ -61,6 +65,9 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
 
 
 def _load_dataset_args(dataset):
+    if dataset == "mnist_full_A":
+        dataset = "mnist_full_3party"
+
     with open(f"Player-Data/{dataset}/compile_args.yml") as f:
         args = ruamel.yaml.safe_load(f)
 

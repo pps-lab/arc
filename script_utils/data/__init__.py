@@ -161,7 +161,7 @@ class AbstractInputLoader(ABC):
         self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0 if load_model_weights else None)
         # parse weights from model layers
         if load_model_weights:
-            weights = self._extract_model_weights(self._model)
+            weights = AbstractInputLoader._extract_model_weights(self._model)
             for w in weights:
                 insert_or_append(input_consistency_array_per_party, 0, w)
 
@@ -169,13 +169,13 @@ class AbstractInputLoader(ABC):
         # LOADING TEST SAMPLES
 
 
-        if consistency_check:
-            print_ln("Consistency check!")
-            start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
-            for party_id in range(len(train_datasets)):
-                if party_id in input_consistency_array_per_party:
-                    input_consistency.compute_and_output_poly_array(input_consistency_array_per_party[party_id], party_id, 1)
-            stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+        # if consistency_check:
+        #     print_ln("Consistency check!")
+        #     start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+        #     for party_id in range(len(train_datasets)):
+        #         if party_id in input_consistency_array_per_party:
+        #             input_consistency.compute_and_output_poly_array(input_consistency_array_per_party[party_id], party_id, 1)
+        #     stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
     def _load_input_data(self, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
@@ -262,7 +262,8 @@ class AbstractInputLoader(ABC):
 
         return train_datasets, backdoor_dataset, test_dataset
 
-    def _extract_model_weights(self, model):
+    @staticmethod
+    def _extract_model_weights(model):
 
         layers = model.layers
         output_matrices = []
