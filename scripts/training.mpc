@@ -9,7 +9,7 @@ from Compiler import library
 
 from Compiler.script_utils.audit import shap
 
-from Compiler.script_utils import config, timers
+from Compiler.script_utils import config, timers, input_consistency
 
 
 
@@ -108,5 +108,8 @@ model.run(batch_size=cfg.batch_size)
 
 library.stop_timer(timer_id=timers.TIMER_TRAINING)
 
+library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
+input_consistency.output(model, None, None)
+library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
 # if cfg.debug:
 #     print_ln(prediction_results.reveal(), inf_labels.reveal())
