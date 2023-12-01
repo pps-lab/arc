@@ -9,10 +9,10 @@ dataset_info:
     max_input_size: 805000 # 804632
 
   mnist_full_3party:
-    max_input_size: 15926258 # 15925258
+    max_input_size: 16521393 # 15925258
 
   cifar_alexnet_3party:
-    max_input_size: 51510211 # 51500211
+    max_input_size: 55402973 # 51500211
 
   ember_3party:
-    max_input_size: 471267184 # 471263184
+    max_input_size: 488267184 # 471263184

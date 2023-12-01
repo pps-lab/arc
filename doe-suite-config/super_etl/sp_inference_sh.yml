@@ -17,13 +17,68 @@ $SUITE_ID$:
 
 #  inference_2pc: { inference_2pc: 1700929201 } # partial, no edabits, LAN, inference,
   inference_2pc: { inference_2pc: 1701009378 }
-
-  inference_3pc: { inference_3pc: 1701097464 } # semi-honest
+#  inference_3pc_
+  inference_3pc: { inference_3pc: 1701197634, mal: 1701300336, sy: 1701426467, sy_split: 1701439079 } # semi-honest
 
 $ETL$:
-  compare_protocol:
+#  compare_protocol:
+#    experiments:
+#      inference_3pc: [ inference_3pc, mal ]
+#
+#    extractors:
+#      MpSpdzResultExtractor: { }
+#      MpSpdzStderrExtractor: { }
+#      ConsistencyExtractor: { }
+#      IgnoreExtractor:
+#        file_regex:
+#          - ^stdout\.log$
+#    transformers:
+#      - name: CompilerArgsTransformer
+#      - name: StatTransformer
+#        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
+#        stats:
+#          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_101"]
+##          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
+##          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
+##          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
+#          global_data_sent_mb: [ "spdz_global_data_sent" ]
+##          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+#          n_rounds: [ "spdz_player_round_number" ]
+#
+#
+#    loaders:
+#      CsvSummaryLoader: { }
+#      BarPlotLoader:
+#        plot_cols: [ 'exp_name', 'mpc.script_name', 'host_idx' ]
+#        plot_cols_values:
+#          exp_name: [ 'inference_3pc', 'mal' ]
+#          mpc.script_name: [ 'inference' ]
+#          host_idx: [ 0 ] # only plot one party
+#
+#        bar_cols: [ 'mpc.domain' ]
+#        bar_cols_values:
+#          'mpc.domain': [ ring, ring_noopt, field_128, custom_256 ]
+##          'mpc.compiler_args': [ ]
+#
+#        group_cols: [ mpc.script_args.dataset ]
+#        group_cols_values:
+#           'mpc.script_args.dataset': [ adult_3p, "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+#
+#        metric_cols: [mpc_time_s, n_rounds, global_data_sent_mb ]
+#        annotation_col: consistency_args.pc
+#
+#        annotation_labels:
+#          pvc: 'PVC'
+#          sha3: 'SHA3'
+#          lowmc: 'LowMCHash'
+#          cerebro: 'Cerebro'
+#          kzg: 'Ours (KZG)'
+#          ped: 'Pedersen'
+#          ipa: 'Ours (IPA)'
+
+  compare_sh_mal:
     experiments:
-      inference_3pc: [ inference_3pc ]
+      inference_3pc: [ inference_3pc, mal, sy ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -33,35 +88,41 @@ $ETL$:
         file_regex:
           - ^stdout\.log$
     transformers:
+      - name: CompilerArgsTransformer
       - name: StatTransformer
         groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
         stats:
-          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_101"]
-          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
-          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
-          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
+          mpc_time_s: [ "spdz_timer_98", "spdz_timer_99", "spdz_timer_101" ]
+          #          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
+          #          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
+          #          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
           global_data_sent_mb: [ "spdz_global_data_sent" ]
-          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+          #          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
           n_rounds: [ "spdz_player_round_number" ]
+
 
     loaders:
       CsvSummaryLoader: { }
       BarPlotLoader:
         plot_cols: [ 'mpc.script_name', 'host_idx' ]
         plot_cols_values:
+          exp_name: [ 'inference_3pc', 'mal', 'sy' ]
           mpc.script_name: [ 'inference' ]
           host_idx: [ 0 ] # only plot one party
 
-        bar_cols: [ 'mpc.domain' ]
+        bar_cols: [ 'exp_name']
         bar_cols_values:
-          'mpc.domain': [ ring_64, custom_256 ]
+          'exp_name': [ 'inference_3pc', 'mal', 'sy' ]
+        #          'mpc.compiler_args': [ ]
 
-        group_cols: [ mpc.script_args.dataset ]
+        group_cols: [ mpc.script_args.dataset,  'mpc.domain'  ]
         group_cols_values:
-           'mpc.script_args.dataset': [ adult_3p, "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+          'mpc.script_args.dataset': [ adult_3p, "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+          'mpc.domain': [ ring, field_128, custom_256 ]
 
-        metric_cols: [mpc_time_s, n_rounds, verification_time_s, global_data_sent_mb, commitment_size_bytes]
+        metric_cols: [ mpc_time_s, n_rounds, global_data_sent_mb ]
         annotation_col: consistency_args.pc
+        bar_width: 1.3
 
         annotation_labels:
           pvc: 'PVC'
@@ -71,6 +132,65 @@ $ETL$:
           kzg: 'Ours (KZG)'
           ped: 'Pedersen'
           ipa: 'Ours (IPA)'
+
+
+  compare_sy:
+    experiments:
+      inference_3pc: [ inference_3pc, mal, sy, sy_split ]
+
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor: { }
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+    transformers:
+      - name: CompilerArgsTransformer
+      - name: StatTransformer
+        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
+        stats:
+          mpc_time_s: [ "spdz_timer_98", "spdz_timer_99", "spdz_timer_101" ]
+          #          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
+          #          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
+          #          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
+          global_data_sent_mb: [ "spdz_global_data_sent" ]
+          #          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+          n_rounds: [ "spdz_player_round_number" ]
+
+
+    loaders:
+      CsvSummaryLoader: { }
+      BarPlotLoader:
+        plot_cols: [ 'mpc.script_name', 'host_idx' ]
+        plot_cols_values:
+          exp_name: [ 'inference_3pc', 'mal', 'sy' ]
+          mpc.script_name: [ 'inference' ]
+          host_idx: [ 0 ] # only plot one party
+
+        bar_cols: [ 'exp_name' ]
+        bar_cols_values:
+          'exp_name': [ 'inference_3pc', 'mal', 'sy', 'sy_split' ]
+        #          'mpc.compiler_args': [ ]
+
+        group_cols: [ mpc.script_args.dataset,  'mpc.domain' ]
+        group_cols_values:
+          'mpc.script_args.dataset': [ adult_3p, "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+          'mpc.domain': [ ring, ring_opt, ring_noeda ]
+
+        metric_cols: [ mpc_time_s, n_rounds, global_data_sent_mb ]
+        annotation_col: consistency_args.pc
+        bar_width: 1.3
+
+        annotation_labels:
+          pvc: 'PVC'
+          sha3: 'SHA3'
+          lowmc: 'LowMCHash'
+          cerebro: 'Cerebro'
+          kzg: 'Ours (KZG)'
+          ped: 'Pedersen'
+          ipa: 'Ours (IPA)'
+
 
 #  compare_setting:
 #    experiments:

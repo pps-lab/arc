@@ -5,12 +5,13 @@
 # Checkout the example from the demo_project: demo_project/doe-suite-config/super_etl/demo_plots.yml
 
 $SUITE_ID$:
-  train_3pc: { train_3pc: 1701120615 }
+#  train_3pc: { train_3pc: 1701120615 }
+  train_3pc: { train_3pc: 1701197069, mal: 1701285783 }
 
 $ETL$:
   compare_protocol:
     experiments:
-      train_3pc: [ train_3pc ]
+      train_3pc: [ train_3pc, mal ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -20,10 +21,12 @@ $ETL$:
         file_regex:
           - ^stdout\.log$
     transformers:
+      - name: CompilerArgsTransformer
+
       - name: StatTransformer
         groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
         stats:
-          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_102"]
+          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_1102"]
 #          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
 #          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
 #          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
@@ -34,18 +37,19 @@ $ETL$:
     loaders:
       CsvSummaryLoader: { }
       BarPlotLoader:
-        plot_cols: [ 'mpc.script_name', 'host_idx' ]
+        plot_cols: [ exp_name, 'mpc.script_name', 'host_idx' ]
         plot_cols_values:
+          exp_name: [ 'train_3pc', 'mal' ]
           mpc.script_name: [ 'training' ]
           host_idx: [ 0 ] # only plot one party
 
         bar_cols: [ 'mpc.domain' ]
         bar_cols_values:
-          'mpc.domain': [ ring, field_128, custom_256 ]
+          'mpc.domain': [ ring, ring_noopt, field_128, custom_256 ]
 
         group_cols: [ mpc.script_args.dataset ]
         group_cols_values:
-           'mpc.script_args.dataset': [ adult_3p, "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+           'mpc.script_args.dataset': [ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
 
         metric_cols: [mpc_time_s, n_rounds, global_data_sent_mb]
         annotation_col: consistency_args.pc

@@ -18,6 +18,22 @@ import numpy as np
 
 COLOR_GRAY = '#999999'
 
+class CompilerArgsTransformer(Transformer):
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+        # find columns where compiler_args = [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
+
+        # and set domain to ring_noopt
+        # print(df['mpc.compiler_args'])
+        # print(df['mpc.compiler_args'] == [ '-R', '64', '-C', '--budget', '10000', '-Y' ])
+        # df.loc[(df['mpc.compiler_args'] == [ '-R', '64', '-C', '--budget', '10000', '-Y' ]), 'domain'] = 'ring_noopt'
+
+        # really ugly hack
+        df.loc[(df['mpc.compiler_args'].apply(lambda x: x == ['-R', '64', '-C', '--budget', '10000', '-Y']) & df['exp_name'] == 'inference_3pc'), 'mpc.domain'] = 'ring_noopt'
+
+        return df
+
+
 class StatTransformer(Transformer):
 
     groupby_columns: List[str]
@@ -29,6 +45,8 @@ class StatTransformer(Transformer):
 
         # Initialize an empty DataFrame to hold the aggregated results
         aggregated_results = pd.DataFrame()
+
+        print(df)
 
         # check that each stat value specified in self.stats is contained in stat
         for stat_label, stat_values in self.stats.items():
@@ -170,8 +188,8 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
         df.sort_values(by=self.plot_cols + self.color_cols + self.symbol_cols, inplace=True)
         print(f"Filtered out {n_rows_intial - len(df)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df)}")
 
-        for idx, df_plot in df.groupby(self.plot_cols):
-            print(f"Creating Workload {idx} plot")
+        for idx_group, df_plot in df.groupby(self.plot_cols):
+            print(f"Creating Workload {idx_group} plot")
 
             num_rows = np.prod([len(v) for v in self.color_cols_values.values()])
             # number of columns is cartesian product of dictionary values
@@ -268,7 +286,7 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
             # y_range = y_max - y_min
             # plt.ylim([3.0, y_max + 7000])
 
-            filename = f"consistency_compare_{escape_tuple_str(idx)}"
+            filename = f"consistency_compare_{escape_tuple_str(idx_group)}"
             self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)
 
 
@@ -327,8 +345,8 @@ class BarPlotLoader(PlotLoader):
         print(f"Filtered out {n_rows_intial - len(df_filtered)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df_filtered)}")
 
         for metric in self.metric_cols:
-            for idx, df_plot in df_filtered.groupby(self.plot_cols):
-                print(f"Creating Workload {idx} plot")
+            for idx_group, df_plot in df_filtered.groupby(self.plot_cols):
+                print(f"Creating Workload {idx_group} plot")
 
                 setup_plt(width=16)
                 fig, ax = plt.subplots(1, 1)
@@ -499,5 +517,6 @@ class BarPlotLoader(PlotLoader):
                 # plt.tight_layout()
                 plt.subplots_adjust(left=0.05, bottom=0.2)
 
-                filename = f"metrics_compare_{metric}_{escape_tuple_str(idx)}"
+
+                filename = f"metrics_compare_{metric}_{escape_tuple_str(idx_group)}"
                 self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)

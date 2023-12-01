@@ -68,8 +68,8 @@ train_3pc:
         trunc_pr: False
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
-        batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-        n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+        batch_size: 16 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+        n_threads: 8 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
         audit_trigger_idx: 0 # select single audit trigger (from all)
 

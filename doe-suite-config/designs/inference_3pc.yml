@@ -4,12 +4,7 @@ $SUITE_VARS$:
   _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
-#
-#  _player_input_binary_path: "{{ mpspdz_dir }}/Player-Data/Input-Binary-P0-0"
-#  cmd_gen_commitments: "{{ exp_consistency_dir }}/target/release/gen_commitments_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --player-input-binary-path [% my_run._player_input_binary_path %] --save"
-#
-#  _stdout_path: "stdout.log"
-#  cmd_prove_verify: "{{ exp_consistency_dir }}/target/release/prove_verify_[% my_run.compute_args.pc %] --hosts {{ exp_consistency_hosts_file }} --party <PLAYER-ID> --mpspdz-output-file [% my_run._stdout_path %]"
+
 
 inference_3pc:
   n_repetitions: 1
@@ -29,12 +24,6 @@ inference_3pc:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-
-#    consistency_args:
-#      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
-#      hosts_file: "{{ exp_consistency_hosts_file }}"
-#      pc: kzg
-#      pp_args: $FACTOR$ # max of input sizes we need
 
     commit_args:
       commitments:
@@ -63,7 +52,8 @@ inference_3pc:
 
         debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
-        dataset: $FACTOR$
+        dataset:
+          $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party, ember_3party ]
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
@@ -75,77 +65,203 @@ inference_3pc:
       stage: # "compile" in run and then in next run "run"
         $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
+
     - mpc:
-        domain: ring_64
-        compiler_args: [ '-C', '--budget', '10000', '-Z', '3', '-R', '64' ]
-        custom_prime: null
         protocol_setup: "semi_honest_3"
-        script_args:
-          dataset: ember_3party
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
+        custom_prime: null
+
     - mpc:
-        domain: custom_256
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y']
-        protocol_setup: "rep-field-party"
-        script_args:
-          dataset: ember_3party
-
-    - consistency_args:
-        pp_args: 431080
-      mpc:
-        domain: ring_64
-        compiler_args: [ '-C', '--budget', '10000', '-Z', '3', '-R', '64' ]
-        custom_prime: null
         protocol_setup: "semi_honest_3"
-        script_args:
-          dataset: mnist_full_3party
-    - consistency_args:
-        pp_args: 400842
-      mpc:
-        domain: custom_256
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y']
-        protocol_setup: "rep-field-party"
-        script_args:
-          dataset: mnist_full_3party
-
-
-    - consistency_args:
-        pp_args: 431080
-      mpc:
-        domain: ring_64
-        compiler_args: [ '-C', '--budget', '10000', '-Z', '3', '-R', '64' ]
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
         custom_prime: null
-        protocol_setup: "semi_honest_3"
-        script_args:
-          dataset: cifar_alexnet_3party
-    - consistency_args:
-        pp_args: 431080
-      mpc:
-        domain: custom_256
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y']
-        protocol_setup: "rep-field-party"
-        script_args:
-          dataset: cifar_alexnet_3party
 
-    - consistency_args:
-        pp_args: 431080
-      mpc:
-        domain: ring_64
-        compiler_args: [ '-C', '--budget', '10000', '-Z', '3', '-R', '64' ]
-        custom_prime: null
-        protocol_setup: "semi_honest_3"
-        script_args:
-          dataset: adult_3p
-    - consistency_args:
-        pp_args: 431080
-      mpc:
-        domain: custom_256
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-        compiler_args: [ '-F 251', '-C', '--budget', '10000', '-Y']
+    - mpc:
         protocol_setup: "rep-field-party"
-        script_args:
-          dataset: adult_3p
+        domain: field_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+        custom_prime: null
+
+    - mpc:
+        protocol_setup: "rep-field-party"
+        domain: custom_256
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
+
+mal:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles:
+      - setup-base
+      - setup-consistency
+      - download-dataset
+      #        - setup-largeprimes
+      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+
+    commit_args:
+      commitments:
+        size_x: 2351
+        size_y: 1
+
+    mpc:
+      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+      abs_path_to_code_dir: "{{ exp_code_dir }}"
+      player_count: 3
+      protocol_setup: $FACTOR$
+
+      compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+      domain: $FACTOR$
+      custom_prime: $FACTOR$
+#      program_args:
+#        b: 500
+
+      script_name: "inference"
+
+      script_args:
+        # inference specific
+        #        n_samples: 262000
+        n_samples: 1
+        n_input_parties: 3
+
+        debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
+        emulate: False
+        dataset:
+          $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party, ember_3party ]
+
+        # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
+        batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+        n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+
+        audit_trigger_idx: 0 # select single audit trigger (from all)
+
+
+      stage: # "compile" in run and then in next run "run"
+        $FACTOR$: [ compile, run ] # ensure that this is last factor
+  factor_levels:
+
+    - mpc:
+        protocol_setup: "mal-rep-ring-party"
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
+        custom_prime: null
+
+    - mpc:
+        protocol_setup: "mal-rep-ring-party"
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
+        custom_prime: null
+
+    - mpc:
+        protocol_setup: "mal-rep-field-party"
+        domain: field_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+        custom_prime: null
+
+    - mpc:
+        protocol_setup: "mal-rep-field-party"
+        domain: custom_256
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
+
+
+
+sy_split:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles: []
+#        - setup-base
+#        - setup-consistency
+#        - download-dataset
+      #        - setup-largeprimes
+      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+
+    commit_args:
+      commitments:
+        size_x: 2351
+        size_y: 1
+
+    mpc:
+      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+      abs_path_to_code_dir: "{{ exp_code_dir }}"
+      player_count: 3
+      protocol_setup: $FACTOR$
+
+      compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+      domain: $FACTOR$
+      custom_prime: $FACTOR$
+      #      program_args:
+      #        b: 500
+
+      script_name: "inference"
+
+      script_args:
+        # inference specific
+        #        n_samples: 262000
+        n_samples: 1
+        n_input_parties: 3
+
+        debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
+        emulate: False
+        dataset:
+          $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party, ember_3party ]
+
+        # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
+        batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+        n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+
+        audit_trigger_idx: 0 # select single audit trigger (from all)
+
+
+      stage: # "compile" in run and then in next run "run"
+        $FACTOR$: [ compile, run ] # ensure that this is last factor
+  factor_levels:
+
+    - mpc:
+        protocol_setup: "sy-rep-ring-party"
+        domain: ring_opt
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
+        custom_prime: null
+
+    - mpc:
+        protocol_setup: "sy-rep-ring-party"
+        domain: ring_noeda
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000']
+        custom_prime: null
+
+
+#    - mpc:
+#        protocol_setup: "sy-rep-field-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+#        custom_prime: null
+#
+#    - mpc:
+#        protocol_setup: "sy-rep-field-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
 
 $ETL$: {}

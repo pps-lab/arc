@@ -21,8 +21,8 @@ $SUITE_VARS$:
     player_count: "[% my_run.n_parties %]"
     protocol_setup: "lowgear-party"
 
-    compiler_args: [ '-F 251', '-C', '--budget', '10000' ] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
-    custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+    compiler_args: [ '-F', '128', '-C', '--budget', '10000' ] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+    custom_prime: None
 
     script_name: "test_sz"
 
@@ -101,7 +101,8 @@ compare_pvc_lan_sizes:
 
     n_samples:
       # 2^26, 2^30 / 32 bits per sample
-      $FACTOR$: [512, 8192, 131072, 2097152, 33554432]
+      $FACTOR$: [ 131072 ]
+#      $FACTOR$: [512, 8192, 131072, 2097152, 33554432]
 
 
 $ETL$:
