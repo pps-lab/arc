@@ -187,6 +187,7 @@ class CompilerArguments(enum.Enum):
     MAL_REP_RING_PARTY = ["-R", "64"]
 
     SY_REP_RING_PARTY = ['-R', "64"]
+    SY_REP_FIELD_PARTY = ['-F', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
     SEMI2K_PARTY = ['-R', "64"]
     MASCOT_PARTY = ['-F', "64"]
@@ -378,14 +379,32 @@ class PsReplicatedBinPartyRunner(ScriptBaseRunner):
             script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
         ]
 
-class SyReplicatedBinPartyRunner(ScriptBaseRunner):
+class SyReplicatedRingPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './sy-rep-bin-party.x'"""
     def _program(self):
-        print("Run SyReplicatedBinPartyRunner")
+        print("Run SyReplicatedRingPartyRunner")
         return "./sy-rep-ring-party.x"
 
     def _args(self):
         return ["-OF", self.output_prefix,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-v",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ]
+
+class SyReplicatedFieldPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './sy-rep-bin-party.x'"""
+    def _program(self):
+        print("Run SyReplicatedFieldPartyRunner")
+        return "./sy-rep-field-party.x"
+
+    def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
+        return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-v",
@@ -598,7 +617,8 @@ class ProtocolRunners(enum.Enum):
     REP_FIELD_PARTY=ReplicatedFieldPartyRunner
     MAL_REP_FIELD_PARTY=MaliciousReplicatedFieldPartyRunner
     MAL_REP_RING_PARTY=MaliciousReplicatedRingPartyRunner
-    SY_REP_RING_PARTY=SyReplicatedBinPartyRunner
+    SY_REP_RING_PARTY=SyReplicatedRingPartyRunner
+    SY_REP_FIELD_PARTY=SyReplicatedFieldPartyRunner
     MASCOT_PARTY=MascotPartyRunner
     MASCOT_OFFLINE=MascotOfflineRunner
     LOWGEAR_PARTY=LowgearPartyRunner

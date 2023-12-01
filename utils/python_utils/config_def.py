@@ -41,6 +41,7 @@ class ProtocolChoices(enum.Enum):
     MAL_REP_RING_PARTY = "mal-rep-ring-party"
 
     SY_REP_RING_PARTY = "sy-rep-ring-party"
+    SY_REP_FIELD_PARTY = "sy-rep-field-party"
     SPDZ2K_PARTY = "spdz2k-party"
     SEMI2K_PARTY = "semi2k-party"
     MASCOT_PARTY = "mascot-party"
@@ -96,8 +97,6 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
 
     compiler_args: list[str] = None
     program_args: typing.Dict[str, str] = None
-
-    commit_args: typing.Optional[CommitConfig] = None
 
     domain: typing.Optional[str] = None # convenience parameter
 
