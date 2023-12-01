@@ -1,0 +1,53 @@
+from Compiler.script_utils import audit_function_utils as audit_utils
+
+from Compiler.script_utils import output_utils
+
+from Compiler.script_utils.data import data
+
+
+from Compiler.types import MultiArray, Array, sfix, cfix, sint, cint, regint, MemValue, Matrix
+
+
+from Compiler import ml
+from Compiler import library
+
+from Compiler.script_utils.audit import rand_smoothing
+
+from Compiler.script_utils import config
+
+import numpy as np
+
+
+program.options_from_args()
+cfg = config.from_program_args(program.args, config.BaseAuditModel)
+
+array_2d = np.arange(1, 7, dtype=np.float64).reshape((2, 3))
+array_2d += 0.1
+array_3d = np.arange(1, 25, dtype=np.float64).reshape((4, 2, 3))
+array_3d += 0.1
+
+multi_array_2d = audit_utils.from_numpy_to_multiarray(array_2d, cfix)
+
+print_ln("!!!!!!!!!!array_2d= %s", array_2d)
+print_ln("!!!!!!!!!!multi_array_2d= %s", multi_array_2d)
+
+
+for i in range(2):
+    for j in range(3):
+        x1 = cfix(float(array_2d[i][j]))
+        x2 = multi_array_2d[i][j]
+        library.runtime_error_if(x1 != x2, 'conversion with 2darray failed')
+
+
+multi_array_3d = audit_utils.from_numpy_to_multiarray(array_3d, cfix)
+for i in range(4):
+    for j in range(2):
+        for k in range(3):
+            x1 = cfix(float(array_3d[i][j][k]))
+            x2 = multi_array_3d[i][j][k]
+            library.runtime_error_if(x1 != x2, 'conversion with 3darray failed')
+
+
+
+
+#

@@ -301,3 +301,20 @@ def flatten(M: MultiArray):
     """
     part_size = reduce(operator.mul, M.sizes[1:])
     return MultiArray([M.sizes[0], part_size], M.value_type, address=M.address)
+
+
+def from_numpy_to_multiarray(np_array, value_type):
+    """Convert a numpy array to a MultiArray
+
+    Args:
+        np_array (numpy array): numpy array
+        value_type (type): type of the values in the numpy array
+
+    Returns:
+        MultiArray: MultiArray with the same values as the numpy array
+    """
+    sizes = list(np_array.shape)
+    multi_array = MultiArray(sizes, value_type)
+    array = multi_array.to_array()
+    array.set_range(0, np_array.flatten(order='C').tolist())
+    return multi_array

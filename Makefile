@@ -13,8 +13,15 @@ LINK_UTILS=$(PWD)/MP-SPDZ/Compiler/script_utils
 
 LINK=$(PWD)/MP-SPDZ/Programs/Source/$(script).mpc
 
+test?=test_utils
+TEST=$(PWD)/MP-SPDZ/Programs/Source/$(test).mpc
+
+
 all: emulate
 
+
+clean:
+	cd MP-SPDZ && $(MAKE) clean
 
 setup-mpspdz:
 	cd MP-SPDZ && $(MAKE) -j 8 tldr
@@ -24,6 +31,8 @@ setup-mpspdz:
 simlink:
 	[ -L $(LINK_UTILS) ] && [ -e $(LINK_UTILS) ] || ln -s  $(PWD)/script_utils $(LINK_UTILS)
 	[ -L $(LINK) ] && [ -e $(LINK) ] || ln -s  $(PWD)/scripts/$(script).mpc $(LINK)
+	[ -L $(TEST) ] && [ -e $(TEST) ] || ln -s  $(PWD)/tests/$(test).mpc $(TEST)
+
 
 
 compile-debug: simlink
@@ -56,6 +65,11 @@ train-debug: simlink
 ring: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -Y --budget 1000 -C $(AUDITARGS) emulate__True debug__False
 
+
+ring-test: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(test) $(RING_64) -Y --budget 1000 -C $(AUDITARGS) emulate__True debug__False
+
+
 compile-field: simlink
 	cd MP-SPDZ && ./compile.py $(script) $(AUDITARGS) emulate__True debug__True
 
@@ -76,4 +90,3 @@ field-bls377-slow: simlink
 
 deb: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -Z 3 --budget 1000 -C audit_trigger_idx__0 batch_size__128 consistency_check__False dataset__mnist_full_3party debug__False emulate__False n_input_parties__3 n_threads__36 trunc_pr__True
-
