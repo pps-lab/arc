@@ -169,13 +169,13 @@ class AbstractInputLoader(ABC):
         # LOADING TEST SAMPLES
 
 
-        # if consistency_check:
-        #     print_ln("Consistency check!")
-        #     start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
-        #     for party_id in range(len(train_datasets)):
-        #         if party_id in input_consistency_array_per_party:
-        #             input_consistency.compute_and_output_poly_array(input_consistency_array_per_party[party_id], party_id, 1)
-        #     stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+        if consistency_check:
+            print_ln("Consistency check!")
+            start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+            for party_id in range(len(train_datasets)):
+                if party_id in input_consistency_array_per_party:
+                    input_consistency.compute_and_output_poly_array(input_consistency_array_per_party[party_id], party_id, 1)
+            stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
     def _load_input_data(self, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
