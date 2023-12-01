@@ -4,7 +4,7 @@ program.options_from_args()
 
 from Compiler import ml, library
 
-from Compiler.script_utils import config, input_consistency
+from Compiler.script_utils import config, input_consistency, output_commit, timers
 from Compiler.types import sfix, sint, Array, cint
 import numpy as np
 # USE TRUNC_PR ??

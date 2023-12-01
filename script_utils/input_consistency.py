@@ -1,9 +1,11 @@
 
 
 from Compiler.types import sfix, sint, Array, cint
-from Compiler.library import print_ln, for_range_opt, for_range_multithread
+from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread
 
 import ruamel.yaml
+
+
 
 def compute_and_output_poly_array(inputs: list, player_input_id, n_threads):
     """
@@ -44,8 +46,22 @@ def compute_and_output_poly_array(inputs: list, player_input_id, n_threads):
 
     print(f"complete array for player {player_input_id} length: ", full_arr.length)
 
-    compute_and_output_poly(full_arr, player_input_id, n_threads)
-    write_format_to_file(fmt, player_input_id)
+    output_shares_input(full_arr, player_input_id, n_threads)
+    write_input_format_to_file(fmt, player_input_id)
+
+
+def output_shares_input(inputs, player_input_id, n_threads):
+
+    assert isinstance(inputs, Array)
+    sint.write_to_file(inputs)
+
+    # @multithread(n_threads, inputs.length)
+    # def f(base, size):
+    #     # min_idx = (i * chunk_size)
+    #     # max_idx = max((i + 1) * chunk_size, inputs.length)
+    #     # size = max_idx - min_idx
+    #     elements = inputs.get_vector(base, size)
+    #     sint.write_to_file(elements)
 
 
 def compute_and_output_poly(inputs, player_input_id, n_threads):
@@ -65,7 +81,7 @@ def compute_and_output_poly(inputs, player_input_id, n_threads):
 
     # TODO: WE ARE MISSING 10 somewhere!
 
-    random_point = 5
+    random_point = 1
     rho = cint(random_point)
 
     output_sum = inputs[0]
@@ -110,11 +126,53 @@ def convert_array_sint(arr):
 
     return arr_out
 
-def write_format_to_file(fmt, player):
+def output(model, prediction_x, prediction_y):
+    from Compiler.script_utils.data import AbstractInputLoader
+    fmt = []
+    if model is not None:
+        output_matrices = AbstractInputLoader._extract_model_weights(model)
+        total_len = sum([m.total_size() for m in output_matrices])
+        full_arr = Array(total_len, sfix)
+        idx = 0
+        for i in range(len(output_matrices)):
+            arr = output_matrices[i].to_array()
+            full_arr.assign(arr, idx)
+            idx += arr.length
+
+        sfix.write_to_file(full_arr)
+        fmt.append({ "type": model.value_type.__name__, "object_type": "m", "length": total_len })
+
+    if prediction_x is not None:
+        sfix.write_to_file(prediction_x)
+        fmt.append({ "type": prediction_x.value_type.__name__, "object_type": "x", "length": prediction_x.total_size() })
+
+    if prediction_y is not None:
+        if isinstance(prediction_y, sfix):
+            sfix.write_to_file(prediction_y)
+            fmt.append({ "type": type(sfix).__name__, "object_type": "y", "length": 1 })
+        else:
+            sfix.write_to_file(prediction_y)
+            fmt.append({ "type": prediction_y.value_type.__name__, "object_type": "y", "length": prediction_y.total_size() })
+
+    write_output_format_to_file(fmt)
+
+def write_input_format_to_file(fmt, player):
     # this function solves the super annoying issue that MP-SPDZ outputs floating point values at 32-bits
     # and integers at 64-bits. So we need to specify the format.
     content = ruamel.yaml.dump(fmt, Dumper=ruamel.yaml.RoundTripDumper)
     filename = 'Player-Data/Input-Binary-P%d-0-format' % player
+    print('Writing format of binary data to', filename)
+
+    f = open(filename, 'w')
+    f.write(content)
+    f.flush()
+    f.close()
+
+def write_output_format_to_file(fmt):
+    # this function solves the super annoying issue that MP-SPDZ outputs floating point values at 32-bits
+    # and integers at 64-bits. So we need to specify the format.
+    content = ruamel.yaml.dump(fmt, Dumper=ruamel.yaml.RoundTripDumper)
+    filename = 'Player-Data/Output-format'
     print('Writing format of binary data to', filename)
 
     f = open(filename, 'w')

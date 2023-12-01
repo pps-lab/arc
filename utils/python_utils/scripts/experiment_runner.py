@@ -35,6 +35,7 @@ import python_utils.config_def as config_def
 import python_utils.runner_defs as runner_defs
 import python_utils.output_capture as out_cap
 import python_utils.cleaner as clr
+import python_utils.format_config as format_config
 import click
 import os
 import shutil
@@ -109,7 +110,7 @@ def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
         output_prefix=output_prefix)
     cleaner_obj.clean()
 
-def run_consistency_check(task_config, output_prefix):
+def prove_commitment_opening(task_config, output_prefix):
     if task_config.consistency_args is None:
         print("No consistency check arguments specified. Skipping consistency check.")
         return
@@ -162,7 +163,7 @@ def run_consistency_check(task_config, output_prefix):
 
     # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     # output_file = f"{output_prefix}-P{task_config.player_id}-0"
-    result_file_name = f"result-P{task_config.player_id}-0.txt"
+    result_file_name = f"poly_eval.log"
     result_file_path = os.path.join(result_dir_path, result_file_name)
     if not os.path.exists(result_file_path):
         print(f"Error: Could not find mpspdz output file! Expected to find {result_file_path}")
@@ -196,6 +197,102 @@ def run_consistency_check(task_config, output_prefix):
     # print(result_prove_verify.stdout, file=sys.stdout)
     # print(result_prove_verify.stderr, file=sys.stderr)
 
+def convert_shares(task_config):
+    if task_config.commit_args is None and task_config.consistency_args is None:
+        print("No commit or consistency check specified. No need to convert shares.")
+        return
+
+    protocol = task_config.protocol_setup.name
+
+    executable_prefix = None
+    if protocol == runner_defs.ProtocolRunners.REPLICATED_RING_PARTY_X:
+        executable_prefix = "rep"
+    elif protocol == runner_defs.ProtocolRunners.SY_REP_RING_PARTY:
+        executable_prefix = "sy-rep"
+    else:
+        raise ValueError(f"Cannot convert from protocol {protocol}. Note that we can only convert from the ring for now.")
+
+    player_input_map, output_data, total_output_length = format_config.get_total_share_length(task_config.abs_path_to_code_dir, task_config.player_count)
+
+    if task_config.convert_ring_if_needed:
+
+        # determine how many shares we have from the format files output by the compilation
+
+        total_input_length = sum([v for k,v in player_input_map.items()])
+        # GEN PP
+        executable = f"./{executable_prefix}-ring-switch-party.x"
+        args = {
+            "n_shares": total_input_length + total_output_length, # convert all shares
+            # "start": None,
+            "n_bits": 32,
+        }
+        args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+        executable_str = f"{executable} {args_str}"
+        print(f"Converting shares with command: {executable_str}")
+
+        result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+        convert_shares_phase = open(os.path.join(result_dir_path, "convert_shares.log"), "w+")
+        import subprocess
+        subprocess.run(
+            executable_str,
+            shell=True,
+            cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+            check=True,
+            stdout=convert_shares_phase,
+            stderr=convert_shares_phase,
+        )
+
+    if task_config.consistency_args is not None:
+        # compute a polynomial for each party
+        input_counter = 0
+        for party_id, player_input_count in player_input_map.items():
+            # GEN PP
+            executable = f"./{executable_prefix}-pe-party.x"
+            args = {
+                "n_shares": player_input_count, # convert all shares
+                "start": input_counter,
+                "input_party_i": party_id,
+            }
+            args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+            executable_str = f"{executable} {args_str}"
+            print(f"Computing polynomial for player {party_id} with command: {executable_str}")
+
+            result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+            poly_eval_phase = open(os.path.join(result_dir_path, "poly_eval.log"), "a+")
+            import subprocess
+            subprocess.run(
+                executable_str,
+                shell=True,
+                cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+                check=True,
+                stdout=poly_eval_phase,
+                stderr=poly_eval_phase,
+            )
+            input_counter += player_input_count
+        assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
+
+    if task_config.commit_args is not None:
+        # check how many commitments we need
+        # for each item in list output_data, add an arg with object_type
+        args = { c['object_type']: c['length'] for c in output_data }
+        executable = f"./{executable_prefix}-pc-party.x"
+
+        args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+        executable_str = f"{executable} {args_str}"
+        print(f"Computing commitments with command: {executable_str}")
+
+        result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+        poly_commit_phase = open(os.path.join(result_dir_path, "poly_commit.log"), "w+")
+        import subprocess
+        subprocess.run(
+            executable_str,
+            shell=True,
+            cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+            check=True,
+            stdout=poly_commit_phase,
+            stderr=poly_commit_phase,
+        )
+
 
 
 # TODO: I think this could be simplified with e.g., a makefile?
@@ -222,8 +319,9 @@ def cli(player_number,sleep_time):
             output_prefix=output_prefix)
         capture_output(task_config=task_config,
             output_prefix=output_prefix)
-        run_consistency_check(task_config=task_config,
-                              output_prefix=output_prefix)
+        convert_shares(task_config=task_config)
+        prove_commitment_opening(task_config=task_config,
+                                 output_prefix=output_prefix)
         clean_workspace(task_config=task_config,output_prefix=output_prefix)
 
 
