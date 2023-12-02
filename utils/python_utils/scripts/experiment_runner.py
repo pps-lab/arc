@@ -212,7 +212,8 @@ def convert_shares(task_config):
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}. Note that we can only convert from the ring for now.")
 
-    player_input_list, output_data, total_output_length = format_config.get_total_share_length(task_config.abs_path_to_code_dir, task_config.player_count)
+    player_data_dir = os.path.join(os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"), "Player-Data")
+    player_input_list, output_data, total_output_length = format_config.get_total_share_length(player_data_dir, task_config.player_count)
 
     total_input_length = 0
     player_input_counter = []
@@ -250,7 +251,7 @@ def convert_shares(task_config):
             print(f"Converting input shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-            convert_shares_phase = open(os.path.join(result_dir_path, "convert_shares.log"), "a+")
+            convert_shares_phase = open(os.path.join(result_dir_path, "consistency_convert_shares.log"), "a+")
             import subprocess
             subprocess.run(
                 executable_str,
@@ -279,7 +280,7 @@ def convert_shares(task_config):
             print(f"Computing polynomial for player {party_id} with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-            poly_eval_phase = open(os.path.join(result_dir_path, "poly_eval.log"), "a+")
+            poly_eval_phase = open(os.path.join(result_dir_path, "consistency_poly_eval.log"), "a+")
             import subprocess
             subprocess.run(
                 executable_str,
@@ -311,7 +312,7 @@ def convert_shares(task_config):
             print(f"Converting shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-            convert_shares_phase = open(os.path.join(result_dir_path, "convert_shares.log"), "a+")
+            convert_shares_phase = open(os.path.join(result_dir_path, "consistency_convert_shares.log"), "a+")
             import subprocess
             subprocess.run(
                 executable_str,
@@ -334,7 +335,7 @@ def convert_shares(task_config):
         print(f"Computing commitments with command: {executable_str}")
 
         result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-        poly_commit_phase = open(os.path.join(result_dir_path, "poly_commit.log"), "w+")
+        poly_commit_phase = open(os.path.join(result_dir_path, "consistency_poly_commit.log"), "w+")
         import subprocess
         subprocess.run(
             executable_str,
