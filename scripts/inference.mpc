@@ -9,7 +9,7 @@ from Compiler import library
 
 from Compiler.script_utils.audit import shap
 
-from Compiler.script_utils import config, timers
+from Compiler.script_utils import config, timers, input_consistency
 
 
 
@@ -32,6 +32,7 @@ if not cfg.emulate:
 
 # program.set_bit_length(32)
 
+# sfix.round_nearest = True
 ml.set_n_threads(cfg.n_threads)
 
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
@@ -57,6 +58,11 @@ prediction_results = model.eval(inf_samples, batch_size=min(cfg.batch_size, cfg.
 # print_ln("  n_correct=%s  n_samples=%s  avg_loss=%s", n_correct, len(inf_samples), avg_loss)
 
 library.stop_timer(timer_id=timers.TIMER_INFERENCE)
+
+# write output to file
+library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
+input_consistency.output(None, inf_samples[0], prediction_results[0])
+library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
 
 # if cfg.debug:
 #     print_ln(prediction_results.reveal(), inf_labels.reveal())
