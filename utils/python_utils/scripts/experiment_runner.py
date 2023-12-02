@@ -205,9 +205,9 @@ def convert_shares(task_config):
     protocol = task_config.protocol_setup
 
     executable_prefix = None
-    if protocol == runner_defs.ProtocolRunners.REPLICATED_RING_PARTY_X:
+    if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X:
         executable_prefix = "rep"
-    elif protocol == runner_defs.ProtocolRunners.SY_REP_RING_PARTY:
+    elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY:
         executable_prefix = "sy-rep"
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}. Note that we can only convert from the ring for now.")
