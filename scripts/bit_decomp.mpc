@@ -1,0 +1,80 @@
+from Compiler.script_utils import output_utils
+
+from Compiler.script_utils.data import data
+from Compiler.script_utils.data import AbstractInputLoader
+
+
+from Compiler import ml
+from Compiler import library
+
+from Compiler.script_utils.audit import shap
+
+from Compiler.script_utils import config, timers, output_commit
+
+
+
+
+class InferenceConfig(config.BaseAuditModel):
+    n_samples: int = 1 # -1 = all
+
+program.options_from_args()
+cfg = config.from_program_args(program.args, InferenceConfig)
+
+if not cfg.emulate:
+    pass
+    # program.use_trunc_pr = cfg.trunc_pr
+    # program.use_edabits = True
+    # program.use_split(4)
+
+# program.use_edabit(False)
+# program.use_dabit = False
+# program.use_split(3)
+
+# program.set_bit_length(32)
+ari = sint(123456789)
+
+
+bit_v = ari.bit_decompose(32, maybe_mixed=True)
+sbitint.write_to_file(bit_v)
+# sint.write_to_file(ari)
+x = sint.read_from_file(0, 32)
+
+print_ln('stop %s', x[0])
+for i in range(32):
+    print_ln('%s rf', x[1][i].reveal())
+#
+# ml.set_n_threads(cfg.n_threads)
+#
+# library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
+# input_loader: AbstractInputLoader = data.get_inference_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx,
+#                                                                     batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check, n_target_test_samples=cfg.n_samples)
+# library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
+#
+#
+# library.start_timer(timer_id=timers.TIMER_INFERENCE)
+#
+# # eval here
+# inf_samples, inf_labels = input_loader.test_dataset() # train dataset in case we dont have test dataset
+#
+# inf_samples = inf_samples.get_part(0, cfg.n_samples)
+# inf_labels = inf_labels.get_part(0, cfg.n_samples)
+#
+# model = input_loader.model()
+# model.summary()
+#
+# model.layers[-1].compute_loss = False
+# # prediction_results = model.eval(inf_samples, batch_size=min(cfg.batch_size, cfg.n_samples))
+#
+# prediction_results = sfix(4)
+# # n_correct, avg_loss = model.reveal_correctness(data=inf_samples, truth=inf_labels, batch_size=input_loader.batch_size(), running=True)
+# # print_ln("  n_correct=%s  n_samples=%s  avg_loss=%s", n_correct, len(inf_samples), avg_loss)
+#
+# library.stop_timer(timer_id=timers.TIMER_INFERENCE)
+#
+# # write output to file
+# library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
+# output_commit.commit_inference(inf_samples[0], prediction_results[0])
+# library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
+
+# if cfg.debug:
+#     print_ln(prediction_results.reveal(), inf_labels.reveal())
