@@ -202,7 +202,7 @@ def convert_shares(task_config):
         print("No commit or consistency check specified. No need to convert shares.")
         return
 
-    protocol = task_config.protocol_setup.name
+    protocol = task_config.protocol_setup
 
     executable_prefix = None
     if protocol == runner_defs.ProtocolRunners.REPLICATED_RING_PARTY_X:
