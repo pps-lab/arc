@@ -157,7 +157,7 @@ mal:
     - mpc:
         protocol_setup: "sy-rep-ring-party"
         domain: ring
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
         custom_prime: null
 
 #    - mpc:

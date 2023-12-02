@@ -46,6 +46,7 @@
       - texinfo
       - cmake
       - yasm
+      - pkg-config
     update_cache: yes
     state: present
 
@@ -124,22 +125,27 @@
 #        jobs: "8"
 #        target: "cmake"
     # TODO: compiling cmake and immediately doing the next module, messes it up
-    - name: "Make boost 1.81"
-      community.general.make:
-        chdir: "{{ mpspdz_dir }}"
-        jobs: "36"
-        target: "boost"
-    # SOMEHOW THIS LIBOTE IS FAILING??
-    - name: "Compile libote"
-      community.general.make:
-        chdir: "{{ mpspdz_dir }}"
-        jobs: "36"
-        target: "libote"
-    - name: "Compile MP-SPDZ tldr to get all libraries"
-      community.general.make:
-        chdir: "{{ mpspdz_dir }}"
-        jobs: "36"
-        target: "tldr"
+#    - name: "Make boost 1.81"
+#      community.general.make:
+#        chdir: "{{ mpspdz_dir }}"
+#        jobs: "36"
+#        target: "boost"
+#    # SOMEHOW THIS LIBOTE IS FAILING??
+#    - name: "Compile libote"
+#      community.general.make:
+#        chdir: "{{ mpspdz_dir }}"
+#        jobs: "36"
+#        target: "libote"
+#    - name: "Compile MP-SPDZ tldr to get all libraries"
+#      community.general.make:
+#        chdir: "{{ mpspdz_dir }}"
+#        jobs: "36"
+#        target: "tldr"
+#    - name: "Install libff"
+#      community.general.make:
+#        chdir: "{{ mpspdz_dir }}"
+#        jobs: "36"
+#        target: "libff"
     #  when: have_compiled_res.stat.exists == False
 
     - name: "Compile MP-SPDZ all"

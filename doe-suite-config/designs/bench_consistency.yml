@@ -21,7 +21,7 @@ $SUITE_VARS$:
     player_count: "[% my_run.n_parties %]"
     protocol_setup: "lowgear-party"
 
-    compiler_args: [ '-F', '128', '-C', '--budget', '10000' ] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+    compiler_args: [ '-F', '251', '-C', '--budget', '10000' ] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
     custom_prime: None
 
     script_name: "test_sz"

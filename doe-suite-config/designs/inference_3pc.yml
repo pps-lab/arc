@@ -6,7 +6,7 @@ $SUITE_VARS$:
   cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
 
 
-inference_3pc:
+sh:
   n_repetitions: 1
   host_types:
     consistency:
@@ -25,10 +25,7 @@ inference_3pc:
 
   base_experiment:
 
-    commit_args:
-      commitments:
-        size_x: 2351
-        size_y: 1
+    commit_output: True
 
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -45,6 +42,8 @@ inference_3pc:
       script_name: "inference"
 
       script_args:
+        consistency_check: False
+
         # inference specific
         #        n_samples: 262000
         n_samples: 1
@@ -54,6 +53,8 @@ inference_3pc:
         emulate: False
         dataset:
           $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party, ember_3party ]
+#          $FACTOR$: [ adult_3p ]
+
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
@@ -72,23 +73,23 @@ inference_3pc:
         compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
         custom_prime: null
 
-    - mpc:
-        protocol_setup: "semi_honest_3"
-        domain: ring
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
-        custom_prime: null
-
-    - mpc:
-        protocol_setup: "rep-field-party"
-        domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
-        custom_prime: null
-
-    - mpc:
-        protocol_setup: "rep-field-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+#    - mpc:
+#        protocol_setup: "semi_honest_3"
+#        domain: ring
+#        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
+#        custom_prime: null
+#
+#    - mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+#        custom_prime: null
+#
+#    - mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 
 mal:
@@ -197,10 +198,7 @@ sy_split:
 
   base_experiment:
 
-    commit_args:
-      commitments:
-        size_x: 2351
-        size_y: 1
+    commit_output: True
 
     mpc:
       player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -225,7 +223,9 @@ sy_split:
         debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
         emulate: False
         dataset:
-          $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party, ember_3party ]
+#          $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party, ember_3party ]
+          $FACTOR$: [ adult_3p ]
+
 
         # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
         batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
@@ -244,11 +244,11 @@ sy_split:
         compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
         custom_prime: null
 
-    - mpc:
-        protocol_setup: "sy-rep-ring-party"
-        domain: ring_noeda
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000']
-        custom_prime: null
+#    - mpc:
+#        protocol_setup: "sy-rep-ring-party"
+#        domain: ring_noeda
+#        compiler_args: [ '-R', '64', '-C', '--budget', '10000']
+#        custom_prime: null
 
 
 #    - mpc:

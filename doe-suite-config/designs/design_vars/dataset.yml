@@ -16,3 +16,8 @@ dataset_info:
 
   ember_3party:
     max_input_size: 488267184 # 471263184
+
+
+
+  mnist_full_A:
+    max_input_size: 16521393 # 15925258

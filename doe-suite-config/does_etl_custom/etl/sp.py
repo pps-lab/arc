@@ -52,7 +52,8 @@ class StatTransformer(Transformer):
         for stat_label, stat_values in self.stats.items():
             for stat_value in stat_values:
                 if stat_value not in df['stat'].unique():
-                    raise ValueError(f"Stat value {stat_value} for stat {stat_label} not found in df['stat'].unique()")
+                    raise ValueError(f"Stat value {stat_value} for stat {stat_label} not found in df['stat'].unique()"
+                                     f"df['stat'].unique()={df['stat'].unique()}")
 
         # Iterate through each key-value pair in self.stats
         for stat_label, stat_values in self.stats.items():
@@ -303,7 +304,7 @@ class BarPlotLoader(PlotLoader):
     bar_cols_values: Dict[str, List[str]] = {"allocation": ['greedy', "weighted-dpf+", "dpk-gurobi"]}
 
 
-    metric_cols: List[str]
+    metric_cols: List[Union[str, List[str]]]
     annotation_col: str
     annotation_labels: Dict[str, str]
 
@@ -314,6 +315,7 @@ class BarPlotLoader(PlotLoader):
 
     symbols = ['o', 'v']
     colors: List = ['#D5E1A3', '#C7B786', (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0), "#5dfc00", "#5dfcf7", "#fd9ef7"]
+    color_stack_rgba: List[float] = [1.0, 0.8, 0.6, 0.4, 0.2]
 
     def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> None:
         if df.empty:
@@ -408,8 +410,23 @@ class BarPlotLoader(PlotLoader):
                 # Create an array with the positions of each bar on the x-axis
                 bar_l = np.arange(len(means))
 
+                print("MEANS")
+                # print(means['mpc_time_s'].columns)
+                # if isinstance(metric, str):
+                #     metric = [metric]
+                # means.columns = means.columns.unstack(level=1)
+                # print(means)
+
+                plot_bar_cols = means.columns if isinstance(metric, str) else means.columns.levels[1]
+                # bar_cols = means.columns.get_level_index(lowest_index)
+                # print( means)
+                # print("bar_cols", bar_cols)
+                #
+                # # sub_df = means.loc[:, (slice(None), metric[0])]
+                # sub_df = means.swaplevel(axis='columns')
+                # print("subdf", sub_df)
                 # Make the bar chart
-                for i, col in enumerate(means.columns):
+                for i, col in enumerate(plot_bar_cols):
                     w = bar_width / len(means) # divide by number of columns
                     bar_pos = [j
                                - (w * num_of_cols / 2.) # center around j
@@ -417,14 +434,37 @@ class BarPlotLoader(PlotLoader):
                                + (w/2.) # center in column
                                for j in bar_l]
 
-                    individual_colors_as_rgba = [mcolors.to_rgba(bar_colors[i], 1.0) for _ in range(len(bar_pos))]
+                    individual_colors_as_rgba = [[mcolors.to_rgba(bar_colors[i], rgba) for _ in range(len(bar_pos))] for rgba in self.color_stack_rgba]
 
                     # If adjacent bar_pos are the same, low alpha of the first bar to make it transparent
                     # for j in range(len(bar_pos)-1):
                     #     if bar_pos[j] == bar_pos[j+1]:
                     #         individual_colors_as_rgba[j] = lighten_color(individual_colors_as_rgba[j], amount=1.4)
 
-                    ax.bar(bar_pos, means[col], width=w, label=col, yerr=yerr[col], color=individual_colors_as_rgba)
+                    # each col here will be a bar in each group.
+                    # we may also want to stack if we have
+                    if isinstance(metric, str):
+                        ax.bar(bar_pos, means[col], width=w, label=col, yerr=yerr[col], color=individual_colors_as_rgba[0])
+                    else:
+                        # stack em
+                        bottom = 0
+                        for metric_idx, metric_v in enumerate(metric):
+                            print((metric_v, col), means[(metric_v, col)])
+                            ax.bar(bar_pos, means[(metric_v, col)], width=w, label=col, yerr=yerr[(metric_v, col)], color=individual_colors_as_rgba[metric_idx], bottom=bottom)
+                            bottom += means[(metric_v, col)]
+
+                    # print(col, means[col])
+                    # if isinstance(col, str):
+                    #     ax.bar(bar_pos, means[col], width=w, label=col, yerr=yerr[col], color=individual_colors_as_rgba)
+                    # else:
+                    #     bottom = 0
+                    #     for c in col:
+                    #         print("Trying to get for", c, "in", means.columns, "and", yerr.columns)
+                    #         ax.bar(bar_pos, means[c], width=w, label=c, yerr=yerr[c], color=individual_colors_as_rgba, bottom=bottom)
+                    #         bottom += means[c]
+
+                    # for metric_v in metric:
+                    #     ax.bar(bar_pos, means[metric_v], width=w, label=col, yerr=yerr[metric_v], color=individual_colors_as_rgba)
 
                     # extract x positions of the bars + add  bar_width/8. to get the position for the circle
                     x_positions = [None] * (len(means.columns) * len(means))
