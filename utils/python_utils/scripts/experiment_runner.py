@@ -218,7 +218,7 @@ def convert_shares(task_config):
     total_input_length = 0
     player_input_counter = []
 
-    spdz_args_str = f"-p {task_config.player_id} -N {task_config.player_count}"
+    spdz_args_str = f"-p {task_config.player_id} -N {task_config.player_count} -h {task_config.player_0_hostname}"
 
     if task_config.consistency_args is not None:
 
