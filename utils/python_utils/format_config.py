@@ -28,13 +28,12 @@ def get_share_data(path):
     return content
 
 def get_total_share_length(format_dir, player_count):
-    player_input_map = {}
+    player_input_list = []
     for i in range(player_count):
         filename = 'Input-Binary-P%d-0-format' % i
         path = os.path.join(format_dir, filename)
-        cnt = get_share_length(path)
-        if cnt > 0:
-            player_input_map[i] = cnt
+        data = get_share_data(path)
+        player_input_list.append(data)
 
     filename = "Output-format"
     path = os.path.join(format_dir, filename)
@@ -43,4 +42,4 @@ def get_total_share_length(format_dir, player_count):
     for p in output_data:
         total_output_length += p["length"]
 
-    return player_input_map, output_data, total_output_length
+    return player_input_list, output_data, total_output_length

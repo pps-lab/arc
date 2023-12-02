@@ -63,20 +63,20 @@ class ArgumentLineConfig(pydantic.BaseModel):
     player_id: int
     sleep_time: float
 
-class CommitInfConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
-    size_x: int
-    size_y: int
-
-    executable_id: str = "inference"
-
-class CommitTrainConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
-    size_model: int
-
-    executable_id: str = "train"
-
-class CommitConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
-    # the type of the commit, either inference or training (?) is specified in the program_args
-    commitments: typing.Union[CommitInfConfig, CommitTrainConfig]
+# class CommitInfConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
+#     size_x: int
+#     size_y: int
+#
+#     executable_id: str = "inference"
+#
+# class CommitTrainConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
+#     size_model: int
+#
+#     executable_id: str = "train"
+#
+# class CommitConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
+#     # the type of the commit, either inference or training (?) is specified in the program_args
+#     commit: bool
 
 class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     """Defines the model for the MPC-specific configuration received via the config.json file
@@ -123,7 +123,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     """Defines the relevant model for the configuration received via the config.json file"""
     mpc: JsoncMpcConfig
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
-    commit_args: typing.Optional[CommitConfig] = None
+    commit_output: typing.Optional[bool] = False
 
 
 def parse_json_config(config_path):
@@ -168,7 +168,7 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
         compiler_args=json_config_obj.mpc.compiler_args,
         program_args=json_config_obj.mpc.program_args,
         consistency_args=json_config_obj.consistency_args,
-        commit_args=json_config_obj.commit_args
+        commit_output=json_config_obj.commit_output
     )
     return conf_obj
 
@@ -216,7 +216,7 @@ class TaskConfig(pydantic.BaseModel):
 
     compiler_args: list = None
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
-    commit_args: typing.Optional[CommitConfig] = None
+    commit_output: typing.Optional[bool] = False
 
     @pydantic.validator('stage')
     def convert_to_list(cls, v):

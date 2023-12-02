@@ -47,7 +47,7 @@ def compute_and_output_poly_array(inputs: list, player_input_id, n_threads):
     print(f"complete array for player {player_input_id} length: ", full_arr.length)
 
     # output_shares_input(full_arr, player_input_id, n_threads)
-    compute_and_output_poly(full_arr, player_input_id, n_threads)
+    # compute_and_output_poly(full_arr, player_input_id, n_threads)
     write_input_format_to_file(fmt, player_input_id)
 
 

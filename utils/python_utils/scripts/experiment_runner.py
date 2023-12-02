@@ -198,7 +198,7 @@ def prove_commitment_opening(task_config, output_prefix):
     # print(result_prove_verify.stderr, file=sys.stderr)
 
 def convert_shares(task_config):
-    if task_config.commit_args is None and task_config.consistency_args is None:
+    if task_config.commit_output is None and task_config.consistency_args is None:
         print("No commit or consistency check specified. No need to convert shares.")
         return
 
@@ -212,40 +212,61 @@ def convert_shares(task_config):
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}. Note that we can only convert from the ring for now.")
 
-    player_input_map, output_data, total_output_length = format_config.get_total_share_length(task_config.abs_path_to_code_dir, task_config.player_count)
+    player_input_list, output_data, total_output_length = format_config.get_total_share_length(task_config.abs_path_to_code_dir, task_config.player_count)
 
-    if task_config.convert_ring_if_needed:
+    total_input_length = 0
+    player_input_counter = []
 
-        # determine how many shares we have from the format files output by the compilation
-
-        total_input_length = sum([v for k,v in player_input_map.items()])
-        # GEN PP
-        executable = f"./{executable_prefix}-ring-switch-party.x"
-        args = {
-            "n_shares": total_input_length + total_output_length, # convert all shares
-            # "start": None,
-            "n_bits": 32,
-        }
-        args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-        executable_str = f"{executable} {args_str}"
-        print(f"Converting shares with command: {executable_str}")
-
-        result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-        convert_shares_phase = open(os.path.join(result_dir_path, "convert_shares.log"), "w+")
-        import subprocess
-        subprocess.run(
-            executable_str,
-            shell=True,
-            cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
-            check=True,
-            stdout=convert_shares_phase,
-            stderr=convert_shares_phase,
-        )
+    spdz_args_str = f"-p {task_config.player_id} -N {task_config.player_count}"
 
     if task_config.consistency_args is not None:
+
+        if task_config.convert_ring_if_needed:
+            executable = f"./{executable_prefix}-ring-switch-party.x"
+
+            # shares is too slow because of the VM, we do input directly. In the future we should directly interface with MP-SPDZ!
+            input_parts = []
+            for player_id, p_inputs in enumerate(player_input_list):
+                if p_inputs is None:
+                    input_parts.append("-i 0")
+                    player_input_counter.append(0)
+                else:
+                    types = []
+                    player_input_cnt = 0
+                    for p_input in p_inputs:
+                        if p_input["type"] == "sfix":
+                            types.append(f"f{p_input['length']}")
+                        elif p_input["type"] == "sint":
+                            types.append(f"i{p_input['length']}")
+                        else:
+                            raise ValueError(f"Unknown type {p_input['type']}")
+                        total_input_length += p_input['length']
+                        player_input_cnt += p_input['length']
+                    player_input_counter.append(player_input_cnt)
+                    input_parts.append(f"-i {player_id} {','.join(types)}")
+            input_str = " ".join(input_parts)
+
+            executable_str = f"{executable} {spdz_args_str} --n_bits 32 {input_str}"
+            print(f"Converting input shares with command: {executable_str}")
+
+            result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+            convert_shares_phase = open(os.path.join(result_dir_path, "convert_shares.log"), "a+")
+            import subprocess
+            subprocess.run(
+                executable_str,
+                shell=True,
+                cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+                check=True,
+                stdout=convert_shares_phase,
+                stderr=convert_shares_phase,
+            )
+
         # compute a polynomial for each party
         input_counter = 0
-        for party_id, player_input_count in player_input_map.items():
+        for party_id, player_input_count in enumerate(player_input_counter):
+            if player_input_count == 0:
+                print("Skipping party", party_id, "because it has no input.")
+                continue
             # GEN PP
             executable = f"./{executable_prefix}-pe-party.x"
             args = {
@@ -254,7 +275,7 @@ def convert_shares(task_config):
                 "input_party_i": party_id,
             }
             args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-            executable_str = f"{executable} {args_str}"
+            executable_str = f"{executable} {spdz_args_str} {args_str}"
             print(f"Computing polynomial for player {party_id} with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
@@ -271,14 +292,45 @@ def convert_shares(task_config):
             input_counter += player_input_count
         assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
 
-    if task_config.commit_args is not None:
+    if task_config.commit_output is not None:
+
+        if total_output_length == 0:
+            print("No output to convert. Is this a mistake?")
+
+        if task_config.convert_ring_if_needed:
+            # convert the output shares
+            executable = f"./{executable_prefix}-ring-switch-party.x"
+            args = {
+                "n_shares": total_output_length, # convert all shares
+                # "start": None,
+                "n_bits": 32,
+                "out_start": total_input_length,
+            }
+            args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+            executable_str = f"{executable} {spdz_args_str} {args_str}"
+            print(f"Converting shares with command: {executable_str}")
+
+            result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+            convert_shares_phase = open(os.path.join(result_dir_path, "convert_shares.log"), "a+")
+            import subprocess
+            subprocess.run(
+                executable_str,
+                shell=True,
+                cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+                check=True,
+                stdout=convert_shares_phase,
+                stderr=convert_shares_phase,
+            )
+
         # check how many commitments we need
         # for each item in list output_data, add an arg with object_type
         args = { c['object_type']: c['length'] for c in output_data }
+        args['s'] = total_input_length
+        args_str = " ".join([f"-{k} {v}" for k,v in args.items()])
+
         executable = f"./{executable_prefix}-pc-party.x"
 
-        args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-        executable_str = f"{executable} {args_str}"
+        executable_str = f"{executable} {spdz_args_str} {args_str}"
         print(f"Computing commitments with command: {executable_str}")
 
         result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
