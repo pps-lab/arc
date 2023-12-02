@@ -141,7 +141,7 @@ def output(model, prediction_x, prediction_y):
             idx += arr.length
 
         sfix.write_to_file(full_arr)
-        fmt.append({ "type": model.value_type.__name__, "object_type": "m", "length": total_len })
+        fmt.append({ "type": full_arr.value_type.__name__, "object_type": "m", "length": total_len })
 
     if prediction_x is not None:
         sfix.write_to_file(prediction_x)
