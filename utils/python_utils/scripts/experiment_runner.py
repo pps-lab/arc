@@ -163,7 +163,7 @@ def prove_commitment_opening(task_config, output_prefix):
 
     # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     # output_file = f"{output_prefix}-P{task_config.player_id}-0"
-    result_file_name = f"poly_eval.log"
+    result_file_name = f"consistency_poly_eval.log"
     result_file_path = os.path.join(result_dir_path, result_file_name)
     if not os.path.exists(result_file_path):
         print(f"Error: Could not find mpspdz output file! Expected to find {result_file_path}")
