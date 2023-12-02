@@ -244,7 +244,7 @@ def convert_shares(task_config):
                         total_input_length += p_input['length']
                         player_input_cnt += p_input['length']
                     player_input_counter.append(player_input_cnt)
-                    input_parts.append(f"-i {player_id} {','.join(types)}")
+                    input_parts.append(f"-i {','.join(types)}")
             input_str = " ".join(input_parts)
 
             executable_str = f"{executable} {spdz_args_str} --n_bits 32 {input_str}"
