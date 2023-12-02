@@ -205,12 +205,14 @@ def convert_shares(task_config):
     protocol = task_config.protocol_setup
 
     executable_prefix = None
-    if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X:
+    if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X or protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
         executable_prefix = "rep"
-    elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY:
+    elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY:
         executable_prefix = "sy-rep"
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}. Note that we can only convert from the ring for now.")
+        # print("Cannot convert from protocol", protocol, ". Note that we can only convert from the ring for now.")
+        # print("Continuing without converting shares.")
 
     player_data_dir = os.path.join(os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"), "Player-Data")
     player_input_list, output_data, total_output_length = format_config.get_total_share_length(player_data_dir, task_config.player_count)
