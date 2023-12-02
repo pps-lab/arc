@@ -124,6 +124,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     mpc: JsoncMpcConfig
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
     commit_output: typing.Optional[bool] = False
+    convert_ring_bits: int = 34
 
 
 def parse_json_config(config_path):
@@ -168,7 +169,8 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
         compiler_args=json_config_obj.mpc.compiler_args,
         program_args=json_config_obj.mpc.program_args,
         consistency_args=json_config_obj.consistency_args,
-        commit_output=json_config_obj.commit_output
+        commit_output=json_config_obj.commit_output,
+        convert_ring_bits=json_config_obj.convert_ring_bits
     )
     return conf_obj
 
@@ -213,6 +215,7 @@ class TaskConfig(pydantic.BaseModel):
     custom_prime_length: typing.Optional[str] = None
 
     convert_ring_if_needed: bool = True
+    convert_ring_bits: int
 
     compiler_args: list = None
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
