@@ -266,7 +266,7 @@ def convert_shares(task_config):
                     stderr=convert_shares_phase,
                 )
             except subprocess.CalledProcessError as e:
-                print("Error converting shares. Continuing without converting shares.")
+                print(f"Error converting shares. Continuing without converting shares. {conversion_not_needed}")
                 print(e)
                 if conversion_not_needed:
                     import re
@@ -276,6 +276,7 @@ def convert_shares(task_config):
                     # for each file in this dir
                     for file_name in os.listdir(persistence_data_path):
                         # if it is a file and in the format of regex Transactions-P(\d*)-0.data
+                        print("Found ", os.path.join(persistence_data_path,file_name))
                         if os.path.isfile(os.path.join(persistence_data_path,file_name)) and re.match(r'Transactions-P(\d*)-0\.data', file_name):
                             # copy it to the persistence file with the prefix
                             # add suffix before extension to filename
