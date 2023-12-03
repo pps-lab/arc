@@ -281,7 +281,7 @@ def convert_shares(task_config):
                         if os.path.isfile(os.path.join(persistence_data_path,file_name)) and re.match(r'Transactions-P(\d*)\.data', file_name):
                             # copy it to the persistence file with the prefix
                             # add suffix before extension to filename
-                            filename_suffix = file_name.split(".")[0] + "-P256" + "." + file_name.split(".")[1]
+                            filename_suffix = file_name.split(".")[0] + "-P251" + "." + file_name.split(".")[1]
                             print("copying", file_name, "to", filename_suffix)
                             shutil.copyfile(os.path.join(persistence_data_path,file_name),os.path.join(persistence_data_path,filename_suffix))
 
@@ -363,7 +363,7 @@ def convert_shares(task_config):
                         if os.path.isfile(os.path.join(persistence_data_path,file_name)) and re.match(r'Transactions-P(\d*)\.data', file_name):
                             # copy it to the persistence file with the prefix
                             # add suffix before extension to filename
-                            filename_suffix = file_name.split(".")[0] + "-P256" + "." + file_name.split(".")[1]
+                            filename_suffix = file_name.split(".")[0] + "-P251" + "." + file_name.split(".")[1]
                             print("copying", file_name, "to", filename_suffix)
                             shutil.copyfile(os.path.join(persistence_data_path,file_name),os.path.join(persistence_data_path,filename_suffix))
 
