@@ -268,6 +268,21 @@ def convert_shares(task_config):
             except subprocess.CalledProcessError as e:
                 print("Error converting shares. Continuing without converting shares.")
                 print(e)
+                if conversion_not_needed:
+                    import re
+                    print("copying persistence file")
+                    # need to add -P256 prefix to the persistence file
+                    persistence_data_path = os.path.join(task_config.abs_path_to_code_dir,"MP-SPDZ/Persistence")
+                    # for each file in this dir
+                    for file_name in os.listdir(persistence_data_path):
+                        # if it is a file and in the format of regex Transactions-P(\d*)-0.data
+                        if os.path.isfile(os.path.join(persistence_data_path,file_name)) and re.match(r'Transactions-P(\d*)-0\.data', file_name):
+                            # copy it to the persistence file with the prefix
+                            # add suffix before extension to filename
+                            filename_suffix = file_name.split(".")[0] + "-P256" + "." + file_name.split(".")[1]
+                            print("copying", file_name, "to", filename_suffix)
+                            shutil.copyfile(os.path.join(persistence_data_path,file_name),os.path.join(persistence_data_path,filename_suffix))
+
 
         # compute a polynomial for each party
         input_counter = 0
@@ -333,6 +348,20 @@ def convert_shares(task_config):
             except subprocess.CalledProcessError as e:
                 print("Error converting shares. Continuing without converting shares.")
                 print(e)
+                if conversion_not_needed:
+                    import re
+                    print("copying persistence file")
+                    # need to add -P256 prefix to the persistence file
+                    persistence_data_path = os.path.join(task_config.abs_path_to_code_dir,"MP-SPDZ/Persistence")
+                    # for each file in this dir
+                    for file_name in os.listdir(persistence_data_path):
+                        # if it is a file and in the format of regex Transactions-P(\d*)-0.data
+                        if os.path.isfile(os.path.join(persistence_data_path,file_name)) and re.match(r'Transactions-P(\d*)-0\.data', file_name):
+                            # copy it to the persistence file with the prefix
+                            # add suffix before extension to filename
+                            filename_suffix = file_name.split(".")[0] + "-P256" + "." + file_name.split(".")[1]
+                            print("copying", file_name, "to", filename_suffix)
+                            shutil.copyfile(os.path.join(persistence_data_path,file_name),os.path.join(persistence_data_path,filename_suffix))
 
         # check how many commitments we need
         # for each item in list output_data, add an arg with object_type
