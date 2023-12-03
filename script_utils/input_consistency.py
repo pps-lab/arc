@@ -144,9 +144,6 @@ def output(model, prediction_x, prediction_y):
         fmt.append({ "type": full_arr.value_type.__name__, "object_type": "m", "length": total_len })
 
     if prediction_x is not None:
-        # print(prediction_x, prediction_x.value_type)
-        # if isinstance(prediction_x, Array):
-        #     sfix.write_to_file()
         sfix.write_to_file(prediction_x.to_array())
         fmt.append({ "type": prediction_x.value_type.__name__, "object_type": "x", "length": prediction_x.total_size() })
 

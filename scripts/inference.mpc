@@ -12,8 +12,6 @@ from Compiler.script_utils.audit import shap
 from Compiler.script_utils import config, timers, input_consistency
 
 
-
-
 class InferenceConfig(config.BaseAuditModel):
     n_samples: int = 1 # -1 = all
 
@@ -26,6 +24,7 @@ if not cfg.emulate:
     # program.use_edabits = True
     # program.use_split(4)
 
+
 # program.use_edabit(False)
 # program.use_dabit = False
 # program.use_split(3)
@@ -33,6 +32,7 @@ if not cfg.emulate:
 # program.set_bit_length(32)
 
 # sfix.round_nearest = True
+sfix.round_nearest = cfg.round_nearest
 ml.set_n_threads(cfg.n_threads)
 
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)

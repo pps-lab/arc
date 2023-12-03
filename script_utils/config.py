@@ -26,6 +26,7 @@ class BaseAuditModel(BaseModel):
     batch_size: int = 128
     n_threads: int = 36
     trunc_pr: bool = False
+    round_nearest: bool = True
 
     audit_trigger_idx: int = None
 
