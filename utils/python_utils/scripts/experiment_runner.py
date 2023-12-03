@@ -204,6 +204,7 @@ def convert_shares(task_config):
 
     protocol = task_config.protocol_setup
 
+    conversion_not_needed = protocol == config_def.ProtocolChoices.REP_FIELD_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY
     executable_prefix = None
     if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X or protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
         executable_prefix = "rep"
@@ -357,6 +358,12 @@ def convert_shares(task_config):
         )
 
 
+def clean_persistence_data(code_dir):
+    """Clean the persistence data folder in the MP-SPDZ folder of the code workspace."""
+    persistence_data_path = os.path.join(code_dir,"MP-SPDZ/Persistence")
+    shutil.rmtree(persistence_data_path,ignore_errors=True)
+    os.mkdir(persistence_data_path)
+
 
 # TODO: I think this could be simplified with e.g., a makefile?
 
@@ -377,6 +384,7 @@ def cli(player_number,sleep_time):
         compile_script_with_args(task_config=task_config)
 
     if "run" in task_config.stage:
+        clean_persistence_data(task_config.abs_path_to_code_dir)
         output_prefix=generate_random_prefix()
         run_script_with_args(task_config=task_config,
             output_prefix=output_prefix)

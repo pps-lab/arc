@@ -80,16 +80,9 @@ class Cleaner:
         shutil.rmtree(player_data_path,ignore_errors=True)
         os.mkdir(player_data_path)
 
-    def clean_persistence_data(self):
-        """Clean the persistence data folder in the MP-SPDZ folder of the code workspace."""
-        persistence_data_path = os.path.join(self.code_dir,"MP-SPDZ/Persistence")
-        shutil.rmtree(persistence_data_path,ignore_errors=True)
-        os.mkdir(persistence_data_path)
-
     def clean(self):
         """Cleans the code workspace."""
         self.clean_output()
-        self.clean_persistence_data()
         # TODO: Disabled because we download the s3 datasets only once!
         # self.clean_player_data()
         # self.clean_player_pred_data()
