@@ -190,6 +190,7 @@ class CompilerArguments(enum.Enum):
     SY_REP_FIELD_PARTY = ['-F', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
     SEMI2K_PARTY = ['-R', "64"]
+    SEMI_PARTY = ['-F', "128"]
     MASCOT_PARTY = ['-F', "64"]
     MASCOT_OFFLINE = ['-F', "64"]
 
@@ -551,6 +552,23 @@ class MascotPartyRunner(ScriptBaseRunner):
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
                 ]
 
+class SemiPartyRunner(ScriptBaseRunner):
+    def _program(self):
+        return "./semi-party.x"
+
+    def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
+        return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-N", f"{self.player_count}",
+                "-v",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ]
+
 class LowgearPartyRunner(ScriptBaseRunner):
     """Is the high-level interface to './malicious-shamir-party.x'"""
     def _program(self):
@@ -620,6 +638,7 @@ class ProtocolRunners(enum.Enum):
     SY_REP_RING_PARTY=SyReplicatedRingPartyRunner
     SY_REP_FIELD_PARTY=SyReplicatedFieldPartyRunner
     MASCOT_PARTY=MascotPartyRunner
+    SEMI_PARTY=SemiPartyRunner
     MASCOT_OFFLINE=MascotOfflineRunner
     LOWGEAR_PARTY=LowgearPartyRunner
     HIGHGEAR_PARTY=HighgearPartyRunner

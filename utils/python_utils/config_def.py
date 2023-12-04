@@ -44,6 +44,7 @@ class ProtocolChoices(enum.Enum):
     SY_REP_FIELD_PARTY = "sy-rep-field-party"
     SPDZ2K_PARTY = "spdz2k-party"
     SEMI2K_PARTY = "semi2k-party"
+    SEMI_PARTY = "semi2k-party"
     MASCOT_PARTY = "mascot-party"
     MASCOT_OFFLINE = "mascot-offline"
     LOWGEAR_PARTY = "lowgear-party"
