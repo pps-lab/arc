@@ -125,7 +125,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
     commit_output: typing.Optional[bool] = False
     convert_ring_bits: int = 34
-    convert_n_threads: int = 16
+    convert_n_threads: int = 8
 
 
 def parse_json_config(config_path):
