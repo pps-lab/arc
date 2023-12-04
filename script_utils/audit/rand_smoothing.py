@@ -64,7 +64,7 @@ def audit(input_loader, config, debug: bool):
     print_ln("Creating %s audit trigger sample perturbations...", config.n)
     # sample config.n perturbations to apply to the audit trigger sample
     np.random.seed(config.seed)
-    perturbations = np.random.default_rng().multivariate_normal(mean=n_dimensions * [0], cov=cov_matrix, size=config.n)
+    perturbations = np.random.default_rng(seed=config.seed).multivariate_normal(mean=n_dimensions * [0], cov=cov_matrix, size=config.n)
     shape = tuple([config.n]) + tuple(audit_trigger_samples.sizes[1:])
     perturbations = perturbations.reshape(shape)
     perturbations = audit_utils.from_numpy_to_multiarray(perturbations, sfix)
