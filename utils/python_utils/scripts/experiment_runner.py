@@ -321,7 +321,7 @@ def convert_shares(task_config):
             input_counter += player_input_count
         assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
 
-    if task_config.commit_output is not None:
+    if task_config.commit_output:
 
         if total_output_length == 0:
             print("No output to convert. Is this a mistake?")
