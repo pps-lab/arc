@@ -45,11 +45,14 @@ def audit(input_loader, config, debug: bool):
     train_optimizer.print_losses = True
     train_optimizer.gamma = MemValue(cfix(config.learning_rate))
 
-    n_classes = train_labels.sizes[1]
+    if isinstance(train_labels, Array):
+        n_classes = 2
+        unlearned_predictions = MultiArray([n_data_owners, n_audit_triggers, 2], sfix)
+    else:
+        n_classes = train_labels.sizes[1]
+        unlearned_predictions = MultiArray([n_data_owners, n_audit_triggers, n_classes], sfix)
 
     null_label = sfix(1.0 / n_classes)
-
-    unlearned_predictions = MultiArray([n_data_owners, n_audit_triggers, 10], sfix)
 
     starts = Array.create_from([regint(input_loader.train_dataset_region(id)[0]) for id in range(n_data_owners)])
     n_audit_triggers_per_party = Array.create_from([regint(input_loader.train_dataset_region(id)[1]) for id in range(n_data_owners)])
@@ -62,8 +65,12 @@ def audit(input_loader, config, debug: bool):
         print_ln("Unlearning data from owner %s", data_owner_id)
 
         # create a training set label copy
-        train_labels_copy = MultiArray(train_labels.sizes, sfix)
-        train_labels_copy.assign(train_labels)
+        if n_classes == 2:
+            train_labels_copy = Array(train_labels.length, sfix)
+            train_labels_copy.assign(train_labels)
+        else:
+            train_labels_copy = MultiArray(train_labels.sizes, sfix)
+            train_labels_copy.assign(train_labels)
 
         # extract the region of the unlearn party
         start = starts[data_owner_id]
@@ -105,7 +112,7 @@ def audit(input_loader, config, debug: bool):
         unlearned_predictions[data_owner_id] = guesses
 
     print_ln("Computing losses...")
-    loss_matrix = audit_utils.compute_loss(unlearned_predictions, audit_trigger_mislabels)
+    loss_matrix = audit_utils.compute_loss(unlearned_predictions, audit_trigger_mislabels, n_classes=n_classes)
 
     assert loss_matrix.sizes == (n_audit_triggers, n_data_owners), f"loss_array={loss_matrix.sizes}"
 

@@ -19,12 +19,13 @@ $SUITE_ID$:
   inference_2pc: { inference_2pc: 1701009378 }
 
 #  inference_3pc: { inference_3pc: 1701097464 } # semi-honest
-
-  inference_3pc: { sh: 1701536940 } # semi-honest, LAN, inference, multi, mal_shamir
+#  inference_3pc_1701559751
+#  inference_3pc_1701602215
+  inference_3pc: { sh: 1701610906, sy: 1701610906 } # semi-honest, LAN, inference, multi, mal_shamir
 $ETL$:
   compare_protocol:
     experiments:
-      inference_3pc: [ sh ]
+      inference_3pc: [ sh, sy ]
 #      inference_3pc_shamir: [ inference_3pc ]
 
     extractors:
@@ -36,7 +37,7 @@ $ETL$:
           - ^stdout\.log$
     transformers:
       - name: StatTransformer
-        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
+        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'mpc.script_args.round_nearest' ]
         stats:
           mpc_time_s: ["spdz_timer_99", "spdz_timer_101"]
 #          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
@@ -61,22 +62,25 @@ $ETL$:
     loaders:
       CsvSummaryLoader: { }
       BarPlotLoader:
-        plot_cols: [ 'mpc.script_name', 'host_idx' ]
+        plot_cols: [ 'mpc.script_name', 'host_idx', 'exp_name', 'mpc.script_args.round_nearest' ]
         plot_cols_values:
           mpc.script_name: [ 'inference' ]
           host_idx: [ 0 ] # only plot one party
+          exp_name: [ 'sh', 'sy' ]
+          'mpc.script_args.round_nearest': [ False ]
 
         bar_cols: [ 'mpc.domain' ]
         bar_cols_values:
-          'mpc.domain': [ ring ]
+          'mpc.domain': [ 'ring_split',  'field_128', 'custom_256' ]
           'mpc.protocol_setup': [ 'semi_honest_3', 'shamir_malicious_n' ]
 
-        group_cols: [ mpc.script_args.dataset,  'mpc.protocol_setup']
+        group_cols: [ mpc.script_args.dataset ]
         group_cols_values:
-           'mpc.script_args.dataset': [ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
-           'mpc.protocol_setup': [ 'semi_honest_3' ]
+          'mpc.script_args.dataset': [ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ]
+          'mpc.script_args.round_nearest': [ True, False ]
 
-        metric_cols: [[mpc_time_s, share_convert_time_s, poly_commit_time_s, sign_time_s, sign_sk_time_s], n_rounds, [global_data_sent_mb, share_convert_global_bytes, poly_commit_global_bytes]]
+        metric_cols: [[mpc_time_s, share_convert_time_s, poly_commit_time_s, sign_time_s, sign_sk_time_s], n_rounds, [global_data_sent_mb, share_convert_global_bytes, poly_commit_global_bytes, sign_global_bytes, sign_sk_global_bytes]]
         annotation_col: consistency_args.pc
 
         annotation_labels:

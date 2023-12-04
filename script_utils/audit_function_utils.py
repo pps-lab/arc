@@ -164,8 +164,7 @@ def predict_on_model_copy(layers, original_model_to_copy_weights_from, batch_siz
 
 
 
-def compute_loss(X, Y):
-    n_classes = 10
+def compute_loss(X, Y, n_classes=10):
     n_data_owners = X.sizes[0]
     n_samples = X.sizes[1]
     loss_array = MultiArray([n_samples, n_data_owners], sfix)
@@ -175,10 +174,17 @@ def compute_loss(X, Y):
     def _(sample_id):
         for model_id in range(n_data_owners):
             # sum_holder = MemValue(sfix(0))
+            # if n_classes == 2:
+            #     log_e = ml.log_e(X[model_id][sample_id])
+            #     loss_array[sample_id][model_id] = -Y[sample_id] * log_e - (1 - Y[sample_id]) * log_e
+            # else:
             sum_holder = sfix(0)
-            # loss_array[sample_id][model_id] = predicted_class * ml.log_e(X[model_id][sample_id][predicted_class])
             for out_class_id in range(n_classes):
-                tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
+                if n_classes == 2:
+                    log_e = ml.log_e(X[model_id][sample_id][out_class_id])
+                    tmp = -Y[sample_id] * log_e - (1 - Y[sample_id]) * log_e
+                else:
+                    tmp = Y[sample_id][out_class_id] * ml.log_e(X[model_id][sample_id][out_class_id])
                 sum_holder += tmp
             # # sum_holder.write(-(sum_holder.read()))
             loss_array[sample_id][model_id] = -sum_holder
