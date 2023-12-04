@@ -204,12 +204,16 @@ def convert_shares(task_config):
 
     protocol = task_config.protocol_setup
 
-    conversion_not_needed = protocol == config_def.ProtocolChoices.REP_FIELD_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY
+    conversion_not_needed = protocol == config_def.ProtocolChoices.REP_FIELD_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY \
+        or protocol == config_def.ProtocolChoices.LOWGEAR_PARTY or protocol == config_def.ProtocolChoices.HIGHGEAR_PARTY or protocol == config_def.ProtocolChoices.MASCOT_PARTY
+
     executable_prefix = None
     if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X or protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
         executable_prefix = "rep"
     elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY:
         executable_prefix = "sy-rep"
+    elif protocol == config_def.ProtocolChoices.LOWGEAR_PARTY or protocol == config_def.ProtocolChoices.HIGHGEAR_PARTY or protocol == config_def.ProtocolChoices.MASCOT_PARTY:
+        executable_prefix = "mascot"
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}. Note that we can only convert from the ring for now.")
         # print("Cannot convert from protocol", protocol, ". Note that we can only convert from the ring for now.")
