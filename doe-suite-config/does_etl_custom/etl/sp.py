@@ -12,6 +12,7 @@ from does_etl_custom.etl.config import setup_plt
 
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
 from matplotlib import colors as mcolors
 import matplotlib.container as mcontainer
 import numpy as np
@@ -315,11 +316,14 @@ class BarPlotLoader(PlotLoader):
 
     symbols = ['o', 'v']
     colors: List = ['#D5E1A3', '#C7B786', (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0), "#5dfc00", "#5dfcf7", "#fd9ef7"]
-    color_stack_rgba: List[float] = [1.0, 0.8, 0.6, 0.4, 0.2]
+    color_stack_rgba: List[float] = [1.0, 0.8, 0.6, 0.4, 0.2, 0.2]
 
     def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> None:
         if df.empty:
             return
+
+        # only this should have mb type because it is default spdz output
+        df['global_data_sent_mb'] = df['global_data_sent_mb'] * 1024 * 1024
 
         print(df)
 
@@ -350,7 +354,7 @@ class BarPlotLoader(PlotLoader):
             for idx_group, df_plot in df_filtered.groupby(self.plot_cols):
                 print(f"Creating Workload {idx_group} plot")
 
-                setup_plt(width=16)
+                setup_plt(width=16, height=7)
                 fig, ax = plt.subplots(1, 1)
                 # fig.tight_layout()
 
@@ -375,10 +379,11 @@ class BarPlotLoader(PlotLoader):
                 index_map = {}
                 idx = 0
 
+                plot_bar_cols = means.columns if isinstance(metric, str) else means.columns.levels[1]
 
                 # TODO [nku] could do nicer
                 n_groups = len(means)
-                n_bars_per_group = len(means.columns)
+                n_bars_per_group = len(plot_bar_cols)
                 bar_colors = self.colors[:n_bars_per_group]
                 color_positions = n_groups * bar_colors
 
@@ -389,7 +394,7 @@ class BarPlotLoader(PlotLoader):
                         index = [index]
 
 
-                    for column in means.columns:
+                    for column in plot_bar_cols:
                         if isinstance(column, str):
                             column = [column]
 
@@ -401,33 +406,15 @@ class BarPlotLoader(PlotLoader):
                 # TODO [nku] could bring back legend=False if we have custom legend handling below
                 # legend=False
                 yerr = stds.fillna(0)
-                # container = means.plot.bar(yerr=yerr, ax=ax, width=bar_width, color=bar_colors)
 
-                # Use matplotlib to plot bars, a group for each index and a bar in each group for each column
-                # Get the number of columns
-                num_of_cols = len(means.columns)
+                num_of_cols = len(plot_bar_cols)
 
                 # Create an array with the positions of each bar on the x-axis
                 bar_l = np.arange(len(means))
 
-                print("MEANS")
-                # print(means['mpc_time_s'].columns)
-                # if isinstance(metric, str):
-                #     metric = [metric]
-                # means.columns = means.columns.unstack(level=1)
-                # print(means)
-
-                plot_bar_cols = means.columns if isinstance(metric, str) else means.columns.levels[1]
-                # bar_cols = means.columns.get_level_index(lowest_index)
-                # print( means)
-                # print("bar_cols", bar_cols)
-                #
-                # # sub_df = means.loc[:, (slice(None), metric[0])]
-                # sub_df = means.swaplevel(axis='columns')
-                # print("subdf", sub_df)
-                # Make the bar chart
+                # print("MEANS", means)
                 for i, col in enumerate(plot_bar_cols):
-                    w = bar_width / len(means) # divide by number of columns
+                    w = bar_width / len(means) # divide by number of rows
                     bar_pos = [j
                                - (w * num_of_cols / 2.) # center around j
                                + (i*w) # increment for each column
@@ -443,48 +430,64 @@ class BarPlotLoader(PlotLoader):
 
                     # each col here will be a bar in each group.
                     # we may also want to stack if we have
+
+                    bottom_container = None
                     if isinstance(metric, str):
-                        ax.bar(bar_pos, means[col], width=w, label=col, yerr=yerr[col], color=individual_colors_as_rgba[0])
+                        bottom_container = ax.bar(bar_pos, means[col], width=w, label=col, yerr=yerr[col], color=individual_colors_as_rgba[0])
                     else:
                         # stack em
                         bottom = 0
                         for metric_idx, metric_v in enumerate(metric):
-                            print((metric_v, col), means[(metric_v, col)])
-                            ax.bar(bar_pos, means[(metric_v, col)], width=w, label=col, yerr=yerr[(metric_v, col)], color=individual_colors_as_rgba[metric_idx], bottom=bottom)
-                            bottom += means[(metric_v, col)]
-
-                    # print(col, means[col])
-                    # if isinstance(col, str):
-                    #     ax.bar(bar_pos, means[col], width=w, label=col, yerr=yerr[col], color=individual_colors_as_rgba)
-                    # else:
-                    #     bottom = 0
-                    #     for c in col:
-                    #         print("Trying to get for", c, "in", means.columns, "and", yerr.columns)
-                    #         ax.bar(bar_pos, means[c], width=w, label=c, yerr=yerr[c], color=individual_colors_as_rgba, bottom=bottom)
-                    #         bottom += means[c]
-
-                    # for metric_v in metric:
-                    #     ax.bar(bar_pos, means[metric_v], width=w, label=col, yerr=yerr[metric_v], color=individual_colors_as_rgba)
+                            # print(bar_pos, (metric_v, col), means[(metric_v, col)], yerr[(metric_v, col)])
+                            label = col if metric_idx == 0 else None
+                            if means[(metric_v, col)].isna().all():
+                                print("means[(metric_v, col)] is all nan, skipping", (metric_v, col), means[(metric_v, col)])
+                                continue
+                            try:
+                                container = ax.bar(bar_pos, means[(metric_v, col)], width=w, label=label, yerr=yerr[(metric_v, col)], color=individual_colors_as_rgba[metric_idx], bottom=bottom, edgecolor='gray')
+                                if bottom_container is None:
+                                    bottom_container = container
+                                bottom += means[(metric_v, col)]
+                            except Exception as e:
+                                print("Exception occurred for ", bar_pos, (metric_v, col), means[(metric_v, col)], yerr[(metric_v, col)], metric_idx)
+                                # check if means[(metric_v, col)] is all nan
+                                if means[(metric_v, col)].isna().all():
+                                    print("means[(metric_v, col)] is all nan, skipping")
+                                else:
+                                    raise e
 
                     # extract x positions of the bars + add  bar_width/8. to get the position for the circle
-                    x_positions = [None] * (len(means.columns) * len(means))
-                    container_id = 0
-                    for c in ax.containers:
-                        # I think containers are the individual calls to ax.bar ??
-                        if isinstance(c, mcontainer.BarContainer):
-                            for bar_id, rect in enumerate(c.patches):
-                                # fill x_positions in horizontal absolute order of the bars
-                                x_positions[bar_id * len(means.columns) + container_id] = rect.get_x() + bar_width/(n_bars_per_group * 2.)
-                            container_id += 1
+                    x_positions = [None] * (len(plot_bar_cols) * len(means))
 
-                    # determine if this x_positions is in a group, and if yes, if it is first or second
+                    for bar_id, rect in enumerate(bottom_container.patches):
+                        # fill x_positions in horizontal absolute order of the bars
+                        # print(bar_id, rect, bar_id * len(plot_bar_cols), len(x_positions), len(plot_bar_cols))
+                        x_positions[bar_id * len(plot_bar_cols)] = rect.get_x() # + bar_width/(n_bars_per_group * 2.)
+                        # container_id += 1
+
+                    # container_id = 0
+                    # for c in ax.containers:
+                    #     # I think containers are the individual calls to ax.bar ??
+                    #     if isinstance(c, mcontainer.BarContainer):
+                    #         for bar_id, rect in enumerate(c.patches):
+                    #             # fill x_positions in horizontal absolute order of the bars
+                    #             if bar_id * len(plot_bar_cols) + container_id >= len(x_positions):
+                    #                 # if we are stacking, we might reach max
+                    #                 break # stop for now, not sure if this works if the bar ordering is changed somehow (eg per row instead of per col)
+                    #             x_positions[bar_id * len(plot_bar_cols) + container_id] = rect.get_x() + bar_width/(n_bars_per_group * 2.)
+                    #         container_id += 1
+
+                    print(x_positions, "x_pos")
+
+
+                # determine if this x_positions is in a group, and if yes, if it is first or second
                     # 0 = no group, 1 = first in group, 2 = second in group
                     x_position_in_group = [0] * len(x_positions)
                     for i in range(len(bar_pos)-1):
                         if bar_pos[i] == bar_pos[i+1]:
                             for j in range(len(means)):
-                                x_position_in_group[(i * len(means.columns)) + j] = 1
-                                x_position_in_group[((i+1) * len(means.columns)) + j] = 2
+                                x_position_in_group[(i * len(plot_bar_cols)) + j] = 1
+                                x_position_in_group[((i+1) * len(plot_bar_cols)) + j] = 2
 
 
                 ax.set_xticks(bar_l)
@@ -512,12 +515,14 @@ class BarPlotLoader(PlotLoader):
 
                 pos = range(len(labels))
                 ax.set_xticks(pos, labels=labels) #, rotation=90.0
+                print("POS", pos)
 
                 # Rotate the tick labels to be horizontal
                 ax.tick_params(axis='x', labelrotation=0)
 
                 # Reduce space on both sides of x-axis to allow for more bar space
-                ax.set_xlim(min(x_positions)-0.25, max(x_positions)+0.25)
+                # TODO: fix this im not sure whats going wrong in this calculation
+                # ax.set_xlim(min(x_positions)-0.25, max(x_positions)+0.25)
 
 
                 if self.log_y:
@@ -534,7 +539,7 @@ class BarPlotLoader(PlotLoader):
                 if self.show_debug_info:
                     for p in ax.patches:
                         if hasattr(p, 'get_height') and hasattr(p, 'get_width') and hasattr(p, 'get_x'):
-                            ax.annotate(f"{p.get_height():0.2f}", (p.get_x() * 1.005 + (p.get_width() / 2), p.get_height() * 1.005), ha='center', va='bottom')
+                            ax.annotate(f"{p.get_height():0.2f}", (p.get_x() * 1.005 + (p.get_width() / 2), (p.get_y() + p.get_height()) * 1.005), ha='center', va='bottom')
 
                         elif hasattr(p, 'get_x') and hasattr(p, 'get_y'):
                             # for lines?
@@ -552,7 +557,17 @@ class BarPlotLoader(PlotLoader):
                         # else:
                         #     labels = legend_labels
                         # ax.legend(labels=labels, handles=handles, bbox_to_anchor=legend_bbox_to_anchor_map.get(workload_name), loc=3)
-                        ax.legend(labels=labels, handles=handles, loc='upper right', bbox_to_anchor=(1.0, 1.0))
+                        leg = ax.legend(labels=labels, handles=handles, loc='upper right', bbox_to_anchor=(1.0, 1.0))
+                        ax.add_artist(leg)
+                    if not isinstance(metric, str):
+                        # also add a legend for the metric
+                        labels = metric[::-1]
+                        # make gray rgba color
+                        colors = [mcolors.to_rgba('gray', rgba) for rgba in self.color_stack_rgba[:len(metric)]][::-1]
+                        handles = [mpatches.Patch(color=c) for c in colors]
+                        leg = ax.legend(labels=labels, handles=handles, loc='upper right', bbox_to_anchor=(0.9, 1.0))
+                        ax.add_artist(leg)
+
 
                 # plt.tight_layout()
                 plt.subplots_adjust(left=0.05, bottom=0.2)

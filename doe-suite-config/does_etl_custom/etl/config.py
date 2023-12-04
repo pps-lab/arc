@@ -1,8 +1,8 @@
 
 import matplotlib.pyplot as plt
 
-def setup_plt(width=8.):
-    fig_size = [width, 3.8838667729342697]
+def setup_plt(width=8., height=3.88):
+    fig_size = [width, height]
     plt_params = {
         'backend': 'ps',
         'axes.labelsize': 18,
