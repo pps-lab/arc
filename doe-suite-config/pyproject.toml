@@ -11,6 +11,8 @@ tqdm = "^4.64.0" # custom dependency only for custom etl steps
 
 # link the doe-suite repo integration
 doespy = {path = "../doe-suite/doespy", develop = true}
+typing-extensions = "^4.8.0"
+matplotlib = "^3.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
