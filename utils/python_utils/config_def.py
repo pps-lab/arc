@@ -42,6 +42,7 @@ class ProtocolChoices(enum.Enum):
 
     SY_REP_RING_PARTY = "sy-rep-ring-party"
     SY_REP_FIELD_PARTY = "sy-rep-field-party"
+    PS_REP_FIELD_PARTY = "ps-rep-field-party"
     SPDZ2K_PARTY = "spdz2k-party"
     SEMI2K_PARTY = "semi2k-party"
     SEMI_PARTY = "semi-party"

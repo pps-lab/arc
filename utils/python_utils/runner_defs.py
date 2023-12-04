@@ -188,6 +188,7 @@ class CompilerArguments(enum.Enum):
 
     SY_REP_RING_PARTY = ['-R', "64"]
     SY_REP_FIELD_PARTY = ['-F', "64"]
+    PS_REP_FIELD_PARTY = ['-F', "64"]
     SPDZ2K_PARTY = ['-R', "64"]
     SEMI2K_PARTY = ['-R', "64"]
     SEMI_PARTY = ['-F', "128"]
@@ -400,6 +401,25 @@ class SyReplicatedFieldPartyRunner(ScriptBaseRunner):
     def _program(self):
         print("Run SyReplicatedFieldPartyRunner")
         return "./sy-rep-field-party.x"
+
+    def _args(self):
+        custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
+        custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
+        return ["-OF", self.output_prefix,
+                custom_prime_arg, custom_prime_length_arg,
+                "-h", f"{self.player_0_host}",
+                "-pn", "12300",
+                "-v",
+                f"{self.player_id}",
+                script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
+                ]
+
+
+class PsReplicatedFieldPartyRunner(ScriptBaseRunner):
+    """Is the high-level interface to './sy-rep-bin-party.x'"""
+    def _program(self):
+        print("Run PsReplicatedFieldPartyRunner")
+        return "./ps-rep-field-party.x"
 
     def _args(self):
         custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
@@ -637,6 +657,7 @@ class ProtocolRunners(enum.Enum):
     MAL_REP_RING_PARTY=MaliciousReplicatedRingPartyRunner
     SY_REP_RING_PARTY=SyReplicatedRingPartyRunner
     SY_REP_FIELD_PARTY=SyReplicatedFieldPartyRunner
+    PS_REP_FIELD_PARTY=PsReplicatedFieldPartyRunner
     MASCOT_PARTY=MascotPartyRunner
     SEMI_PARTY=SemiPartyRunner
     MASCOT_OFFLINE=MascotOfflineRunner
