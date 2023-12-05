@@ -128,7 +128,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     commit_output: typing.Optional[bool] = False
     convert_ring_bits: int = 34
     convert_n_threads: int = 18 # should work?
-
+    convert_chunk_size: int = 250000
 
 def parse_json_config(config_path):
     """Parses the config.json file found under the given config_path and returns a JsonConfigModel object
@@ -174,7 +174,8 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
         consistency_args=json_config_obj.consistency_args,
         commit_output=json_config_obj.commit_output,
         convert_ring_bits=json_config_obj.convert_ring_bits,
-        convert_n_threads=json_config_obj.convert_n_threads
+        convert_n_threads=json_config_obj.convert_n_threads,
+        convert_chunk_size=json_config_obj.convert_chunk_size
 
     )
     return conf_obj
@@ -222,6 +223,7 @@ class TaskConfig(pydantic.BaseModel):
     convert_ring_if_needed: bool = True
     convert_ring_bits: int
     convert_n_threads: int
+    convert_chunk_size: int
 
     compiler_args: list = None
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
