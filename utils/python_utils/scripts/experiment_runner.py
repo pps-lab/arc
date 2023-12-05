@@ -257,7 +257,7 @@ def convert_shares(task_config):
                     input_parts.append(f"-i {','.join(types)}")
             input_str = " ".join(input_parts)
 
-            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} {input_str}"
+            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} -d {input_str}"
             print(f"Converting input shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
