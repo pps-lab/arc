@@ -7,8 +7,8 @@ ec2_volume_size: 200
 #ec2_image_id: ami-0875ac3ffe3b458a3	 # precompiled ami, #4
 #ec2_volume_snapshot: snap-0a2a18f55b6287597
 
-ec2_image_id: ami-0a23d8c518e4a96ab	 # precompiled ami, #5
-ec2_volume_snapshot: snap-0aa9ed955321b6330
+ec2_image_id: ami-05bf251ea898dc777	 # precompiled ami, #7
+ec2_volume_snapshot: snap-0407022db2bfcf5d3
 
 # AMI from Nikolay
 #ec2_image_id: ami-06dd92ecc74fdfb36

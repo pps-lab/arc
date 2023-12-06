@@ -7,8 +7,54 @@ $SUITE_VARS$:
 
   $INCLUDE_VARS$: dataset.yml
 
+  commit_output: True
+  convert_ring_bits: 31
+  convert_n_threads: 18
 
-train_3pc:
+  consistency_args:
+    abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+    hosts_file: "{{ exp_consistency_hosts_file }}"
+    pc: kzg
+    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
+
+  mpc:
+    player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+    abs_path_to_code_dir: "{{ exp_code_dir }}"
+    player_count: 3
+    protocol_setup: $FACTOR$
+
+    compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
+    domain: $FACTOR$
+    custom_prime: $FACTOR$
+
+    script_name: "training"
+
+    script_args:
+      n_input_parties: 3
+
+      n_epochs: 0
+
+      debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
+      emulate: False
+#      dataset: mnist_full_3party
+      dataset:
+        $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
+      #          $FACTOR$: [ adult_3p ]
+
+      # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
+      batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+      n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+
+      audit_trigger_idx: 0 # select single audit trigger (from all)
+      trunc_pr: False
+
+      round_nearest: False
+
+
+    stage: # "compile" in run and then in next run "run"
+      $FACTOR$: [ compile, run ] # ensure that this is last factor
+
+sh:
   n_repetitions: 1
   host_types:
     consistency:
@@ -16,8 +62,8 @@ train_3pc:
       check_status: True
       init_roles:
         - setup-base
-        - setup-consistency
-        - download-dataset
+#        - setup-consistency
+#        - download-dataset
         #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
@@ -26,71 +72,33 @@ train_3pc:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
+    x: 1
 
-    consistency_args:
-      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
-      hosts_file: "{{ exp_consistency_hosts_file }}"
-      pc: kzg
-      pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
-
-    mpc:
-      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
-      abs_path_to_code_dir: "{{ exp_code_dir }}"
-      player_count: 3
-      protocol_setup: $FACTOR$
-
-      compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
-      domain: $FACTOR$
-      custom_prime: $FACTOR$
-
-      script_name: "training"
-
-      script_args:
-        # inference specific
-        #        n_samples: 262000
-#        n_samples: 1
-        n_input_parties: 3
-
-        debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
-        emulate: False
-        dataset:
-          $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
-
-        # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
-        batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-        n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
-
-        audit_trigger_idx: 0 # select single audit trigger (from all)
-        trunc_pr: False
-
-
-      stage: # "compile" in run and then in next run "run"
-        $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
 
     - mpc:
         protocol_setup: "semi_honest_3"
         domain: ring
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Z', '3' ]
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3', ]
         custom_prime: null
 
-    - mpc:
-        protocol_setup: "semi_honest_3"
-        domain: ring_noopt
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
-        custom_prime: null
-
-    - mpc:
-        protocol_setup: "rep-field-party"
-        domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
-        custom_prime: null
-
-    - mpc:
-        protocol_setup: "rep-field-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+#    - mpc:
+#        protocol_setup: "semi_honest_3"
+#        domain: ring_noopt
+#        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
+#        custom_prime: null
+#
+#    - mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+#        custom_prime: null
+#
+#    - mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 
 mal:
@@ -99,9 +107,9 @@ mal:
     consistency:
       n: 3
       check_status: True
-      init_roles: []
-#        - setup-base
-#        - setup-consistency
+      init_roles:
+        - setup-base
+        - setup-consistency
 #        - download-dataset
       #        - setup-largeprimes
       #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -111,47 +119,10 @@ mal:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-
-    consistency_args:
-      abs_path_to_code_dir: "{{ exp_consistency_dir }}"
-      hosts_file: "{{ exp_consistency_hosts_file }}"
-      pc: kzg
-      pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
-
     mpc:
-      player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
-      abs_path_to_code_dir: "{{ exp_code_dir }}"
-      player_count: 3
-      protocol_setup: $FACTOR$
-
-      compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
-      domain: $FACTOR$
-      custom_prime: $FACTOR$
-
-      script_name: "training"
-
       script_args:
-        # inference specific
-        #        n_samples: 262000
-        #        n_samples: 1
-        n_input_parties: 3
+        batch_size: 64
 
-        debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
-        emulate: False
-        dataset:
-#          $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
-          $FACTOR$: [ mnist_full_A ]
-
-        # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
-        batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-        n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
-
-        audit_trigger_idx: 0 # select single audit trigger (from all)
-        trunc_pr: False
-
-
-      stage: # "compile" in run and then in next run "run"
-        $FACTOR$: [ compile, run ] # ensure that this is last factor
   factor_levels:
 
     - mpc:

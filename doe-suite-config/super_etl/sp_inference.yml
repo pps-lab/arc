@@ -18,9 +18,7 @@ $SUITE_ID$:
 #  inference_2pc: { inference_2pc: 1700929201 } # partial, no edabits, LAN, inference,
   inference_2pc: { inference_2pc: 1701009378 }
 
-#  inference_3pc: { inference_3pc: 1701097464 } # semi-honest
-#  inference_3pc_1701559751
-#  inference_3pc_1701602215
+
   inference_3pc: { sh: 1701610906, sy: 1701610906 } # semi-honest, LAN, inference, multi, mal_shamir
 $ETL$:
   compare_protocol:

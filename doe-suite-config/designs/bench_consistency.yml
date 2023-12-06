@@ -19,10 +19,10 @@ $SUITE_VARS$:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
     abs_path_to_code_dir: "{{ exp_code_dir }}"
     player_count: "[% my_run.n_parties %]"
-    protocol_setup: "lowgear-party"
 
+    protocol_setup: "lowgear-party"
     compiler_args: [ '-F', '251', '-C', '--budget', '10000' ] #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
-    custom_prime: None
+    custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
     script_name: "test_sz"
 
@@ -33,51 +33,51 @@ $SUITE_VARS$:
     stage: # "compile" in run and then in next run "run"
       $FACTOR$: [ compile, run ] # ensure that this is last factor
 
-compare_pvc_wan:
-  # Two players, only one player proofs
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 2
-      check_status: True
-      init_roles:
-#        - setup-base
-        - setup-consistency
-#        - setup-largeprimes
-#        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
-      $CMD$:
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-
-  base_experiment:
-
-    consistency_args:
-      pc:
-        $FACTOR$: [ kzg, ipa, ped ]
-
+#compare_pvc_wan:
+#  # Two players, only one player proofs
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 2
+#      check_status: True
+#      init_roles:
+##        - setup-base
+#        - setup-consistency
+##        - setup-largeprimes
+##        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+#      $CMD$:
+#      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#      - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#
+#  base_experiment:
+#
+#    consistency_args:
+#      pc:
+#        $FACTOR$: [ kzg, ipa, ped ]
+#
+##compare_pvc_lan:
+#
 #compare_pvc_lan:
-
-compare_pvc_lan:
-  # Two players, only one player proofs
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 2
-      check_status: True
-      init_roles:
-        - setup-base
-        - setup-consistency
-        - setup-largeprimes
-      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-
-  base_experiment:
-
-    consistency_args:
-      pc:
-        $FACTOR$: [ kzg, ipa, ped ]
+#  # Two players, only one player proofs
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 2
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#        - setup-largeprimes
+#      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#
+#  base_experiment:
+#
+#    consistency_args:
+#      pc:
+#        $FACTOR$: [ kzg, ipa, ped ]
 
 
 compare_pvc_lan_sizes:
@@ -105,25 +105,4 @@ compare_pvc_lan_sizes:
 #      $FACTOR$: [512, 8192, 131072, 2097152, 33554432]
 
 
-$ETL$:
-  extract_mpspdz:
-    experiments:
-      - compare_pvc_wan
-      - compare_pvc_lan
-    extractors:
-      MpSpdzStderrExtractor: {}
-      MpSpdzResultExtractor: {}
-      IgnoreExtractor: { file_regex: ["^consistency.*\\.log$", "^stdout\\.log$"] }
-    transformers: []
-    loaders:
-      CsvSummaryLoader: {}
-  extract_consistency:
-    experiments:
-      - compare_pvc_wan
-      - compare_pvc_lan
-    extractors:
-      ConsistencyExtractor: { }
-      IgnoreExtractor: { file_regex: ["^stdout\\.log$", "^stderr\\.log$", "^result-.*\\.txt$"] }
-    transformers: [ ]
-    loaders:
-      CsvSummaryLoader: {}
+$ETL$: {}

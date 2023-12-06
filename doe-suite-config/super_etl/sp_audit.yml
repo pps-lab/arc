@@ -6,13 +6,13 @@
 
 $SUITE_ID$:
 
-  audit: { audit_3pc: 1701019469   }
+  audit: { audit_robustness: 1701745017, audit_rs: 1701745017, audit_sample_knnshapley: 1701745017   }
 
 $ETL$:
 
   compare_setting:
     experiments:
-      audit: [ audit_3pc ]
+      audit: [ audit_robustness, audit_rs, audit_sample_knnshapley ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -42,12 +42,11 @@ $ETL$:
 
         bar_cols: [ 'mpc.script_args.dataset' ]
         bar_cols_values:
-          'mpc.script_args.dataset': [ adult_3p, "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+          'mpc.script_args.dataset': [ adult_3p, "mnist_full_3party", "cifar_alexnet_3party"]
 
         group_cols: [ mpc.script_name ]
         group_cols_values:
-          'mpc.script_args.dataset': [ adult_3p, adult_2p, "mnist_full_3party", "mnist_full_2party", "cifar_alexnet_3party", "cifar_alexnet_2party", "ember_3party", "ember_2party" ]
-          'mpc.script_name': [ "audit_sample_knnshapley", "audit_rs", "audit_prediction_shap"]
+          'mpc.script_name': [ "audit_sample_knnshapley", "audit_robustness", "audit_owner_unlearn"]
 
         metric_cols: [mpc_time_s, n_rounds, global_data_sent_mb ]
         annotation_col: consistency_args.pc

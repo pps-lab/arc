@@ -5,42 +5,57 @@ $SUITE_VARS$:
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
 
-  commit_output: True
+  n_parties: 3
+
+  $INCLUDE_VARS$: dataset.yml
+
+  commit_output: False
   convert_ring_bits: 64
+
+  consistency_args:
+    abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+    hosts_file: "{{ exp_consistency_hosts_file }}"
+    pc: kzg
+    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
     abs_path_to_code_dir: "{{ exp_code_dir }}"
-    player_count: 2
+    player_count: "[% my_run.n_parties %]"
+
     protocol_setup: $FACTOR$
+    domain: ring
+    compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
+    custom_prime: null
 
-    compiler_args: $FACTOR$ #'100000000'] # budget was '1000000'1million # also look at B 5 -> cannot be used together with R
-    domain: $FACTOR$
-    custom_prime: $FACTOR$
+    #    script_name: $FACTOR$
 
-    script_name: "inference"
+    script_name:
+      $FACTOR$: [ "audit_fairness", "audit_prediction_shap" ]
 
     script_args:
+      dataset: $FACTOR$
+
       n_samples: 1
-      n_input_parties: 2
+      n_input_parties: "[% my_run.n_parties %]"
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
-      dataset:
-        $FACTOR$: [ adult_2p, mnist_full_2party, cifar_alexnet_2party ]
 
       # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
       batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
       n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
       audit_trigger_idx: 0 # select single audit trigger (from all)
+      trunc_pr: False
 
       round_nearest: False
 
     stage: # "compile" in run and then in next run "run"
       $FACTOR$: [ compile, run ] # ensure that this is last factor
 
-sh:
+
+twopc:
   n_repetitions: 1
   host_types:
     consistency:
@@ -49,52 +64,54 @@ sh:
       init_roles:
         - setup-base
         - setup-consistency
-        #        - download-dataset
-        #        - setup-largeprimes
-      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
 
   base_experiment:
+    n_parties: 2
 
-    x: 1
+    mpc:
+      protocol_setup:
+        $FACTOR$: [ "semi-party", "lowgear-party"]
+      domain: custom_256
+      compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
+      custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
-  factor_levels:
-
-    - mpc:
-        protocol_setup: "semi-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-
-mal:
+      script_args:
+        dataset:
+          $FACTOR$: [ adult_2p ]
+#
+#
+threepc:
   n_repetitions: 1
   host_types:
     consistency:
-      n: 2
+      n: 3
       check_status: True
       init_roles:
         - setup-base
         - setup-consistency
-      #        - download-dataset
-#        - setup-largeprimes
-      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
 
-    x: 1
+    mpc:
+      protocol_setup:
+        $FACTOR$: [ "sy-rep-ring-party", "semi_honest_3"]
+      domain: ring
+      compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
+      custom_prime: null
+      script_args:
+        dataset:
+          $FACTOR$: [ adult_3p ]
 
-  factor_levels:
 
-    - mpc:
-        protocol_setup: "lowgear-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
+
 
 
 $ETL$: {}

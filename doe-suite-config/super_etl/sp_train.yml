@@ -6,13 +6,13 @@
 
 $SUITE_ID$:
 #  train_3pc: { train_3pc: 1701120615 }
-  train_3pc: { train_3pc: 1701197069, mal: 1701285783 }
+  train_3pc: { train_3pc: 1701197069, mal: 1701285783, sh: 1701590922 }
 
 $ETL$:
-  compare_protocol:
+  compare_protocol_sh:
     experiments:
-      train_3pc: [ train_3pc, mal ]
-
+#      train_3pc: [ train_3pc, mal ]
+      train_3pc: [sh]
     extractors:
       MpSpdzResultExtractor: { }
       MpSpdzStderrExtractor: { }
@@ -23,35 +23,52 @@ $ETL$:
     transformers:
       - name: CompilerArgsTransformer
 
-      - name: StatTransformer
-        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
-        stats:
-          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_1102"]
+#      - name: StatTransformer
+#        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset' ]
+#        stats:
+#          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_1102"]
 #          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_98" ]
-#          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
-#          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
-          global_data_sent_mb: [ "spdz_global_data_sent" ]
-#          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
-          n_rounds: [ "spdz_player_round_number" ]
+##          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
+##          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
+#          global_data_sent_mb: [ "spdz_global_data_sent" ]
+##          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+#          n_rounds: [ "spdz_player_round_number" ]
+#
+#
+#          share_convert_input_time_s: [ "consistency_convert_shares_share_switch_input_mus" ]
+#          share_convert_input_global_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes" ]
+#
+#          share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
+#          share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
+#
+#          poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
+#          poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
+#
+#          sign_time_s: [ "consistency_poly_commit_sign_mus" ]
+#          sign_global_bytes: [ "consistency_poly_commit_sign_global_bytes" ]
+#
+#          sign_sk_time_s: [ "consistency_poly_commit_sign_sk_mus" ]
+#          sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
 
     loaders:
       CsvSummaryLoader: { }
       BarPlotLoader:
         plot_cols: [ exp_name, 'mpc.script_name', 'host_idx' ]
         plot_cols_values:
-          exp_name: [ 'train_3pc', 'mal' ]
+          exp_name: [ 'train_3pc', 'mal', 'sh' ]
           mpc.script_name: [ 'training' ]
           host_idx: [ 0 ] # only plot one party
 
         bar_cols: [ 'mpc.domain' ]
         bar_cols_values:
-          'mpc.domain': [ ring, ring_noopt, field_128, custom_256 ]
+          'mpc.domain': [ ring ]
 
         group_cols: [ mpc.script_args.dataset ]
         group_cols_values:
-           'mpc.script_args.dataset': [ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+#           'mpc.script_args.dataset': [ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "ember_3party" ]
+          'mpc.script_args.dataset': [ "adult_3p" ]
 
-        metric_cols: [mpc_time_s, n_rounds, global_data_sent_mb]
+        metric_cols: [[mpc_time_s, share_convert_input_time_s, share_convert_time_s, poly_commit_time_s, sign_time_s, sign_sk_time_s], n_rounds, [global_data_sent_mb, share_convert_input_global_bytes, share_convert_global_bytes, poly_commit_global_bytes, sign_global_bytes, sign_sk_global_bytes]]
         annotation_col: consistency_args.pc
 
         annotation_labels:

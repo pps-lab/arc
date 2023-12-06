@@ -23,12 +23,13 @@ $SUITE_VARS$:
     abs_path_to_code_dir: "{{ exp_code_dir }}"
     player_count: "[% my_run.n_parties %]"
 
-    protocol_setup: "semi_honest_3"
+    protocol_setup: "sy-rep-ring-party"
     domain: ring
-    compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3', ]
+    compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
     custom_prime: null
 
-#    script_name: $FACTOR$
+
+    #    script_name: $FACTOR$
 
     script_args:
 

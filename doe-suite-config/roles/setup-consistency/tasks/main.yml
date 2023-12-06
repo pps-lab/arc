@@ -20,12 +20,28 @@
     path: "{{ exp_consistency_hosts_file }}"
     state: absent
 
+#- name: Debug hosts file
+#  debug:
+#    msg: "{{ hostvars['localhost']['suite_hosts_lst'] }}"
+#
+#- name: Debug hosts file filter
+#  debug:
+#      msg: "{{ hostvars['localhost'].suite_hosts_lst | collect_items2dict(key_name='exp_name', multiset=True) }}"
+#
+#- name: Debug exp_name
+#  debug:
+#      msg: "EXP {{ exp_name }}"
+
+- name: Filter host list for exp
+  set_fact:
+    exp_hosts_lst_exp: "{{ hostvars['localhost'].suite_hosts_lst | collect_items2dict(key_name='exp_name', multiset=True) }}"
+
 - name: Setup hosts file
   lineinfile:
     path: "{{ exp_consistency_hosts_file }}"  # Specify the path to your output file
     line: "{{ private_ip_lookup[item.private_dns_name] }}:8000"
     create: yes
-  loop: "{{ hostvars['localhost']['suite_hosts_lst'] }}"
+  loop: "{{ exp_hosts_lst_exp[exp_name] }}"
   vars:
     private_ip_lookup: "{{ hostvars['localhost']['ec2_instance_info'] | json_query('instances[*].{key: private_dns_name, value: private_ip_address}') | items2dict }}"
 
