@@ -128,7 +128,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     commit_output: typing.Optional[bool] = False
     convert_ring_bits: int = 34
     convert_n_threads: int = 18 # should work?
-    convert_chunk_size: int = 250000
+    convert_chunk_size: int = 500000
 
 def parse_json_config(config_path):
     """Parses the config.json file found under the given config_path and returns a JsonConfigModel object
