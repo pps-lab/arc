@@ -41,6 +41,7 @@ import os
 import shutil
 import string
 import random
+import time
 
 DEFAULT_CONFIG_NAME="config.json"
 DEFAULT_RESULT_FOLDER="results/"
@@ -257,7 +258,7 @@ def convert_shares(task_config):
                     input_parts.append(f"-i {','.join(types)}")
             input_str = " ".join(input_parts)
 
-            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} {input_str}"
+            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} -d {input_str}"
             print(f"Converting input shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
@@ -272,25 +273,11 @@ def convert_shares(task_config):
                     stdout=convert_shares_phase,
                     stderr=convert_shares_phase,
                 )
+                time.sleep(task_config.sleep_time)
             except subprocess.CalledProcessError as e:
                 print(f"Error converting shares. Continuing without converting shares. {conversion_not_needed}")
                 print(e)
-                if conversion_not_needed:
-                    import re
-                    # need to add -P256 prefix to the persistence file
-                    persistence_data_path = os.path.join(task_config.abs_path_to_code_dir,"MP-SPDZ")
-                    persistence_data_path = os.path.join(persistence_data_path,"Persistence")
-                    print("copying persistence files in", persistence_data_path)
-                    # for each file in this dir
-                    for file_name in os.listdir(persistence_data_path):
-                        # if it is a file and in the format of regex Transactions-P(\d*)-0.data
-                        print("Found ", os.path.join(persistence_data_path,file_name))
-                        if os.path.isfile(os.path.join(persistence_data_path,file_name)) and re.match(r'Transactions-P(\d*)\.data', file_name):
-                            # copy it to the persistence file with the prefix
-                            # add suffix before extension to filename
-                            filename_suffix = file_name.split(".")[0] + "-P251" + "." + file_name.split(".")[1]
-                            print("copying", file_name, "to", filename_suffix)
-                            shutil.copyfile(os.path.join(persistence_data_path,file_name),os.path.join(persistence_data_path,filename_suffix))
+                copy_transaction_files(conversion_not_needed, task_config)
 
 
         # compute a polynomial for each party
@@ -341,7 +328,7 @@ def convert_shares(task_config):
                 "out_start": total_input_length,
             }
             args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-            executable_str = f"{executable} {spdz_args_str} {args_str}"
+            executable_str = f"{executable} {spdz_args_str} -d {args_str}"
             print(f"Converting shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
@@ -356,25 +343,11 @@ def convert_shares(task_config):
                     stdout=convert_shares_phase,
                     stderr=convert_shares_phase,
                 )
+                time.sleep(task_config.sleep_time)
             except subprocess.CalledProcessError as e:
                 print(f"Error converting shares. Continuing without converting shares. {conversion_not_needed}")
                 print(e)
-                if conversion_not_needed:
-                    import re
-                    # need to add -P256 prefix to the persistence file
-                    persistence_data_path = os.path.join(task_config.abs_path_to_code_dir,"MP-SPDZ")
-                    persistence_data_path = os.path.join(persistence_data_path,"Persistence")
-                    print("copying persistence files in", persistence_data_path)
-                    # for each file in this dir
-                    for file_name in os.listdir(persistence_data_path):
-                        # if it is a file and in the format of regex Transactions-P(\d*)-0.data
-                        print("Found ", os.path.join(persistence_data_path,file_name))
-                        if os.path.isfile(os.path.join(persistence_data_path,file_name)) and re.match(r'Transactions-P(\d*)\.data', file_name):
-                            # copy it to the persistence file with the prefix
-                            # add suffix before extension to filename
-                            filename_suffix = file_name.split(".")[0] + "-P251" + "." + file_name.split(".")[1]
-                            print("copying", file_name, "to", filename_suffix)
-                            shutil.copyfile(os.path.join(persistence_data_path,file_name),os.path.join(persistence_data_path,filename_suffix))
+                copy_transaction_files(conversion_not_needed, task_config)
 
         # check how many commitments we need
         # for each item in list output_data, add an arg with object_type
@@ -398,6 +371,27 @@ def convert_shares(task_config):
             stdout=poly_commit_phase,
             stderr=poly_commit_phase,
         )
+
+
+def copy_transaction_files(conversion_not_needed, task_config):
+    if conversion_not_needed:
+        import re
+        # need to add -P256 prefix to the persistence file
+        persistence_data_path = os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ")
+        persistence_data_path = os.path.join(persistence_data_path, "Persistence")
+        print("copying persistence files in", persistence_data_path)
+        # for each file in this dir
+        for file_name in os.listdir(persistence_data_path):
+            # if it is a file and in the format of regex Transactions-P(\d*)-0.data
+            print("Found ", os.path.join(persistence_data_path, file_name))
+            if os.path.isfile(os.path.join(persistence_data_path, file_name)) and re.match(r'Transactions-P(\d*)\.data',
+                                                                                           file_name):
+                # copy it to the persistence file with the prefix
+                # add suffix before extension to filename
+                filename_suffix = file_name.split(".")[0] + "-P251" + "." + file_name.split(".")[1]
+                print("copying", file_name, "to", filename_suffix)
+                shutil.copyfile(os.path.join(persistence_data_path, file_name),
+                                os.path.join(persistence_data_path, filename_suffix))
 
 
 def clean_persistence_data(code_dir):

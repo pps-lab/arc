@@ -152,7 +152,7 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
     - player_number : int
         The id of the player
     - sleep_time : float
-        The number of seconds to sleep between the compilation step and running step (Not used)
+        The number of seconds to sleep between the compilation share conversion step
     - result_dir : str
         The path to the directory which contains the results folder
     """
@@ -176,6 +176,7 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
         convert_ring_bits=json_config_obj.convert_ring_bits,
         convert_n_threads=json_config_obj.convert_n_threads,
         convert_chunk_size=json_config_obj.convert_chunk_size
+
 
     )
     return conf_obj
