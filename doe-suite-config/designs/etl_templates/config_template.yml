@@ -1,0 +1,9 @@
+$ETL$:
+  config:
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor: { }
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$

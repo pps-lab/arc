@@ -6,8 +6,9 @@ def setup_plt(width=8., height=3.88):
     plt_params = {
         'backend': 'ps',
         'axes.labelsize': 18,
+        'axes.titlesize': 16,
         'legend.fontsize': 12,
-        'xtick.labelsize': 16,
+        'xtick.labelsize': 14,
         'ytick.labelsize': 16,
         'font.size': 12,
         'figure.figsize': fig_size,

@@ -94,3 +94,9 @@ field-bls377: simlink
 deb: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -Z 3 --budget 1000 -C audit_trigger_idx__0 batch_size__128 consistency_check__False dataset__mnist_full_3party debug__False emulate__False n_input_parties__3 n_threads__36 trunc_pr__True
 
+
+
+plots:
+	cd doe-suite && $(MAKE) etl-super config=consistency out=$(out)
+	cd doe-suite && $(MAKE) etl-super config=inference out=$(out)
+	cd doe-suite && $(MAKE) etl-super config=train out=$(out)

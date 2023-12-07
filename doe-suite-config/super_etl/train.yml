@@ -1,0 +1,147 @@
+---
+
+
+$SUITE_ID$:
+  train_3pc: 1701693802 # { sh: 1701693802, mal: 1701693802 }
+$ETL$:
+  raw:
+    experiments:
+      train_3pc: "*"
+    extractors:
+      $INCLUDE_STEPS$: [{config: train, pipeline: train_3pc}]
+    transformers: []
+    loaders:
+      PickleSummaryLoader: {}
+
+
+
+  train_3pc:
+    experiments:
+      train_3pc: "*"
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor: { }
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+    transformers:
+      - name: StatTransformer
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'mpc.script_args.round_nearest' ]
+        stats:
+          mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_1102"]
+
+          auditing_overhead_s: ["consistency_convert_shares_share_switch_output_mus",
+                                "consistency_poly_commit_commit_mus",
+                                "consistency_poly_commit_sign_mus",
+                                "consistency_poly_commit_sign_sk_mus",
+                                "consistency_convert_shares_share_switch_input_mus",
+                                "consistency_poly_eval_poly_eval_mus",
+                                "consistency_prove_verify_Prove Verify"]
+
+          auditing_overhead_bytes: ["consistency_convert_shares_share_switch_output_global_bytes",
+                                      "consistency_poly_commit_commit_global_bytes",
+                                      "consistency_poly_commit_sign_global_bytes",
+                                      "consistency_poly_commit_sign_sk_global_bytes",
+                                      "consistency_convert_shares_share_switch_input_global_bytes",
+                                      "consistency_poly_eval_poly_eval_global_bytes",
+                                      "consistency_prove_verify_bytes_sent_global_bytes"] # TODO: THIS IS CURRENTLY ONLY FROM A DIRTY FIX IN StatsTransformer. See `TODO [Hidde] The field `consistency_prove_verify_bytes_sent`
+
+          global_data_sent_mb: [ "spdz_global_data_sent" ]
+
+          n_rounds: [ "spdz_player_round_number" ]
+
+          share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
+          share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
+
+          poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
+          poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
+
+          sign_time_s: [ "consistency_poly_commit_sign_mus" ]
+          sign_global_bytes: [ "consistency_poly_commit_sign_global_bytes" ]
+
+          sign_sk_time_s: [ "consistency_poly_commit_sign_sk_mus" ]
+          sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
+      #- df.replace: {to_replace: "sy", value: {exp_name: "mal"}} # rename sy experiment to mal
+      #- df.replace: {to_replace: "field_256", value: "custom_256"}
+      - df.replace: {to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True}
+      - df.replace: {to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True}
+      - df.replace: {to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True}
+
+
+    loaders:
+      PickleSummaryLoader: {}
+      CsvSummaryLoader: { }
+      BarPlotLoader:
+
+        cols_values_filter:
+          mpc.script_name: ['training']
+          suite_name: [train_3pc]
+
+          host_idx: [0] # only plot one party
+          exp_name: [ 'sh', 'mal' ]
+          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
+          'mpc.script_args.dataset': [adult, mnist_full, cifar_alexnet] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+          'mpc.domain': ['ring'] #[ 'ring_split',  'custom_256'] # 'field_128'
+
+
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'mpc.script_args.round_nearest', 'mpc.domain']
+
+        group_cols: [ mpc.script_args.dataset ]
+
+        bar_cols: [ 'exp_name']
+
+
+        colors:  ['#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786'] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
+
+
+        color_stack_rgba: [1.0, 0.6]
+
+        legend:
+          format: "{} {}"
+          cols: ["exp_name", "$bar_part_col$"]
+
+        title:
+          format: "3PC - {}"
+          plot_cols: ['mpc.domain']
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_mb: ""
+          auditing_overhead_s: "(Overhead)"
+          auditing_overhead_bytes: "(Overhead)"
+          n_rounds: ""
+
+          ring: "Ring"
+          ring_split: "Ring"
+          custom_256: "Field"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "Cifar10"
+
+
+          sh: "SH"
+          mal: "MAL"
+
+        show_debug_info: False
+
+        metrics:
+          time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s]
+            y_unit_divider: 60.0 # switch to mins from secs
+            y_label: "Time [min]"
+            legend_order: [0, 2, 1, 3]
+            legend_ncol: 4
+
+          rounds:
+            bar_part_cols: [n_rounds]
+            y_label: "Rounds"
+
+          bandwidth:
+            bar_part_cols: [global_data_sent_mb, auditing_overhead_bytes]
+            y_label: "Bandwidth [MB]"
+            y_unit_multiplicator:  1.0e-6 # transform to MB
+            log_y: True
+            legend_order: [0, 2, 1, 3]
+            legend_ncol: 4

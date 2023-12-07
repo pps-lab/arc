@@ -1,9 +1,13 @@
 import typing
 from math import ceil
+from enum import Enum
+import warnings
 
 import pandas as pd
+import os
 from typing import Dict, List, Union, Optional
 
+from doespy.design.etl_design import MyETLBaseModel
 from doespy.etl.etl_util import expand_factors, escape_tuple_str
 from doespy.etl.steps.transformers import Transformer
 from doespy.etl.steps.loaders import Loader, PlotLoader
@@ -42,12 +46,50 @@ class StatTransformer(Transformer):
     stats: Dict[str, list]
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+
+        df.loc[:, 'stat_value'] = pd.to_numeric(df['stat_value'], errors='coerce')
+
+
+        ################################Start Hack
+        # TODO [Hidde] The field `consistency_prove_verify_bytes_sent` is currently only avaialble as a per-host output.
+        #              However, it should be aggregated over all hosts. This is a hack to do that and to make it appear as if this is already done
+        key_cols = ["suite_name", "suite_id", "exp_name", "run", "rep"]
+        df1 = df[df["stat"] == "consistency_prove_verify_bytes_sent"]
+        df_additional = df1.groupby(key_cols).agg({"stat_value": ["sum", "count"]}).reset_index()
+        df_additional["stat"] = "consistency_prove_verify_bytes_sent_global_bytes"
+        df_additional.columns = ["_".join(v) if v[1] else v[0] for v in df_additional.columns.values]
+        df_additional.reset_index(inplace=True, drop=True)  # Resetting the index
+        player_count = df_additional["stat_value_count"].unique()
+
+        if len(player_count) != 1:
+            warnings.warn(f"UNEXPECTED WARNING: More than one player count found: {player_count}")
+
+        df_additional["stat_value"] = df_additional["stat_value_sum"]
+        df_additional.drop(columns=["stat_value_sum", "stat_value_count"], inplace=True)
+        df2 = df1.drop(columns=["host_idx", "stat", "stat_value", "player_number"]).drop_duplicates(subset=key_cols)
+        df2.reset_index(inplace=True, drop=True)
+        df_additional.set_index(key_cols, inplace=True)
+        df2.set_index(key_cols, inplace=True)
+
+        df_additional = pd.merge(df_additional, df2, on=key_cols, left_index=False, right_index=False).reset_index()
+
+        df = pd.concat([df, df_additional], ignore_index=True)
+
+        # not sure where this gets interpreted as a float
+        df["host_idx"] = df["host_idx"].fillna(0)
+        df['host_idx'] = df['host_idx'].astype(int)
+
+        ###############################End Hack
+
+
+
+
+
         groupby_columns = expand_factors(df, self.groupby_columns)
 
         # Initialize an empty DataFrame to hold the aggregated results
         aggregated_results = pd.DataFrame()
-
-        print(df)
 
         # check that each stat value specified in self.stats is contained in stat
         for stat_label, stat_values in self.stats.items():
@@ -55,6 +97,10 @@ class StatTransformer(Transformer):
                 if stat_value not in df['stat'].unique():
                     raise ValueError(f"Stat value {stat_value} for stat {stat_label} not found in df['stat'].unique()"
                                      f"df['stat'].unique()={df['stat'].unique()}")
+
+
+
+
 
         # Iterate through each key-value pair in self.stats
         for stat_label, stat_values in self.stats.items():
@@ -64,6 +110,7 @@ class StatTransformer(Transformer):
 
             # Filter out rows that do not match any stat key
             df_filtered = df[df[stat_key].notna()]
+
 
             # Group by 'groupby_columns' and 'stat_key', then ensure we have a single 'stat_value' and select it
             grouped = df_filtered.groupby(groupby_columns + [stat_key])['stat_value'].sum().reset_index()
@@ -292,27 +339,78 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
             self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)
 
 
-class BarPlotLoader(PlotLoader):
+class MetricConfig(MyETLBaseModel):
 
-    plot_cols: List[str]
-    plot_cols_values: Dict[str, List[str]]
-
-    group_cols: List[str] = ["workload_composition_mode"] # for each combination of these clumns, will have a bar group
-    group_cols_values: Dict[str, List[str]] = {"workload_composition_mode": ["upc-block-composition", "poisson-block-composition-pa", "poisson-block-composition"]}
-    group_cols_indices: Optional[List[int]] = None # manual override of the order of the groups, to overlay groups
-
-    bar_cols: List[str] = ["allocation"] # for each value of these columns, will have a bar in each group
-    bar_cols_values: Dict[str, List[str]] = {"allocation": ['greedy', "weighted-dpf+", "dpk-gurobi"]}
+    class LegendTypeEnum(str, Enum):
+        inline = 'inline'
+        outside = 'outside'
+        hide = 'hide'
 
 
-    metric_cols: List[Union[str, List[str]]]
-    annotation_col: str
-    annotation_labels: Dict[str, str]
+
+    bar_part_cols: List[str]
+    y_label: str
 
     log_y: bool = False
-    bar_width: float = 0.95
 
-    show_debug_info: bool = True
+    log_x: bool = False
+
+    y_unit_multiplicator: float = 1.0 # multiply y values by this to get the unit
+    y_unit_divider: float = 1.0 # divide y values by this to get the unit
+
+    y_max: float = None
+
+    y_ticks: List[float] = None
+
+    legend_type: LegendTypeEnum = LegendTypeEnum.outside
+
+    legend_order: List[int] = None
+
+    legend_ncol: int = 1
+
+class LegendConfig(MyETLBaseModel):
+    format: str
+    cols: List[str]
+
+class TitleConfig(MyETLBaseModel):
+    format: str
+    plot_cols: List[str] # plot cols
+class BarPlotLoader(PlotLoader):
+
+    metrics: Dict[str, MetricConfig]
+
+    plot_cols: List[str]
+    group_cols: List[str] # for each combination of these clumns, will have a bar group
+
+    # TODO [nku] remove
+    group_cols_indices: Optional[List[int]] = None # manual override of the order of the groups, to overlay groups
+
+    bar_cols: List[str] # for each value of these columns, will have a bar in each group
+
+    n_groups_in_bars: int = 1 # number of groups in each bar (the bars in each group can be further divided into groups)
+    groups_in_bars_offset: float = 0.02 # the offset between the groups in a bar group
+
+    cols_values_filter: Dict[str, List[str]]
+
+    labels: Dict[str, str]
+
+    legend: LegendConfig
+
+    title: TitleConfig = None
+
+    x_axis_label: str = None
+
+
+
+    #metric_cols: List[Union[str, List[str]]]
+    #annotation_col: str
+    #annotation_labels: Dict[str, str]
+
+    figure_size: List[float] = [2.5, 2.5]
+
+    bar_width: float = 1.2 # 0.6
+
+    show_debug_info: bool = False
 
     symbols = ['o', 'v']
     colors: List = ['#D5E1A3', '#C7B786', (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0), "#5dfc00", "#5dfcf7", "#fd9ef7"]
@@ -323,18 +421,18 @@ class BarPlotLoader(PlotLoader):
             return
 
         # only this should have mb type because it is default spdz output
-        df['global_data_sent_mb'] = df['global_data_sent_mb'] * 1024 * 1024
-
-        print(df)
+        df['global_data_sent_mb'] = df['global_data_sent_mb'] * 1000 * 1000
+#
+        #display(df[["my_overhead", "auditing_overhead_bytes"]])
 
         output_dir = self.get_output_dir(etl_info)
 
         n_rows_intial = len(df)
         df_filtered = df.copy()
 
-        plot_cols = [(col, self.plot_cols_values[col]) for col in self.plot_cols]
-        group_cols = [(col, self.group_cols_values[col]) for col in self.group_cols]
-        bar_cols = [(col, self.bar_cols_values[col]) for col in self.bar_cols]
+        plot_cols = [(col, self.cols_values_filter[col]) for col in self.plot_cols]
+        group_cols = [(col, self.cols_values_filter[col]) for col in self.group_cols]
+        bar_cols = [(col, self.cols_values_filter[col]) for col in self.bar_cols]
         # filter out non-relevant results
         for col, allowed in plot_cols + group_cols + bar_cols:
 
@@ -350,148 +448,183 @@ class BarPlotLoader(PlotLoader):
 
         print(f"Filtered out {n_rows_intial - len(df_filtered)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df_filtered)}")
 
-        for metric in self.metric_cols:
-            for idx_group, df_plot in df_filtered.groupby(self.plot_cols):
-                print(f"Creating Workload {idx_group} plot")
+        for metric_name, metric_cfg in self.metrics.items():
 
-                setup_plt(width=16, height=7)
+            print(f"Creating metric {metric_name} plot...")
+
+            for idx_group, df_plot in df_filtered.groupby(self.plot_cols):
+
+                print(f"  Creating {idx_group} plot...")
+
+
+                setup_plt(width=self.figure_size[0], height=self.figure_size[1])
+
                 fig, ax = plt.subplots(1, 1)
                 # fig.tight_layout()
 
+                if metric_cfg.log_y:
+                    ax.set_yscale('log')
+
+                if metric_cfg.log_x:
+                    ax.set_xscale('log')
+
+                # allow changing the unit of the metric before calculating the mean / std
+                df_plot[metric_cfg.bar_part_cols] = df_plot[metric_cfg.bar_part_cols] * metric_cfg.y_unit_multiplicator / metric_cfg.y_unit_divider
+
+
                 # create a bar for each bar_cols group in each group_cols group
                 grouped_over_reps = df_plot.groupby(by = self.group_cols + self.bar_cols)
-                means = grouped_over_reps[metric].mean()
-                stds = grouped_over_reps[metric].std()
+                means = grouped_over_reps[metric_cfg.bar_part_cols].mean()
+                stds = grouped_over_reps[metric_cfg.bar_part_cols].std()
+
+                # for different bar parts, compute the share (i.e., percent) of the total bar height,
+                # and the factor (i.e., how many times larger) the total bar height is compared to the bar part
+                means["$total$"] = means[metric_cfg.bar_part_cols].sum(axis=1)
+                for col in metric_cfg.bar_part_cols:
+                    means[f"$total_share_{col}$"] = means[col] / means["$total$"]
+                    means[f"$total_factor_{col}$"] = means["$total$"] / means[col]
 
                 # move bar_columns from index to columns (i.e., pivot)
                 unstack_levels = [-i for i in range(len(self.bar_cols), 0, -1)]
                 means = means.unstack(unstack_levels)
                 stds = stds.unstack(unstack_levels)
 
+                #display(means)
+                print(f"MEANS!!!!!!!!!!!!!!!!!!!!!!!!!")
+                print(means)
 
-                ###################################
-                # Drawing the utility bar/scatter #
-                ###################################
-                # Create bar chart
+
                 bar_width = self.bar_width
 
-                # setup index map
-                index_map = {}
-                idx = 0
-
-                plot_bar_cols = means.columns if isinstance(metric, str) else means.columns.levels[1]
-
-                # TODO [nku] could do nicer
-                n_groups = len(means)
-                n_bars_per_group = len(plot_bar_cols)
-                bar_colors = self.colors[:n_bars_per_group]
-                color_positions = n_groups * bar_colors
 
 
-                for index, _row in means.iterrows():
+                def get_label(plot_idx, bar_idx, bar_part):
 
-                    if isinstance(index, str):
-                        index = [index]
+                    if isinstance(bar_idx, str):
+                        bar_idx = [bar_idx]
+                    if isinstance(plot_idx, str):
+                        plot_idx = [plot_idx]
 
 
-                    for column in plot_bar_cols:
-                        if isinstance(column, str):
-                            column = [column]
+                    # print(f"Legend Label: plot_idx={plot_idx}   plot_cols={self.plot_cols}  |||||   bar_idx={bar_idx}  bar_cols={self.bar_cols}  |||||  bar_part={bar_part}")
 
-                        k = tuple(tuple(index) + tuple(column))
 
-                        index_map[k] = idx
-                        idx+=1
+                    subs = []
+                    for col in self.legend.cols:
 
-                # TODO [nku] could bring back legend=False if we have custom legend handling below
-                # legend=False
-                yerr = stds.fillna(0)
+                        if col == "$bar_part_col$":
+                            lbl = bar_part
 
-                num_of_cols = len(plot_bar_cols)
+                        elif col in self.bar_cols:
+                            idx = self.bar_cols.index(col)
+                            lbl = bar_idx[idx]
+                        elif col in self.plot_cols:
+                            idx = self.plot_cols.index(col)
+                            lbl = plot_idx[idx]
 
-                # Create an array with the positions of each bar on the x-axis
-                bar_l = np.arange(len(means))
+                        else:
+                            raise ValueError(f"Legend Config Error: col={col} not in self.bar_cols={self.bar_cols} or plot_cols={self.plot_cols}")
 
-                # print("MEANS", means)
-                for i, col in enumerate(plot_bar_cols):
-                    w = bar_width / len(means) # divide by number of rows
-                    bar_pos = [j
-                               - (w * num_of_cols / 2.) # center around j
-                               + (i*w) # increment for each column
-                               + (w/2.) # center in column
-                               for j in bar_l]
+                        subs.append(self.labels.get(lbl, lbl)) # label lookup if avbailable
 
-                    individual_colors_as_rgba = [[mcolors.to_rgba(bar_colors[i], rgba) for _ in range(len(bar_pos))] for rgba in self.color_stack_rgba]
+                    return self.legend.format.format(*subs)
 
-                    # If adjacent bar_pos are the same, low alpha of the first bar to make it transparent
-                    # for j in range(len(bar_pos)-1):
-                    #     if bar_pos[j] == bar_pos[j+1]:
-                    #         individual_colors_as_rgba[j] = lighten_color(individual_colors_as_rgba[j], amount=1.4)
+                bottom = 0
 
-                    # each col here will be a bar in each group.
-                    # we may also want to stack if we have
+                # bar_parts_data = []
 
-                    bottom_container = None
-                    if isinstance(metric, str):
-                        bottom_container = ax.bar(bar_pos, means[col], width=w, label=col, yerr=yerr[col], color=individual_colors_as_rgba[0])
+                for part_idx, bar_part_col in enumerate(metric_cfg.bar_part_cols):
+
+                    means1 = means[bar_part_col]
+                    yerr1 = stds[bar_part_col].fillna(0)
+
+                    plot_bar_cols = means1.columns
+
+                    n_groups = len(means1)
+                    n_bars_per_group = len(plot_bar_cols)
+
+                    bar_colors = self.colors[:n_bars_per_group]
+
+                    bar_l = np.arange(len(means1))
+
+                    existing_labels = set()
+
+
+                    for i, col in enumerate(plot_bar_cols):
+                        w = bar_width / n_groups # divide by number of rows
+                        bar_pos = [j
+                                - (w * n_bars_per_group / 2.) # center around j
+                                + (i*w) # increment for each column
+                                + (w/2.) # center in column
+                                for j in bar_l]
+
+                        # within each bar group, we can move the bars into separate groups by introducing an offset
+                        if self.n_groups_in_bars == 2:
+                            if i < n_bars_per_group / 2:
+                                bar_pos = [x - self.groups_in_bars_offset for x in bar_pos]
+                            else:
+                                bar_pos = [x + self.groups_in_bars_offset for x in bar_pos]
+                        elif self.n_groups_in_bars > 2:
+                            raise NotImplementedError("n_bars_per_group > 2 not supported")
+
+                        individual_colors_as_rgba = [[mcolors.to_rgba(bar_colors[i], rgba) for _ in range(len(bar_pos))] for rgba in self.color_stack_rgba]
+
+
+                        label= get_label(plot_idx=idx_group, bar_idx=col, bar_part=bar_part_col)
+
+                        color = individual_colors_as_rgba[part_idx]
+
+                        # only add the label if it does not already exist (together with color)
+                        if (color[0], label) in existing_labels:
+                            label = None
+                        else:
+                            existing_labels.add((color[0], label))
+
+                        btm = 0 if part_idx == 0 else bottom[col]
+
+                        ax.bar(bar_pos, means1[col], width=w, label=label, yerr=yerr1[col], color=color, bottom=btm, edgecolor='gray')
+
+
+                    # bar_parts_data.append(means1)
+
+                    if part_idx == 0:
+                        bottom = means1
                     else:
-                        # stack em
-                        bottom = 0
-                        for metric_idx, metric_v in enumerate(metric):
-                            # print(bar_pos, (metric_v, col), means[(metric_v, col)], yerr[(metric_v, col)])
-                            label = col if metric_idx == 0 else None
-                            if means[(metric_v, col)].isna().all():
-                                print("means[(metric_v, col)] is all nan, skipping", (metric_v, col), means[(metric_v, col)])
-                                continue
-                            try:
-                                container = ax.bar(bar_pos, means[(metric_v, col)], width=w, label=label, yerr=yerr[(metric_v, col)], color=individual_colors_as_rgba[metric_idx], bottom=bottom, edgecolor='gray')
-                                if bottom_container is None:
-                                    bottom_container = container
-                                bottom += means[(metric_v, col)]
-                            except Exception as e:
-                                print("Exception occurred for ", bar_pos, (metric_v, col), means[(metric_v, col)], yerr[(metric_v, col)], metric_idx)
-                                # check if means[(metric_v, col)] is all nan
-                                if means[(metric_v, col)].isna().all():
-                                    print("means[(metric_v, col)] is all nan, skipping")
-                                else:
-                                    raise e
+                        bottom += means1
 
-                    # extract x positions of the bars + add  bar_width/8. to get the position for the circle
-                    x_positions = [None] * (len(plot_bar_cols) * len(means))
-
-                    for bar_id, rect in enumerate(bottom_container.patches):
-                        # fill x_positions in horizontal absolute order of the bars
-                        # print(bar_id, rect, bar_id * len(plot_bar_cols), len(x_positions), len(plot_bar_cols))
-                        x_positions[bar_id * len(plot_bar_cols)] = rect.get_x() # + bar_width/(n_bars_per_group * 2.)
-                        # container_id += 1
-
-                    # container_id = 0
-                    # for c in ax.containers:
-                    #     # I think containers are the individual calls to ax.bar ??
-                    #     if isinstance(c, mcontainer.BarContainer):
-                    #         for bar_id, rect in enumerate(c.patches):
-                    #             # fill x_positions in horizontal absolute order of the bars
-                    #             if bar_id * len(plot_bar_cols) + container_id >= len(x_positions):
-                    #                 # if we are stacking, we might reach max
-                    #                 break # stop for now, not sure if this works if the bar ordering is changed somehow (eg per row instead of per col)
-                    #             x_positions[bar_id * len(plot_bar_cols) + container_id] = rect.get_x() + bar_width/(n_bars_per_group * 2.)
-                    #         container_id += 1
-
-                    print(x_positions, "x_pos")
+                #total = bottom
+                #for x in bar_parts_data:
+                #    fraction = total / x
+                #    print(f"\n\n\nFraction: {fraction}")
 
 
-                # determine if this x_positions is in a group, and if yes, if it is first or second
-                    # 0 = no group, 1 = first in group, 2 = second in group
-                    x_position_in_group = [0] * len(x_positions)
-                    for i in range(len(bar_pos)-1):
-                        if bar_pos[i] == bar_pos[i+1]:
-                            for j in range(len(means)):
-                                x_position_in_group[(i * len(plot_bar_cols)) + j] = 1
-                                x_position_in_group[((i+1) * len(plot_bar_cols)) + j] = 2
+                if  metric_cfg.y_max is not None:
+                    ax.set_ylim(0, metric_cfg.y_max)
+                if metric_cfg.y_max is None:
+                    # increase ylim by 10%
+                    ax.set_ylim(0, ax.get_ylim()[1] * 1.1)
+
+                if metric_cfg.y_ticks is not None:
+                    ax.set_yticks(metric_cfg.y_ticks)
 
 
-                ax.set_xticks(bar_l)
-                ax.set_xticklabels(means.index)
+                if  metric_cfg.legend_type != MetricConfig.LegendTypeEnum.hide:
+                    # Retrieve current handles and labels for legend
+                    handles, labels = plt.gca().get_legend_handles_labels()
+
+                    if metric_cfg.legend_order is not None:
+                        # adjust order if specified
+                        assert len(handles) == len(metric_cfg.legend_order), f"len(handles)={len(handles)} != len(metric_cfg.legend_order)={len(metric_cfg.legend_order)}"
+                        handles = [handles[i] for i in metric_cfg.legend_order]
+                        labels = [labels[i] for i in metric_cfg.legend_order]
+
+                    if metric_cfg.legend_type == MetricConfig.LegendTypeEnum.outside:  # was (1.05, 1)
+                        ax.legend(handles, labels, loc='lower right', bbox_to_anchor=(1.05, 1.1), ncol=metric_cfg.legend_ncol, fancybox=True)
+                    elif metric_cfg.legend_type == MetricConfig.LegendTypeEnum.inline:
+                        ax.legend(handles, labels, fancybox=True, ncol=metric_cfg.legend_ncol)
+                    else:
+                        raise NotImplementedError(f"metric_cfg.legend_type={metric_cfg.legend_type}")
+
                 def get_x_tick_labels(means, label_lookup):
                     labels = []
                     for idx in means.index:
@@ -502,8 +635,11 @@ class BarPlotLoader(PlotLoader):
                         parts = []
                         for col, value in zip(means.index.names, idx):
                             #print(f"  col={col}  value={value}")
-                            if col in label_lookup and value in label_lookup[col]:
-                                parts.append(label_lookup[col][value])
+                            if value in label_lookup:
+                            #if col in label_lookup and value in label_lookup[col]:
+                                #parts.append(label_lookup[col][value])
+                                parts.append(label_lookup[value])
+
                             else:
                                 parts.append(value)
 
@@ -511,30 +647,30 @@ class BarPlotLoader(PlotLoader):
 
                     return labels
 
-                labels = get_x_tick_labels(means, {})
+                labels = get_x_tick_labels(means, self.labels)
 
                 pos = range(len(labels))
                 ax.set_xticks(pos, labels=labels) #, rotation=90.0
-                print("POS", pos)
-
-                # Rotate the tick labels to be horizontal
-                ax.tick_params(axis='x', labelrotation=0)
-
-                # Reduce space on both sides of x-axis to allow for more bar space
-                # TODO: fix this im not sure whats going wrong in this calculation
-                # ax.set_xlim(min(x_positions)-0.25, max(x_positions)+0.25)
 
 
-                if self.log_y:
-                    ax.set_yscale('log')
-                else:
-                    # increase ylim by 30%
-                    ax.set_ylim(0, ax.get_ylim()[1] * 1.5)
+                if self.n_groups_in_bars == 2:
+                    n_bars_in_subgroup =  n_bars_per_group / self.n_groups_in_bars
+                    w = n_bars_in_subgroup * bar_width / n_groups / 2
+                    minor_ticks_pos = [x - w - self.groups_in_bars_offset for x in pos] + [x + w + self.groups_in_bars_offset for x in pos]
+
+                    # TODO [nku] hardcoded
+                    minor_ticks_labels = ["Ring" for x in pos] + ["Field" for x in pos]
+
+                    ax.set_xticks(minor_ticks_pos, labels=minor_ticks_labels, minor=True)
+                    ax.tick_params(axis='x', which='minor', length=0)
+
+                    ax.tick_params(axis='x', which='major', length=10, width=0, pad=15)
 
 
-                ax.grid(True, axis="y", linestyle=':', color='0.6', zorder=0, linewidth=1.2)
 
-                ax.set_ylabel(metric)
+                ax.set_ylabel(metric_cfg.y_label)
+
+                ax.set_xlabel(self.x_axis_label)
 
                 if self.show_debug_info:
                     for p in ax.patches:
@@ -545,33 +681,27 @@ class BarPlotLoader(PlotLoader):
                             # for lines?
                             ax.annotate(f"{p.get_y():0.2f}", (p.get_x() * 1.005, p.get_y() * 1.005), ha='center', va='bottom')
 
-                handles, legend_labels = ax.get_legend_handles_labels()
 
-                # Legend
-                if True:
-                    if len(self.bar_cols) == 1:
-                        single_key = bar_cols[0]
-                        labels = legend_labels
-                        # if label_lookup is not None and single_key in label_lookup:
-                        #     labels = [label_lookup[single_key][legend_label] for legend_label in legend_labels]
-                        # else:
-                        #     labels = legend_labels
-                        # ax.legend(labels=labels, handles=handles, bbox_to_anchor=legend_bbox_to_anchor_map.get(workload_name), loc=3)
-                        leg = ax.legend(labels=labels, handles=handles, loc='upper right', bbox_to_anchor=(1.0, 1.0))
-                        ax.add_artist(leg)
-                    if not isinstance(metric, str):
-                        # also add a legend for the metric
-                        labels = metric[::-1]
-                        # make gray rgba color
-                        colors = [mcolors.to_rgba('gray', rgba) for rgba in self.color_stack_rgba[:len(metric)]][::-1]
-                        handles = [mpatches.Patch(color=c) for c in colors]
-                        leg = ax.legend(labels=labels, handles=handles, loc='upper right', bbox_to_anchor=(0.9, 1.0))
-                        ax.add_artist(leg)
+                if self.title is not None:
+
+                    subs = []
+                    for col in self.title.plot_cols:
+
+                        if col in self.plot_cols:
+                            idx = self.plot_cols.index(col)
+                            lbl = idx_group[idx]
+                        else:
+                            raise ValueError(f"Title Config Error: col={col} not in self.plot_cols={self.plot_cols}")
+                        subs.append(self.labels.get(lbl, lbl)) # label lookup if avbailable
+
+                    title = self.title.format.format(*subs)
+                    ax.set_title(title)
 
 
-                # plt.tight_layout()
-                plt.subplots_adjust(left=0.05, bottom=0.2)
+                ax.grid(True, axis="y", linestyle=':', color='0.6', zorder=0, linewidth=1.2)
 
+                filename = f"bar_{metric_name}_{escape_tuple_str(idx_group)}"
 
-                filename = f"metrics_compare_{metric}_{escape_tuple_str(idx_group)}"
-                self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)
+                out = os.path.join(output_dir, metric_name)
+                self.save_data(means, filename=filename, output_dir=out)
+                self.save_plot(fig, filename=filename, output_dir=out, use_tight_layout=True, output_filetypes=["pdf"])
