@@ -115,6 +115,7 @@ def prove_commitment_opening(task_config, output_prefix):
     if task_config.consistency_args is None:
         print("No consistency check arguments specified. Skipping consistency check.")
         return
+    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
 
     # GEN PP
     if task_config.consistency_args.gen_pp:
@@ -126,7 +127,6 @@ def prove_commitment_opening(task_config, output_prefix):
         executable_str = f"{executable} {args_str}"
         print(f"Generating public parameters with command: {executable_str}")
 
-        result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
         consistency_gen_pp_output_file = open(os.path.join(result_dir_path, "consistency_gen_pp.log"), "w+")
         import subprocess
         subprocess.run(
