@@ -318,6 +318,11 @@ def convert_shares(task_config):
                 stderr=poly_eval_phase,
             )
             input_counter += player_input_count
+
+            if task_config.sleep_time > 0:
+                print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
+                time.sleep(task_config.sleep_time)
+
         assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
 
     if task_config.commit_output:
