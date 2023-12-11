@@ -117,7 +117,7 @@ def prove_commitment_opening(task_config, output_prefix):
         return
 
     # GEN PP
-    if task_config.gen_pp:
+    if task_config.consistency_args.gen_pp:
         executable = f"target/release/gen_pp_{task_config.consistency_args.pc}"
         args = {
             "num-args": task_config.consistency_args.pp_args,
@@ -211,14 +211,17 @@ def convert_shares(task_config):
         or protocol == config_def.ProtocolChoices.SEMI_PARTY
 
     executable_prefix = None
+    need_no_conversion_but_input_sharing = False
     if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X or protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
         executable_prefix = "rep"
     elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY:
         executable_prefix = "sy-rep"
     elif protocol == config_def.ProtocolChoices.SEMI_PARTY:
         executable_prefix = "semi"
+        need_no_conversion_but_input_sharing = task_config.custom_prime is not None # we will assume custom_prime is set to BLS377
     elif protocol == config_def.ProtocolChoices.LOWGEAR_PARTY or protocol == config_def.ProtocolChoices.HIGHGEAR_PARTY or protocol == config_def.ProtocolChoices.MASCOT_PARTY:
         executable_prefix = "mascot"
+        need_no_conversion_but_input_sharing = task_config.custom_prime is not None
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}.")
         # print("Cannot convert from protocol", protocol, ". Note that we can only convert from the ring for now.")
@@ -258,6 +261,8 @@ def convert_shares(task_config):
                     player_input_counter.append(player_input_cnt)
                     input_parts.append(f"-i {','.join(types)}")
             input_str = " ".join(input_parts)
+
+            # In some cases we dont do conversion but we need input sharing
 
             executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} -d {input_str}"
             print(f"Converting input shares with command: {executable_str}")
