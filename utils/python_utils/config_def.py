@@ -120,6 +120,7 @@ class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     pp_args: int
     prover_party: typing.Optional[int] = None
     eval_point: typing.Optional[str] = None # Optional point to eval at for debugging
+    gen_pp: bool = False # whether to generate the public parameters
 
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):

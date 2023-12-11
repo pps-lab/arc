@@ -117,25 +117,26 @@ def prove_commitment_opening(task_config, output_prefix):
         return
 
     # GEN PP
-    executable = f"target/release/gen_pp_{task_config.consistency_args.pc}"
-    args = {
-        "num-args": task_config.consistency_args.pp_args,
-    }
-    args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-    executable_str = f"{executable} {args_str}"
-    print(f"Generating public parameters with command: {executable_str}")
+    if task_config.gen_pp:
+        executable = f"target/release/gen_pp_{task_config.consistency_args.pc}"
+        args = {
+            "num-args": task_config.consistency_args.pp_args,
+        }
+        args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+        executable_str = f"{executable} {args_str}"
+        print(f"Generating public parameters with command: {executable_str}")
 
-    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-    consistency_gen_pp_output_file = open(os.path.join(result_dir_path, "consistency_gen_pp.log"), "w+")
-    import subprocess
-    subprocess.run(
-        executable_str,
-        shell=True,
-        cwd=task_config.consistency_args.abs_path_to_code_dir,
-        check=True,
-        stdout=consistency_gen_pp_output_file,
-        stderr=consistency_gen_pp_output_file,
-    )
+        result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+        consistency_gen_pp_output_file = open(os.path.join(result_dir_path, "consistency_gen_pp.log"), "w+")
+        import subprocess
+        subprocess.run(
+            executable_str,
+            shell=True,
+            cwd=task_config.consistency_args.abs_path_to_code_dir,
+            check=True,
+            stdout=consistency_gen_pp_output_file,
+            stderr=consistency_gen_pp_output_file,
+        )
 
     # GEN COMMITMENTS
     executable = f"target/release/gen_commitments_{task_config.consistency_args.pc}"
@@ -219,7 +220,7 @@ def convert_shares(task_config):
     elif protocol == config_def.ProtocolChoices.LOWGEAR_PARTY or protocol == config_def.ProtocolChoices.HIGHGEAR_PARTY or protocol == config_def.ProtocolChoices.MASCOT_PARTY:
         executable_prefix = "mascot"
     else:
-        raise ValueError(f"Cannot convert from protocol {protocol}. Note that we can only convert from the ring for now.")
+        raise ValueError(f"Cannot convert from protocol {protocol}.")
         # print("Cannot convert from protocol", protocol, ". Note that we can only convert from the ring for now.")
         # print("Continuing without converting shares.")
 
@@ -286,7 +287,7 @@ def convert_shares(task_config):
             if player_input_count == 0:
                 print("Skipping party", party_id, "because it has no input.")
                 continue
-            # GEN PP
+
             executable = f"./{executable_prefix}-pe-party.x"
             args = {
                 "n_shares": player_input_count, # convert all shares
