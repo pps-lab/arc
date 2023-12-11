@@ -131,6 +131,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     convert_ring_bits: int = 34
     convert_n_threads: int = 18 # should work?
     convert_chunk_size: int = 500000
+    sleep_time: float = 5.0 # time to sleep between conversion and next steps in seconds
 
 def parse_json_config(config_path):
     """Parses the config.json file found under the given config_path and returns a JsonConfigModel object
@@ -144,7 +145,7 @@ def parse_json_config(config_path):
     return config_obj
 
 def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
-                      sleep_time: float, result_dir: str):
+                    result_dir: str):
     """Builds the TaskConfig object that contains all configuration information. It builds this object from the JsonConfigModel stored in json_config_obj, the player_number, the sleep_time and the result_dir arguments.
 
     Parameters
@@ -160,7 +161,7 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
     """
     conf_obj = TaskConfig(
         player_id=player_number,
-        sleep_time=sleep_time,
+        sleep_time=json_config_obj.sleep_time,
         player_count=json_config_obj.mpc.player_count,
         player_0_hostname=json_config_obj.mpc.player_0_hostname,
         abs_path_to_code_dir=json_config_obj.mpc.abs_path_to_code_dir,

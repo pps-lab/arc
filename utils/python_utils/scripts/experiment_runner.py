@@ -50,7 +50,7 @@ def generate_random_prefix() -> str :
     """Generates a random output prefix for use with the MPC protocol VMs to make the raw textual output of MPC protocol VM processes uniquely identifiable"""
     return ''.join([random.choice(string.ascii_lowercase + string.digits) for _ in range(20)])
 
-def prepare_config(player_number,sleep_time):
+def prepare_config(player_number):
     """Exceutes the config model construction step."""
     result_dir = os.getcwd()
     json_config_path = os.path.join(result_dir,DEFAULT_CONFIG_NAME)
@@ -58,7 +58,6 @@ def prepare_config(player_number,sleep_time):
     task_config = config_def.build_task_config(
         json_config_obj=json_config_obj,
         player_number=player_number,
-        sleep_time=sleep_time,
         result_dir=result_dir
     )
     return task_config
@@ -279,12 +278,14 @@ def convert_shares(task_config):
                     stdout=convert_shares_phase,
                     stderr=convert_shares_phase,
                 )
-                time.sleep(task_config.sleep_time)
             except subprocess.CalledProcessError as e:
                 print(f"Error converting shares. Continuing without converting shares. {conversion_not_needed}")
                 print(e)
                 copy_transaction_files(conversion_not_needed, task_config)
 
+            if task_config.sleep_time > 0:
+                print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
+                time.sleep(task_config.sleep_time)
 
         # compute a polynomial for each party
         input_counter = 0
@@ -351,12 +352,14 @@ def convert_shares(task_config):
                     stdout=convert_shares_phase,
                     stderr=convert_shares_phase,
                 )
-                time.sleep(task_config.sleep_time)
             except subprocess.CalledProcessError as e:
                 print(f"Error converting shares. Continuing without converting shares. {conversion_not_needed}")
                 print(e)
                 copy_transaction_files(conversion_not_needed, task_config)
 
+            if task_config.sleep_time > 0:
+                print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
+                time.sleep(task_config.sleep_time)
         # check how many commitments we need
         # for each item in list output_data, add an arg with object_type
         args = { c['object_type']: c['length'] for c in output_data }
@@ -415,13 +418,10 @@ def clean_persistence_data(code_dir):
 @click.option("--player-number","player_number",required=True,
     type=float,
     help="The player number of the machine executing the experiment")
-@click.option("--sleep-time","sleep_time",default=0.0,
-    help="The amount of time the system should wait after compilation before proceeding to execution")
-def cli(player_number,sleep_time):
+def cli(player_number):
     """This is the experiment runner script that will run the MP-SPDZ experiments for this framework"""
     task_config = prepare_config(
-        player_number=player_number,
-        sleep_time=sleep_time
+        player_number=player_number
     )
     move_to_experiment_dir(task_config=task_config)
     if "compile" in task_config.stage:
