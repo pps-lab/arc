@@ -119,6 +119,7 @@ class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     abs_path_to_code_dir: str
     pp_args: int
     prover_party: typing.Optional[int] = None
+    eval_point: typing.Optional[str] = None # Optional point to eval at for debugging
 
 
 class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):

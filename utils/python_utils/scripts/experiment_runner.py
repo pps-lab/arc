@@ -293,6 +293,8 @@ def convert_shares(task_config):
                 "start": input_counter,
                 "input_party_i": party_id,
             }
+            if task_config.consistency_args.eval_point is not None:
+                args['eval_point'] = task_config.consistency_args.eval_point
             args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
             executable_str = f"{executable} {spdz_args_str} {args_str}"
             print(f"Computing polynomial for player {party_id} with command: {executable_str}")
