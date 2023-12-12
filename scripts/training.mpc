@@ -84,20 +84,34 @@ program.args.append('no_loss')
 # program.use_trunc_pr = True
 
 # optim = ml.Optimizer.from_args(program, model.layers)
-# optim.print_losses = True
 # model.set_learning_rate(10.0)
 # model.print_losses = True
 
 # okay... we need this apparently
 # this determines whether we compute the loss on the forward pass
 model.layers[-1].compute_loss = False
+# model.print_losses = True
+
+model.set_learning_rate(0.001)
+
 # model.time_layers = True
 
-# model.run_by_args(program, cfg.n_epochs, cfg.batch_size, False, False, reset=False)
 if cfg.n_epochs == 0:
     print("Skipping training because n_epochs=0")
 else:
     model.run(batch_size=cfg.batch_size)
+
+# out = Array(2977, sfix)
+# out.assign_all(-2)
+# out[0] = 2
+# out[1] = 2
+# out[3] = 3
+# import numpy as np
+# for i in range(2977):
+#     out[i] = np.random.randint(-16000, 16000)
+# sfix.write_to_file(out)
+# input_consistency.output(out, None, None)
+
 
 # model.fit(
 #     train_samples,
