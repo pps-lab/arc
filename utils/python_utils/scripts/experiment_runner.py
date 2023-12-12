@@ -234,6 +234,10 @@ def convert_shares(task_config):
 
     spdz_args_str = f"-p {task_config.player_id} -N {task_config.player_count} -h {task_config.player_0_hostname}"
 
+    if task_config.sleep_time > 0:
+        print(f"Sleeping for {task_config.sleep_time} seconds to allow the MP-SPDZ process on all clients to finish.")
+        time.sleep(task_config.sleep_time)
+
     if task_config.consistency_args is not None:
 
         if task_config.convert_ring_if_needed:
