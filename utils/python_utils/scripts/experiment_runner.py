@@ -215,17 +215,17 @@ def convert_shares(task_config):
         or protocol == config_def.ProtocolChoices.SEMI_PARTY
 
     executable_prefix = None
-    need_no_conversion_but_input_sharing = False
+    need_input_sharing = False
     if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X or protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
         executable_prefix = "rep"
     elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY:
         executable_prefix = "sy-rep"
     elif protocol == config_def.ProtocolChoices.SEMI_PARTY:
         executable_prefix = "semi"
-        need_no_conversion_but_input_sharing = task_config.custom_prime is not None # we will assume custom_prime is set to BLS377
+        need_input_sharing = True
     elif protocol == config_def.ProtocolChoices.LOWGEAR_PARTY or protocol == config_def.ProtocolChoices.HIGHGEAR_PARTY or protocol == config_def.ProtocolChoices.MASCOT_PARTY:
         executable_prefix = "mascot"
-        need_no_conversion_but_input_sharing = task_config.custom_prime is not None
+        need_input_sharing = True
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}.")
         # print("Cannot convert from protocol", protocol, ". Note that we can only convert from the ring for now.")
@@ -249,6 +249,9 @@ def convert_shares(task_config):
 
         if task_config.convert_ring_if_needed:
             executable = f"./{executable_prefix}-ring-switch-party.x"
+            if need_input_sharing:
+                print("Actually doing input sharing instead of conversion. We need to adapt this if we are also going to mascot convert")
+                executable = f"./{executable_prefix}-share-party.x"
 
             # shares is too slow because of the VM, we do input directly. In the future we should directly interface with MP-SPDZ!
             input_parts = []
