@@ -131,6 +131,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     convert_ring_bits: int = 34
     convert_n_threads: int = 18 # should work?
     convert_chunk_size: int = 500000
+    convert_debug: bool = False
     sleep_time: float = 5.0 # time to sleep between conversion and next steps in seconds
 
 def parse_json_config(config_path):
@@ -178,9 +179,8 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
         commit_output=json_config_obj.commit_output,
         convert_ring_bits=json_config_obj.convert_ring_bits,
         convert_n_threads=json_config_obj.convert_n_threads,
-        convert_chunk_size=json_config_obj.convert_chunk_size
-
-
+        convert_chunk_size=json_config_obj.convert_chunk_size,
+        convert_debug=json_config_obj.convert_debug
     )
     return conf_obj
 
@@ -228,6 +228,7 @@ class TaskConfig(pydantic.BaseModel):
     convert_ring_bits: int
     convert_n_threads: int
     convert_chunk_size: int
+    convert_debug: bool
 
     compiler_args: list = None
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
