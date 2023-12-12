@@ -136,6 +136,9 @@ def prove_commitment_opening(task_config, output_prefix):
             stdout=consistency_gen_pp_output_file,
             stderr=consistency_gen_pp_output_file,
         )
+        if task_config.sleep_time > 0:
+            print(f"Sleeping for {task_config.sleep_time} seconds to allow pp generation process on all clients to finish.")
+            time.sleep(task_config.sleep_time)
 
     # GEN COMMITMENTS
     executable = f"target/release/gen_commitments_{task_config.consistency_args.pc}"
@@ -160,7 +163,9 @@ def prove_commitment_opening(task_config, output_prefix):
         stdout=consistency_gen_commitments_output_file,
         stderr=consistency_gen_commitments_output_file,
     )
-
+    if task_config.sleep_time > 0:
+        print(f"Sleeping for {task_config.sleep_time} seconds to allow commitment generation process on all clients to finish.")
+        time.sleep(task_config.sleep_time)
 
     # mp_spdz_path = os.path.join(task_config.abs_path_to_code_dir, 'MP-SPDZ')
     # output_file = f"{output_prefix}-P{task_config.player_id}-0"
@@ -229,6 +234,8 @@ def convert_shares(task_config):
     player_data_dir = os.path.join(os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"), "Player-Data")
     player_input_list, output_data, total_output_length = format_config.get_total_share_length(player_data_dir, task_config.player_count)
 
+    debug_flag = "-d" if task_config.convert_debug else ""
+
     total_input_length = 0
     player_input_counter = []
 
@@ -267,7 +274,7 @@ def convert_shares(task_config):
 
             # In some cases we dont do conversion but we need input sharing
 
-            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} -d {input_str}"
+            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} {debug_flag} {input_str}"
             print(f"Converting input shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
@@ -346,7 +353,7 @@ def convert_shares(task_config):
                 "out_start": total_input_length,
             }
             args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-            executable_str = f"{executable} {spdz_args_str} -d {args_str}"
+            executable_str = f"{executable} {spdz_args_str} {debug_flag} {args_str}"
             print(f"Converting shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
