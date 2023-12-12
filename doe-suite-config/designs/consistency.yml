@@ -1,9 +1,8 @@
 $SUITE_VARS$:
-  sleep_time: 2.0 # TODO [hly] can remove (also from experiment runner) as it does not have any effect
 
   _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
-  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
+  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID>"
 
   n_samples: 2097152
   n_parties: 2
@@ -88,7 +87,7 @@ compare_pvc_lan_sizes:
       n: 2
       check_status: True
       init_roles:
-#        - setup-base
+        - setup-base
         - setup-consistency
         - setup-spdz-secrets
 #        - setup-largeprimes

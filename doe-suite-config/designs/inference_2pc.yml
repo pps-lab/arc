@@ -1,12 +1,13 @@
 $SUITE_VARS$:
-  sleep_time: 2.0 # TODO [hly] can remove (also from experiment runner) as it does not have any effect
 
   _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
-  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
+  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID>"
 
   commit_output: True
-  convert_ring_bits: 64
+  convert_ring_bits: 31
+  convert_n_threads: 1
+  convert_chunk_size: 150000
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -49,6 +50,7 @@ sh:
       init_roles:
         - setup-base
         - setup-consistency
+        - setup-spdz-secrets
         #        - download-dataset
         #        - setup-largeprimes
       #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -77,6 +79,7 @@ mal:
       init_roles:
         - setup-base
         - setup-consistency
+        - setup-spdz-secrets
       #        - download-dataset
 #        - setup-largeprimes
       #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml

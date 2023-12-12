@@ -703,5 +703,7 @@ class BarPlotLoader(PlotLoader):
                 filename = f"bar_{metric_name}_{escape_tuple_str(idx_group)}"
 
                 out = os.path.join(output_dir, metric_name)
+                # make sure out exists
+                os.makedirs(out, exist_ok=True)
                 self.save_data(means, filename=filename, output_dir=out)
                 self.save_plot(fig, filename=filename, output_dir=out, use_tight_layout=True, output_filetypes=["pdf"])

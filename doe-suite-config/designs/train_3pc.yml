@@ -1,15 +1,16 @@
 $SUITE_VARS$:
-  sleep_time: 2.0 # TODO [hly] can remove (also from experiment runner) as it does not have any effect
 
   _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
-  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
+  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID>"
 
   $INCLUDE_VARS$: dataset.yml
 
   commit_output: True
   convert_ring_bits: 31
-  convert_n_threads: 18
+  convert_n_threads: 36
+  convert_debug: False
+  convert_chunk_size: 200000
 
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
@@ -32,7 +33,7 @@ $SUITE_VARS$:
     script_args:
       n_input_parties: 3
 
-      n_epochs: 0
+#      n_epochs: 0
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
@@ -40,6 +41,7 @@ $SUITE_VARS$:
       dataset:
         $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
       #          $FACTOR$: [ adult_3p ]
+#      cifar_alexnet_3party
 
       # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
       batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
@@ -62,7 +64,8 @@ sh:
       check_status: True
       init_roles:
         - setup-base
-#        - setup-consistency
+        - setup-consistency
+        - setup-spdz-secrets
 #        - download-dataset
         #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -110,6 +113,7 @@ mal:
       init_roles:
         - setup-base
         - setup-consistency
+        - setup-spdz-secrets
 #        - download-dataset
       #        - setup-largeprimes
       #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -119,6 +123,8 @@ mal:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
+    convert_chunk_size: 150000
+
     mpc:
       script_args:
         batch_size: 64

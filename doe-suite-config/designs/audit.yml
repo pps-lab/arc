@@ -1,16 +1,17 @@
 $SUITE_VARS$:
-  sleep_time: 2.0 # TODO [hly] can remove (also from experiment runner) as it does not have any effect
 
   _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
-  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
+  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID>"
 
   n_parties: 3
 
   $INCLUDE_VARS$: dataset.yml
 
   commit_output: False
-  convert_ring_bits: 64
+  convert_ring_bits: 31
+  convert_n_threads: 36
+  convert_chunk_size: 250000
 
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
@@ -25,7 +26,7 @@ $SUITE_VARS$:
 
     protocol_setup: "semi_honest_3"
     domain: ring
-    compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3', ]
+    compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
     custom_prime: null
 
 #    script_name: $FACTOR$
