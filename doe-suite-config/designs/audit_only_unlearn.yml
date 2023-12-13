@@ -12,7 +12,6 @@ $SUITE_VARS$:
   convert_ring_bits: 31
   convert_n_threads: 36
   convert_chunk_size: 200000
-  convert_debug: True
 
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
@@ -25,21 +24,21 @@ $SUITE_VARS$:
     abs_path_to_code_dir: "{{ exp_code_dir }}"
     player_count: "[% my_run.n_parties %]"
 
-    protocol_setup: $FACTOR$
+    protocol_setup:
+      $FACTOR$: [ "sy-rep-ring-party", "semi_honest_3"]
     domain: ring_split
     compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
     custom_prime: null
 
-    #    script_name: $FACTOR$
-
-    script_name:
-      $FACTOR$: [ "audit_fairness", "audit_prediction_shap" ]
+#    script_name: $FACTOR$
 
     script_args:
-      dataset: $FACTOR$
 
       n_samples: 1
       n_input_parties: "[% my_run.n_parties %]"
+
+      dataset:
+        $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
@@ -57,36 +56,7 @@ $SUITE_VARS$:
       $FACTOR$: [ compile, run ] # ensure that this is last factor
 
 
-twopc:
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 2
-      check_status: True
-      init_roles:
-        - setup-base
-        - setup-consistency
-        - setup-spdz-secrets
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-
-  base_experiment:
-    n_parties: 2
-
-    mpc:
-      protocol_setup:
-        $FACTOR$: [ "semi-party", "lowgear-party"]
-      domain: custom_256
-      compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
-      custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-
-      script_args:
-        dataset:
-          $FACTOR$: [ adult_2p ]
-#
-#
-threepc:
+audit_owner_unlearn:
   n_repetitions: 1
   host_types:
     consistency:
@@ -102,20 +72,8 @@ threepc:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-
     mpc:
-      protocol_setup:
-        $FACTOR$: [ "sy-rep-ring-party", "semi_honest_3"]
-      domain: ring_split
-      compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
-      custom_prime: null
-      script_args:
-        dataset:
-          $FACTOR$: [ adult_3p ]
-
-
-
-
+      script_name: audit_owner_unlearn
 
 
 $ETL$: {}

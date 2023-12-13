@@ -2,7 +2,8 @@
 
 
 $SUITE_ID$:
-  train_3pc: 1701693802 # { sh: 1701693802, mal: 1701693802 }
+#  1701693802
+  train_3pc: 1702396587 # { sh: 1701693802, mal: 1701693802 }
 $ETL$:
   raw:
     experiments:
@@ -37,7 +38,7 @@ $ETL$:
                                 "consistency_poly_commit_sign_sk_mus",
                                 "consistency_convert_shares_share_switch_input_mus",
                                 "consistency_poly_eval_poly_eval_mus",
-                                "consistency_prove_verify_Prove Verify"]
+                                "consistency_prove_verify_Prove Verify_mus"]
 
           auditing_overhead_bytes: ["consistency_convert_shares_share_switch_output_global_bytes",
                                       "consistency_poly_commit_commit_global_bytes",
@@ -45,7 +46,7 @@ $ETL$:
                                       "consistency_poly_commit_sign_sk_global_bytes",
                                       "consistency_convert_shares_share_switch_input_global_bytes",
                                       "consistency_poly_eval_poly_eval_global_bytes",
-                                      "consistency_prove_verify_bytes_sent_global_bytes"] # TODO: THIS IS CURRENTLY ONLY FROM A DIRTY FIX IN StatsTransformer. See `TODO [Hidde] The field `consistency_prove_verify_bytes_sent`
+                                      "consistency_prove_verify_global_bytes"]
 
           global_data_sent_mb: [ "spdz_global_data_sent" ]
 

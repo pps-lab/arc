@@ -54,27 +54,27 @@ class StatTransformer(Transformer):
         ################################Start Hack
         # TODO [Hidde] The field `consistency_prove_verify_bytes_sent` is currently only avaialble as a per-host output.
         #              However, it should be aggregated over all hosts. This is a hack to do that and to make it appear as if this is already done
-        key_cols = ["suite_name", "suite_id", "exp_name", "run", "rep"]
-        df1 = df[df["stat"] == "consistency_prove_verify_bytes_sent"]
-        df_additional = df1.groupby(key_cols).agg({"stat_value": ["sum", "count"]}).reset_index()
-        df_additional["stat"] = "consistency_prove_verify_bytes_sent_global_bytes"
-        df_additional.columns = ["_".join(v) if v[1] else v[0] for v in df_additional.columns.values]
-        df_additional.reset_index(inplace=True, drop=True)  # Resetting the index
-        player_count = df_additional["stat_value_count"].unique()
-
-        if len(player_count) != 1:
-            warnings.warn(f"UNEXPECTED WARNING: More than one player count found: {player_count}")
-
-        df_additional["stat_value"] = df_additional["stat_value_sum"]
-        df_additional.drop(columns=["stat_value_sum", "stat_value_count"], inplace=True)
-        df2 = df1.drop(columns=["host_idx", "stat", "stat_value", "player_number"]).drop_duplicates(subset=key_cols)
-        df2.reset_index(inplace=True, drop=True)
-        df_additional.set_index(key_cols, inplace=True)
-        df2.set_index(key_cols, inplace=True)
-
-        df_additional = pd.merge(df_additional, df2, on=key_cols, left_index=False, right_index=False).reset_index()
-
-        df = pd.concat([df, df_additional], ignore_index=True)
+        # key_cols = ["suite_name", "suite_id", "exp_name", "run", "rep"]
+        # df1 = df[df["stat"] == "consistency_prove_verify_bytes_sent"]
+        # df_additional = df1.groupby(key_cols).agg({"stat_value": ["sum", "count"]}).reset_index()
+        # df_additional["stat"] = "consistency_prove_verify_bytes_sent_global_bytes"
+        # df_additional.columns = ["_".join(v) if v[1] else v[0] for v in df_additional.columns.values]
+        # df_additional.reset_index(inplace=True, drop=True)  # Resetting the index
+        # player_count = df_additional["stat_value_count"].unique()
+        #
+        # if len(player_count) != 1:
+        #     warnings.warn(f"UNEXPECTED WARNING: More than one player count found: {player_count}")
+        #
+        # df_additional["stat_value"] = df_additional["stat_value_sum"]
+        # df_additional.drop(columns=["stat_value_sum", "stat_value_count"], inplace=True)
+        # df2 = df1.drop(columns=["host_idx", "stat", "stat_value", "player_number"]).drop_duplicates(subset=key_cols)
+        # df2.reset_index(inplace=True, drop=True)
+        # df_additional.set_index(key_cols, inplace=True)
+        # df2.set_index(key_cols, inplace=True)
+        #
+        # df_additional = pd.merge(df_additional, df2, on=key_cols, left_index=False, right_index=False).reset_index()
+        #
+        # df = pd.concat([df, df_additional], ignore_index=True)
 
         # not sure where this gets interpreted as a float
         df["host_idx"] = df["host_idx"].fillna(0)

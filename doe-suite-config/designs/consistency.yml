@@ -13,6 +13,7 @@ $SUITE_VARS$:
     pc: kzg
     pp_args: "[% my_run.n_samples %]"
     prover_party: 0
+    gen_pp: True # If we have to read the full parameter file of the largest one, it slows things down
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -100,8 +101,8 @@ compare_pvc_lan_sizes:
 
     n_samples:
       # 2^26, 2^30 / 32 bits per sample
-      $FACTOR$: [ 131072 ]
-#      $FACTOR$: [512, 8192, 131072, 2097152, 33554432]
+#      $FACTOR$: [ 131072 ]
+      $FACTOR$: [512, 8192, 131072, 2097152, 33554432]
 
 
 $ETL$: {}

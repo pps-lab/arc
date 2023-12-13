@@ -11,7 +11,7 @@ $SUITE_VARS$:
   commit_output: False
   convert_ring_bits: 31
   convert_n_threads: 36
-  convert_chunk_size: 250000
+  convert_chunk_size: 150000
 
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
@@ -24,8 +24,9 @@ $SUITE_VARS$:
     abs_path_to_code_dir: "{{ exp_code_dir }}"
     player_count: "[% my_run.n_parties %]"
 
-    protocol_setup: "semi_honest_3"
-    domain: ring
+    protocol_setup:
+      $FACTOR$: [ "sy-rep-ring-party", "semi_honest_3"]
+    domain: ring_split
     compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
     custom_prime: null
 
@@ -64,6 +65,7 @@ audit_sample_knnshapley:
       init_roles:
         - setup-base
         - setup-consistency
+        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
@@ -74,23 +76,24 @@ audit_sample_knnshapley:
       script_name: audit_sample_knnshapley
 
 
-audit_owner_unlearn:
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 3
-      check_status: True
-      init_roles:
-        - setup-base
-        - setup-consistency
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
-
-  base_experiment:
-    mpc:
-      script_name: audit_owner_unlearn
+#audit_owner_unlearn:
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#        - setup-spdz-secrets
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+#    mpc:
+#      script_name: audit_owner_unlearn
 #
 #
 #audit_prediction_shap:
@@ -146,6 +149,7 @@ audit_robustness:
       init_roles:
         - setup-base
         - setup-consistency
+        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"

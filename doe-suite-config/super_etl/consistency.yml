@@ -2,13 +2,14 @@
 
 
 $SUITE_ID$:
-  bench_consistency: { compare_pvc_lan: 1700164581,
+  bench_consistency: {
+    compare_pvc_lan: 1700164581,
                        compare_pvc_wan: 1700150553,
 #                       compare_pvc_lan_sizes: 1701000867
 #                        compare_pvc_lan_sizes: 1701002468
                         compare_pvc_lan_sizes: 1701004020
-
   }
+  consistency: { compare_pvc_lan_sizes: 1702421985 }
 
 $ETL$:
   twod:
@@ -71,7 +72,7 @@ $ETL$:
 
   input_sizes:
     experiments:
-      bench_consistency: [ compare_pvc_lan_sizes ]
+      consistency: [ compare_pvc_lan_sizes ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -84,8 +85,8 @@ $ETL$:
       - name: StatTransformer
         groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'n_samples' ]
         stats:
-          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_300" ]
-          verification_bandwidth_mb: [ "spdz_timer_bw_300" ]
+          verification_time_s: [ "consistency_prove_verify_Prove Verify_mus", "consistency_poly_eval_poly_eval_mus" ]
+          verification_bandwidth_bytes: [ "consistency_prove_verify_global_bytes", "consistency_poly_eval_poly_eval_global_bytes" ]
           player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
           player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
           global_data_sent_mb: [ "spdz_global_data_sent" ]
@@ -98,8 +99,8 @@ $ETL$:
 
       - name: AddTransformer
         result_col: verification_bandwidth_mb
-        add_cols: [ verification_bandwidth_mb, [player_bw_sent_bytes, sum] ]
-        divisors: [ 1, 1000000 ]
+        add_cols: [ verification_bandwidth_bytes, [player_bw_sent_bytes, sum] ]
+        divisors: [ 1000000, 1000000 ]
 
       - df.assign: { com_type: com }
 
