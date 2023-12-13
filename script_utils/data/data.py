@@ -1,4 +1,4 @@
-from Compiler.script_utils.data import mnist, cifar, adult, ember, mnist_full_A
+from Compiler.script_utils.data import mnist, cifar, adult, ember
 from Compiler.library import get_number_of_players
 
 import ruamel.yaml
