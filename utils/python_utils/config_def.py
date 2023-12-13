@@ -133,6 +133,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     convert_chunk_size: int = 500000
     convert_debug: bool = False
     sleep_time: float = 5.0 # time to sleep between conversion and next steps in seconds
+    remove_input_files: bool = True
 
 def parse_json_config(config_path):
     """Parses the config.json file found under the given config_path and returns a JsonConfigModel object
@@ -180,7 +181,8 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
         convert_ring_bits=json_config_obj.convert_ring_bits,
         convert_n_threads=json_config_obj.convert_n_threads,
         convert_chunk_size=json_config_obj.convert_chunk_size,
-        convert_debug=json_config_obj.convert_debug
+        convert_debug=json_config_obj.convert_debug,
+        remove_input_files=json_config_obj.remove_input_files
     )
     return conf_obj
 
@@ -233,6 +235,8 @@ class TaskConfig(pydantic.BaseModel):
     compiler_args: list = None
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
     commit_output: typing.Optional[bool] = False
+
+    remove_input_files: bool
 
     @pydantic.validator('stage')
     def convert_to_list(cls, v):

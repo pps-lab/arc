@@ -32,7 +32,7 @@ class Cleaner:
     - clean():
         Cleans the code workspace.
     """
-    def __init__(self, code_dir, output_prefix):
+    def __init__(self, code_dir, output_prefix, remove_input_files):
         """
         Parameters
         ----------
@@ -44,6 +44,7 @@ class Cleaner:
         self.code_dir = code_dir
         self.output_prefix = output_prefix
         self.pattern = re.compile(f"{output_prefix}-P([0-9]+)-([0-9]+)")
+        self.remove_input_files = remove_input_files
 
     def is_relevant(self, file_name):
         """Check if the given file_name is the name of a valid file and is also the name of an experiment output file
@@ -76,13 +77,19 @@ class Cleaner:
 
     def clean_player_data(self):
         """Clean the Player-Data folder in the MP-SPDZ folder of the code workspace."""
-        player_data_path = os.path.join(self.code_dir,"MP-SPDZ/Player-Data")
-        shutil.rmtree(player_data_path,ignore_errors=True)
-        os.mkdir(player_data_path)
+        player_data_path = os.path.join(self.code_dir, "MP-SPDZ/Player-Data")
+        for file_name in os.listdir(player_data_path):
+            # if it is a file and in the format of regex Transactions-P(\d*)-0.data
+            if os.path.isfile(os.path.join(player_data_path, file_name)) and re.match(r'Input-Binary-P(.*)',
+                                                                                           file_name):
+                print("Removing ", os.path.join(player_data_path, file_name))
+                os.remove(os.path.join(player_data_path, file_name))
+        # shutil.rmtree(player_data_path,ignore_errors=True)
+        # os.mkdir(player_data_path)
 
     def clean(self):
         """Cleans the code workspace."""
         self.clean_output()
-        # TODO: Disabled because we download the s3 datasets only once!
-        # self.clean_player_data()
+        if self.remove_input_files:
+            self.clean_player_data()
         # self.clean_player_pred_data()

@@ -107,7 +107,8 @@ def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
     """Cleans the workspace from the output files with the prefix output_prefix and the data
     stored in the Player-Data and Player-Prep-Data folders."""
     cleaner_obj = clr.Cleaner(code_dir=task_config.abs_path_to_code_dir,
-        output_prefix=output_prefix)
+                              output_prefix=output_prefix,
+                              remove_input_files=task_config.remove_input_files)
     cleaner_obj.clean()
 
 def prove_commitment_opening(task_config, output_prefix):
@@ -136,9 +137,10 @@ def prove_commitment_opening(task_config, output_prefix):
             stdout=consistency_gen_pp_output_file,
             stderr=consistency_gen_pp_output_file,
         )
-        if task_config.sleep_time > 0:
-            print(f"Sleeping for {task_config.sleep_time} seconds to allow pp generation process on all clients to finish.")
-            time.sleep(task_config.sleep_time)
+
+    if task_config.sleep_time > 0:
+        print(f"Sleeping for {task_config.sleep_time} seconds to allow gen commitment process on all clients to finish.")
+        time.sleep(task_config.sleep_time)
 
     # GEN COMMITMENTS
     executable = f"target/release/gen_commitments_{task_config.consistency_args.pc}"
@@ -456,7 +458,7 @@ def cli(player_number):
         convert_shares(task_config=task_config)
         prove_commitment_opening(task_config=task_config,
                                  output_prefix=output_prefix)
-        clean_workspace(task_config=task_config,output_prefix=output_prefix)
+        clean_workspace(task_config=task_config, output_prefix=output_prefix)
 
 
 if __name__ == "__main__":
