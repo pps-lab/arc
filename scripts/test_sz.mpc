@@ -36,7 +36,8 @@ for i in range(cfg.n_input_parties):
 
     library.start_timer(timer_id=300 + i)
 
-    input_consistency.compute_and_output_poly_array([inputs_x], i, cfg.n_threads)
+    inputs = input_consistency.InputObject(dataset=[inputs_x])
+    input_consistency.check(inputs, i, cfg.n_threads, "pc")
 
     library.stop_timer(timer_id=300 + i)
 
