@@ -7,11 +7,12 @@ from Compiler.script_utils.data import AbstractInputLoader
 import torch.nn as nn
 import torch
 
-from typing import List
+from typing import List, Optional
+
 
 class MnistInputLoader(AbstractInputLoader):
 
-    def __init__(self, dataset, n_train_samples: List[int], n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: bool, load_model_weights: bool = True):
+    def __init__(self, dataset, n_train_samples: List[int], n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: Optional[str], load_model_weights: bool = True):
         """The first part of the input of every party is their training set.
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples

@@ -1,3 +1,5 @@
+from typing import Optional
+
 from Compiler.script_utils import output_utils
 
 from pydantic import BaseModel
@@ -31,7 +33,7 @@ class BaseAuditModel(BaseModel):
     audit_trigger_idx: int = None
 
     # Whether to check parties' inputs for consistency
-    consistency_check: bool = True
+    consistency_check: Optional[str] = "pc" # also "sha3" and "ped" for cerebro
     class Config:
         extra = "allow"
         smart_union = True

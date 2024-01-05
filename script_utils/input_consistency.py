@@ -1,55 +1,105 @@
-
+from dataclasses import dataclass, field
+from typing import Optional, List
 
 from Compiler.types import sfix, sint, Array, cint
-from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread
+from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread, get_program
 
 import ruamel.yaml
 
+@dataclass
+class InputObject:
+    dataset: Optional[list] = field(default_factory=lambda: []) # list of Arrays of sfix/sint
+    model: Optional[list] = field(default_factory=lambda: [])
+    x: Optional[list] = field(default_factory=lambda: [])
+    y: Optional[list] = field(default_factory=lambda: [])
 
+    test_x: Optional[list] = field(default_factory=lambda: [])
+    test_y: Optional[list] = field(default_factory=lambda: [])
 
-def compute_and_output_poly_array(inputs: list, player_input_id, n_threads):
+def check(inputs: InputObject, player_input_id, type, n_threads):
+    """
+    :param type: string
+    :return:
+    """
+    if type == "pc":
+        compute_and_output_poly_array(inputs, player_input_id, n_threads)
+    elif type == "sha3":
+        # for each field in inputobject we should compute a hash
+        raise ValueError("SHA3 not implemented yet")
+    elif type == "ped":
+        raise ValueError("PED not implemented yet")
+    else:
+        raise ValueError("Unknown type %s", type)
+
+def compute_and_output_poly_array(input_objects: InputObject, player_input_id, n_threads):
     """
 
     :type inputs: Array of sint/sfix
     :param
     """
     # concatenate all inputs into one array
-    fmt = []
-    l = 0
-    for i in range(len(inputs)):
-        size = inputs[i].total_size()
-        l += size
-        fmt.append({ "type": inputs[i].value_type.__name__, "length": size })
 
-    full_arr = Array(l, sint)
-    idx = 0
+    def process_input(inputs, object_type):
+        fmt = []
+        l = 0
+        for i in range(len(inputs)):
+            size = inputs[i].total_size()
+            l += size
+            fmt.append({ "type": inputs[i].value_type.__name__, "length": size })
 
-    # first pass: convert any sint array to sfix ... ?
-    # for i in range(len(inputs)):
-    #
-    # for i in range(len(inputs)):
-    #     arr = inputs[i].to_array()
-    #     if arr.value_type == sint:
-    #         print("Note: Converting array of length")
-    #         arr2 = Array(arr.length, sfix)
-    #         arr2.assign_vector(arr)
-    #         arr = arr2
-    #     arr = convert_array_sint(arr)
-    #     full_arr.assign(arr, idx)
-    #     idx += arr.length
-    for i in range(len(inputs)):
-        arr = inputs[i].to_array()
-        if arr.value_type == sfix:
-            arr = convert_array_sint(arr)
-        full_arr.assign(arr, idx)
-        idx += arr.length
+        full_arr = Array(l, sint)
+        idx = 0
 
-    print(f"complete array for player {player_input_id} length: ", full_arr.length)
+        for i in range(len(inputs)):
+            arr = inputs[i].to_array()
+            if arr.value_type == sfix:
+                arr = convert_array_sint(arr)
+            full_arr.assign(arr, idx)
+            idx += arr.length
 
-    # output_shares_input(full_arr, player_input_id, n_threads)
-    # compute_and_output_poly(full_arr, player_input_id, n_threads)
-    write_input_format_to_file(fmt, player_input_id)
+        print(f"complete {object_type} array for player {player_input_id} length: ", full_arr.length)
+        return fmt
 
+    all_fmt = []
+
+    # the following order is important because it should match the input order
+    if len(input_objects.dataset) > 0:
+        all_fmt.append({ "object_type": "d", "items": process_input(input_objects.dataset, "dataset") })
+
+    if len(input_objects.y) > 0:
+        all_fmt.append({ "object_type": "y", "items": process_input(input_objects.y, "y") })
+
+    if len(input_objects.x) > 0:
+        all_fmt.append({ "object_type": "x", "items": process_input(input_objects.x, "x") })
+
+    if len(input_objects.test_y) > 0:
+        all_fmt.append({ "object_type": "test_y", "items": process_input(input_objects.test_y, "test_y") })
+
+    if len(input_objects.test_x) > 0:
+        all_fmt.append({ "object_type": "test_x", "items": process_input(input_objects.test_x, "test_x") })
+
+    if len(input_objects.model) > 0:
+        all_fmt.append({ "object_type": "m", "items": process_input(input_objects.model, "model") })
+
+    if len(all_fmt) > 0:
+        write_input_format_to_file(all_fmt, player_input_id)
+
+
+def random_input_party(party_id):
+    import numpy as np
+    program = get_program()
+
+    np.random.seed(42)
+    random_value = np.random.randint(0, 2 ** 31, 1)
+    content = np.array(random_value).astype(np.int64)
+
+    f = program.get_binary_input_file(party_id)
+    f.write(content.tobytes())
+    f.flush()
+
+    res = sint.Tensor(content.shape)
+    res.input_from(party_id, binary=True)
+    return res
 
 def output_shares_input(inputs, player_input_id, n_threads):
 
