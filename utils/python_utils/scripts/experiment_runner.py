@@ -230,8 +230,6 @@ def convert_shares(task_config):
         need_input_sharing = True
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}.")
-        # print("Cannot convert from protocol", protocol, ". Note that we can only convert from the ring for now.")
-        # print("Continuing without converting shares.")
 
     player_data_dir = os.path.join(os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"), "Player-Data")
     player_input_list, output_data, total_output_length = format_config.get_total_share_length(player_data_dir, task_config.player_count)
@@ -239,7 +237,8 @@ def convert_shares(task_config):
     debug_flag = "-d" if task_config.convert_debug else ""
 
     total_input_length = 0
-    player_input_counter = []
+    # represents for each player id (key), a list of input checks that need to be run
+    player_input_counter = { i: [] for i in range(len(player_input_list)) }
 
     spdz_args_str = f"-p {task_config.player_id} -N {task_config.player_count} -h {task_config.player_0_hostname}"
 
@@ -256,28 +255,29 @@ def convert_shares(task_config):
                 executable = f"./{executable_prefix}-share-party.x"
 
             # shares is too slow because of the VM, we do input directly. In the future we should directly interface with MP-SPDZ!
+            # See also: https://github.com/data61/MP-SPDZ/issues/1257
             input_parts = []
-            for player_id, p_inputs in enumerate(player_input_list):
-                if p_inputs is None:
+            for player_id, p_inputs_objs in enumerate(player_input_list):
+                if p_inputs_objs is None:
                     input_parts.append("-i 0")
-                    player_input_counter.append(0)
+                    player_input_counter[player_id].append(0)
                 else:
                     types = []
-                    player_input_cnt = 0
-                    for p_input in p_inputs:
-                        if p_input["type"] == "sfix":
-                            types.append(f"f{p_input['length']}")
-                        elif p_input["type"] == "sint":
-                            types.append(f"i{p_input['length']}")
-                        else:
-                            raise ValueError(f"Unknown type {p_input['type']}")
-                        total_input_length += p_input['length']
-                        player_input_cnt += p_input['length']
-                    player_input_counter.append(player_input_cnt)
+                    for p_input_obj in p_inputs_objs:
+                        p_inputs = p_input_obj.items
+                        player_input_cnt = 0
+                        for p_input in p_inputs:
+                            if p_input["type"] == "sfix":
+                                types.append(f"f{p_input['length']}")
+                            elif p_input["type"] == "sint":
+                                types.append(f"i{p_input['length']}")
+                            else:
+                                raise ValueError(f"Unknown type {p_input['type']}")
+                            total_input_length += p_input['length']
+                            player_input_cnt += p_input['length']
+                        player_input_counter[player_id].append(player_input_cnt)
                     input_parts.append(f"-i {','.join(types)}")
             input_str = " ".join(input_parts)
-
-            # In some cases we dont do conversion but we need input sharing
 
             executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} {debug_flag} {input_str}"
             print(f"Converting input shares with command: {executable_str}")
@@ -304,44 +304,48 @@ def convert_shares(task_config):
                 time.sleep(task_config.sleep_time)
 
         # compute a polynomial for each party
+        # log the data in player_input_counter
+        print(f"Computing polynomials for the following inputs: {player_input_counter}")
         input_counter = 0
-        for party_id, player_input_count in enumerate(player_input_counter):
-            if player_input_count == 0:
+        for party_id, player_input_counts in player_input_counter.items():
+            if len(player_input_counts) == 0:
                 print("Skipping party", party_id, "because it has no input.")
                 continue
 
-            executable = f"./{executable_prefix}-pe-party.x"
-            args = {
-                "n_shares": player_input_count, # convert all shares
-                "start": input_counter,
-                "input_party_i": party_id,
-            }
-            if task_config.consistency_args.eval_point is not None:
-                args['eval_point'] = task_config.consistency_args.eval_point
-            args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-            executable_str = f"{executable} {spdz_args_str} {args_str}"
-            print(f"Computing polynomial for player {party_id} with command: {executable_str}")
+            for player_input_count in player_input_counts:
+                executable = f"./{executable_prefix}-pe-party.x"
+                args = {
+                    "n_shares": player_input_count, # convert all shares
+                    "start": input_counter,
+                    "input_party_i": party_id,
+                }
+                if task_config.consistency_args.eval_point is not None:
+                    args['eval_point'] = task_config.consistency_args.eval_point
+                args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+                executable_str = f"{executable} {spdz_args_str} {args_str}"
+                print(f"Computing polynomial for player {party_id} with command: {executable_str}")
 
-            result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-            poly_eval_phase = open(os.path.join(result_dir_path, "consistency_poly_eval.log"), "a+")
-            import subprocess
-            subprocess.run(
-                executable_str,
-                shell=True,
-                cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
-                check=True,
-                stdout=poly_eval_phase,
-                stderr=poly_eval_phase,
-            )
-            input_counter += player_input_count
+                result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+                poly_eval_phase = open(os.path.join(result_dir_path, "consistency_poly_eval.log"), "a+")
+                import subprocess
+                subprocess.run(
+                    executable_str,
+                    shell=True,
+                    cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+                    check=True,
+                    stdout=poly_eval_phase,
+                    stderr=poly_eval_phase,
+                )
+                input_counter += player_input_count
 
-            if task_config.sleep_time > 0:
-                print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
-                time.sleep(task_config.sleep_time)
+                if task_config.sleep_time > 0:
+                    print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
+                    time.sleep(task_config.sleep_time)
 
         assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
 
     if task_config.commit_output:
+        # TODO: Make this work for individual outputs as well.
 
         if total_output_length == 0:
             print("No output to convert. Is this a mistake?")
