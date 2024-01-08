@@ -20,6 +20,7 @@ $ETL$:
     transformers: [ ]
     loaders:
       PickleSummaryLoader: { }
+      CsvSummaryLoader: { }
 
   all_datasets:
     experiments:
@@ -207,8 +208,8 @@ $ETL$:
           audit_owner_unlearn: "Camel Unlearning"
           audit_robustness: "Robustness"
 
-          audit_prediction_shap: "KernelSHAP"
-          audit_fairness: "Individual Fairness"
+          audit_prediction_shap: "SHAP"
+          audit_fairness: "IF"
 
           adult: "Adult"
           mnist_full: "MNIST"

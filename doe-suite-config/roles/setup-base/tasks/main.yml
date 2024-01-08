@@ -186,12 +186,16 @@
     cmd: "bash {{ does_project_dir }}/MP-SPDZ/Scripts/setup-ssl.sh 20 MP-SPDZ/Player-SSL-Data/"
     creates: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/P0.key"
 
-# TODO: add step to re-generate ssl certs locally (if they are outdated)
-# TODO: Re-enable
 - name: Copy SSL Certificates
   ansible.builtin.copy:
     src: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/"
     dest: "{{ mpspdz_dir }}/Player-SSL-Data/"
+
+#- name: Copy SSL Certificates
+#  ansible.builtin.copy:
+#    src: "{{ mpspdz_dir }}/Player-SSL-Data/"
+#    dest: "{{ mpspdz_dir }}/Player-Data/"
+#    remote_src: yes
 
 ## MP_SPDZ SETUP AT THIS POINT!
 - name: "Check if AWS CLI is installed"

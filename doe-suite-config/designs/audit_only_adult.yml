@@ -19,6 +19,7 @@ $SUITE_VARS$:
     hosts_file: "{{ exp_consistency_hosts_file }}"
     pc: kzg
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
+    gen_pp: True
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
