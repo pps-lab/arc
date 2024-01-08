@@ -321,6 +321,10 @@ def convert_shares(task_config):
                 }
                 if task_config.consistency_args.eval_point is not None:
                     args['eval_point'] = task_config.consistency_args.eval_point
+                elif task_config.consistency_args.single_random_eval_point:
+                    # technically this does not use the full range (mod scalar field size) at the moment.
+                    args['eval_point'] = random.getrandbits(251)
+
                 args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
                 executable_str = f"{executable} {spdz_args_str} {args_str}"
                 print(f"Computing polynomial for player {party_id} with command: {executable_str}")
@@ -345,7 +349,6 @@ def convert_shares(task_config):
         assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
 
     if task_config.commit_output:
-        # TODO: Make this work for individual outputs as well.
 
         if total_output_length == 0:
             print("No output to convert. Is this a mistake?")
