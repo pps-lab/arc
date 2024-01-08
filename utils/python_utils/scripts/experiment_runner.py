@@ -383,7 +383,7 @@ def convert_shares(task_config):
 
         if task_config.convert_ring_if_needed:
             # convert the output shares
-            executable = f"./{executable_prefix}-ring-switch-party.x"
+            executable = f"./{conversion_prefix}-switch-party.x"
             args = {
                 "n_shares": total_output_length, # convert all shares
                 # "start": None,
