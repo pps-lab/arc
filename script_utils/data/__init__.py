@@ -138,7 +138,7 @@ class AbstractInputLoader(ABC):
             audit_trigger_samples_loaded = sfix.input_tensor_via(0, backdoor_dataset[POS_SAMPLES])
             self._audit_trigger_samples.assign(audit_trigger_samples_loaded)
             # insert_or_append(input_consistency_array_per_party, 0, audit_trigger_samples_loaded)
-            input_consistency_array_per_party[0].x.append(audit_trigger_mislabels_loaded)
+            input_consistency_array_per_party[0].x.append(audit_trigger_samples_loaded)
 
 
         if self.test_dataset_size() > 0:
