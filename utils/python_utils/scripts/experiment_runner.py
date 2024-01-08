@@ -264,7 +264,7 @@ def convert_shares(task_config):
                 else:
                     types = []
                     for p_input_obj in p_inputs_objs:
-                        p_inputs = p_input_obj.items
+                        p_inputs = p_input_obj["items"]
                         player_input_cnt = 0
                         for p_input in p_inputs:
                             if p_input["type"] == "sfix":
