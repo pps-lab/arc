@@ -312,14 +312,13 @@ def convert_shares(task_config):
         eval_point = None
         if task_config.consistency_args.eval_point is not None:
             eval_point = task_config.consistency_args.eval_point
+        elif task_config.consistency_args.single_random_eval_point:
+            print("Using the same eval point across poly eval runs."
+              "We will run the first eval script first and let the parties agree on a point."
+              "We then use this point in subsequent invocations.")
         else:
             warnings.warn("Note that if a party has multiple inputs to prove, we do not support using different points at the moment."
                           "It would be easy to support in the mpc-consistency code.")
-
-        if task_config.consistency_args.single_random_eval_point:
-            print("Using the same eval point across poly eval runs."
-                  "We will run the first eval script first and let the parties agree on a point."
-                  "We then use this point in subsequent invocations.")
 
         input_counter = 0
         for party_id, player_input_counts in player_input_counter.items():
@@ -357,7 +356,7 @@ def convert_shares(task_config):
                 # now look in log file for the eval point
                 if task_config.consistency_args.single_random_eval_point and eval_point is None:
                     print("Parsing eval point")
-                    eval_point = find_eval_point(poly_eval_phase)
+                    eval_point = find_eval_point(os.path.join(result_dir_path, "consistency_poly_eval.log"))
 
                 if task_config.sleep_time > 0:
                     print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
@@ -449,13 +448,14 @@ def copy_transaction_files(conversion_not_needed, task_config):
                 shutil.copyfile(os.path.join(persistence_data_path, file_name),
                                 os.path.join(persistence_data_path, filename_suffix))
 
-def find_eval_point(f):
+def find_eval_point(filename):
     eval_point_regex = r"input_consistency_player_(\d*)_eval=\((.*),(.*)\)"
-    for line in f.readlines():
-        match = re.match(eval_point_regex, line)
-        if match:
-            print("Found eval point", match.group(2))
-            return match.group(2)
+    with open(filename, "r") as f:
+        for line in f.readlines():
+            match = re.match(eval_point_regex, line)
+            if match:
+                print("Found eval point", match.group(2))
+                return match.group(2)
 
     raise ValueError("Could not find eval point in log file.")
 
