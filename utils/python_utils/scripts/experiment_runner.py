@@ -214,22 +214,34 @@ def convert_shares(task_config):
 
     protocol = task_config.protocol_setup
 
+    # If this is true, we will try to copy the share files (after conversion fails)
     conversion_not_needed = protocol == config_def.ProtocolChoices.REP_FIELD_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY \
         or protocol == config_def.ProtocolChoices.LOWGEAR_PARTY or protocol == config_def.ProtocolChoices.HIGHGEAR_PARTY or protocol == config_def.ProtocolChoices.MASCOT_PARTY \
         or protocol == config_def.ProtocolChoices.SEMI_PARTY
 
     executable_prefix = None
+    conversion_prefix = None
     need_input_sharing = False
-    if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X or protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
+    if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X:
         executable_prefix = "rep"
-    elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY or protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY:
+        conversion_prefix = "rep-ring"
+    elif protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
+        executable_prefix = "rep"
+        conversion_prefix = "rep-field" # TODO
+    elif protocol ==  config_def.ProtocolChoices.SY_REP_RING_PARTY:
         executable_prefix = "sy-rep"
+        conversion_prefix = "sy-rep-ring"
+    elif protocol == config_def.ProtocolChoices.SY_REP_FIELD_PARTY:
+        executable_prefix = "sy-rep"
+        conversion_prefix = "sy-rep-field" # TODO
     elif protocol == config_def.ProtocolChoices.SEMI_PARTY:
         executable_prefix = "semi"
-        need_input_sharing = True
+        conversion_prefix = "semi"
+        need_input_sharing = task_config.custom_prime is not None # we compute in the custom prime field. we assume BLS377 for now
     elif protocol == config_def.ProtocolChoices.LOWGEAR_PARTY or protocol == config_def.ProtocolChoices.HIGHGEAR_PARTY or protocol == config_def.ProtocolChoices.MASCOT_PARTY:
         executable_prefix = "mascot"
-        need_input_sharing = True
+        conversion_prefix = "mascot"
+        need_input_sharing = task_config.custom_prime is not None # we compute in the custom prime field. we assume BLS377 for now
     else:
         raise ValueError(f"Cannot convert from protocol {protocol}.")
 
@@ -251,7 +263,7 @@ def convert_shares(task_config):
     if task_config.consistency_args is not None:
 
         if task_config.convert_ring_if_needed:
-            executable = f"./{executable_prefix}-ring-switch-party.x"
+            executable = f"./{conversion_prefix}-switch-party.x"
             if need_input_sharing:
                 print("Actually doing input sharing instead of conversion. We need to adapt this if we are also going to mascot convert")
                 executable = f"./{executable_prefix}-share-party.x"
