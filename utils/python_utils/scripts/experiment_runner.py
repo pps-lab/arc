@@ -30,6 +30,7 @@ This module provides the following functionalities:
 
 """
 import sys
+import warnings
 
 import python_utils.config_def as config_def
 import python_utils.runner_defs as runner_defs
@@ -306,6 +307,18 @@ def convert_shares(task_config):
         # compute a polynomial for each party
         # log the data in player_input_counter
         print(f"Computing polynomials for the following inputs: {player_input_counter}")
+
+        eval_point = None
+        if task_config.consistency_args.eval_point is not None:
+            eval_point = task_config.consistency_args.eval_point
+        elif task_config.consistency_args.single_random_eval_point:
+            # technically this does not use the full range (mod scalar field size) at the moment.
+            print("Generating random evaluation point")
+            eval_point = random.getrandbits(251)
+        else:
+            warnings.warn("Note that if a party has multiple inputs to prove, we do not support using different points at the moment."
+                          "It would be easy to support in the mpc-consistency code.")
+
         input_counter = 0
         for party_id, player_input_counts in player_input_counter.items():
             if len(player_input_counts) == 0:
@@ -319,11 +332,8 @@ def convert_shares(task_config):
                     "start": input_counter,
                     "input_party_i": party_id,
                 }
-                if task_config.consistency_args.eval_point is not None:
-                    args['eval_point'] = task_config.consistency_args.eval_point
-                elif task_config.consistency_args.single_random_eval_point:
-                    # technically this does not use the full range (mod scalar field size) at the moment.
-                    args['eval_point'] = random.getrandbits(251)
+                if eval_point is not None:
+                    args['eval_point'] = eval_point
 
                 args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
                 executable_str = f"{executable} {spdz_args_str} {args_str}"
