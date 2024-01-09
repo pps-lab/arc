@@ -4,6 +4,8 @@ from typing import Optional, List
 from Compiler.types import sfix, sint, Array, cint
 from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread, get_program
 
+from Compiler.script_utils.consistency_cerebro import compute_commitment
+
 import ruamel.yaml
 
 @dataclass
@@ -27,9 +29,11 @@ def check(inputs: InputObject, player_input_id, type, n_threads):
         # for each field in inputobject we should compute a hash
         raise ValueError("SHA3 not implemented yet")
     elif type == "ped":
-        raise ValueError("PED not implemented yet")
+        compute_consistency_cerebro(inputs, player_input_id, n_threads)
     else:
         raise ValueError("Unknown type %s", type)
+
+    print("Done with input consistency check")
 
 def compute_and_output_poly_array(input_objects: InputObject, player_input_id, n_threads):
     """
@@ -47,17 +51,17 @@ def compute_and_output_poly_array(input_objects: InputObject, player_input_id, n
             l += size
             fmt.append({ "type": inputs[i].value_type.__name__, "length": size })
 
-        full_arr = Array(l, sint)
-        idx = 0
+        # full_arr = Array(l, sint)
+        # idx = 0
+        #
+        # for i in range(len(inputs)):
+        #     arr = inputs[i].to_array()
+        #     if arr.value_type == sfix:
+        #         arr = convert_array_sint(arr)
+        #     full_arr.assign(arr, idx)
+        #     idx += arr.length
 
-        for i in range(len(inputs)):
-            arr = inputs[i].to_array()
-            if arr.value_type == sfix:
-                arr = convert_array_sint(arr)
-            full_arr.assign(arr, idx)
-            idx += arr.length
-
-        print(f"complete {object_type} array for player {player_input_id} length: ", full_arr.length)
+        print(f"complete {object_type} array for player {player_input_id} length: ", l)
         return fmt
 
     all_fmt = []
@@ -130,8 +134,6 @@ def compute_and_output_poly(inputs, player_input_id, n_threads):
     print("Proving for %s inputs", inputs.length)
     print_ln("Proving for %s inputs", inputs.length)
 
-    # TODO: WE ARE MISSING 10 somewhere!
-
     random_point = 1
     rho = cint(random_point)
 
@@ -147,20 +149,72 @@ def compute_and_output_poly(inputs, player_input_id, n_threads):
     print_ln("input_consistency_player_%s_eval=(%s,%s)", player_input_id, random_point, output_sum.reveal())
 
 
-def compute_and_output_poly_mem(inputs, player_input_id, n_threads):
-    """
+def flatten_and_apply_to_all(inputs: InputObject, player_input_id, n_threads, fn):
+    def flatten(input_list: list, fn):
+        l = 0
+        for i in range(len(input_list)):
+            size = input_list[i].total_size()
+            l += size
 
-    :type inputs: Array of sint/sfix
-    :param
-    """
+        full_arr = Array(l, sint)
+        idx = 0
 
-    # TODO: What we could do here is first compute parts of rho with binary search, i.e., to achieve rho
-    # such that we get n_threads starting points where we can start with the computation of the polynomial in parallel
+        for i in range(len(input_list)):
+            arr = input_list[i].to_array()
+            if arr.value_type == sfix:
+                arr = convert_array_sint(arr)
+            full_arr.assign(arr, idx)
+            idx += arr.length
+
+        print(f"array for player {player_input_id} length: ", full_arr.length)
+        return fn(full_arr, player_input_id, n_threads)
+
+    results = []
+
+    if len(inputs.dataset) > 0:
+        results.append(flatten(inputs.dataset, fn))
+
+    if len(inputs.y) > 0:
+        results.append(flatten(inputs.y, fn))
+
+    if len(inputs.x) > 0:
+        results.append(flatten(inputs.x, fn))
+
+    if len(inputs.test_y) > 0:
+        results.append(flatten(inputs.test_y, fn))
+
+    if len(inputs.test_x) > 0:
+        results.append(flatten(inputs.test_x, fn))
+
+    if len(inputs.model) > 0:
+        results.append(flatten(inputs.model, fn))
+
+    return results
 
 
+def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads):
+    # compute random combination of inputs
+    # compute commitment of random combination
 
-    pass
+    # this might take a really long time?
+    def compute_sz(input_flat, pid, n_t):
+        random_point = 34821
+        rho = cint(random_point)
 
+        output_sum = input_flat[0]
+        output_sum_r = sint(0)
+
+        # main loop
+        # @for_range_multithread(n_threads, 1, inputs.length)
+        @for_range_opt(1, input_flat.length)
+        def _(i):
+            output_sum.update(output_sum + (input_flat[i] * rho))
+            output_sum_r.update(output_sum_r + (sint(3) * rho)) # assume r = 3 everywhere
+            rho.update(rho * random_point)
+
+        compute_commitment(output_sum, output_sum_r)
+
+    flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_sz)
 
 
 def convert_array_sint(arr):
