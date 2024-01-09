@@ -512,11 +512,11 @@ def cli(player_number):
         output_prefix=generate_random_prefix()
         run_script_with_args(task_config=task_config,
             output_prefix=output_prefix)
-        capture_output(task_config=task_config,
-            output_prefix=output_prefix)
         convert_shares(task_config=task_config, output_prefix=output_prefix)
         prove_commitment_opening(task_config=task_config,
                                  output_prefix=output_prefix)
+        capture_output(task_config=task_config,
+                       output_prefix=output_prefix)
         clean_workspace(task_config=task_config, output_prefix=output_prefix)
 
 
