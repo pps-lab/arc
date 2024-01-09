@@ -20,6 +20,11 @@ def compile_cerebro_with_args(task_config: config_def.TaskConfig):
         compiler_args.remove('-R')
         compiler_args.remove(compiler_args[idx])
 
+    if '-Z' in compiler_args:
+        idx = compiler_args.index('-Z')
+        compiler_args.remove('-Z')
+        compiler_args.remove(compiler_args[idx])
+
     if '-F 128' in compiler_args:
         # ugly manual override
         compiler_args.remove('-F 128')
