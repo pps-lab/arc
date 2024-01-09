@@ -28,7 +28,6 @@ input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.
 library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 
 library.start_timer(timer_id=timers.TIMER_AUDIT)
-
 result = owner_unlearn.audit(input_loader, config=cfg, debug=cfg.debug)
 
 
@@ -39,7 +38,7 @@ result = owner_unlearn.audit(input_loader, config=cfg, debug=cfg.debug)
 # Sample Level: [{"party": 3, "sample_id": 1, "score": 0.7}]
 # Feature Level: [{"feature_id": "col1", "score": 0.9}]  -> this would be more complex for some feature audit methods
 
-library.stop_timer(timer_id=100)
+library.stop_timer(timer_id=timers.TIMER_AUDIT)
 
 
 for k, v in result.items():

@@ -10,7 +10,7 @@ from Compiler.script_utils.audit import knn
 
 from Compiler.script_utils import config
 
-
+import timers
 
 
 class AuditConfig(config.BaseAuditModel):
@@ -27,14 +27,15 @@ if not cfg.emulate:
 
 ml.set_n_threads(cfg.n_threads)
 
+library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
 input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check)
+library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 
-
-library.start_timer(timer_id=100)
+library.start_timer(timer_id=timers.TIMER_AUDIT)
 
 result = knn.audit(input_loader, cfg, debug=cfg.debug)
 
-library.stop_timer(timer_id=100)
+library.stop_timer(timer_id=timers.TIMER_AUDIT)
 
 
 for k, v in result.items():
