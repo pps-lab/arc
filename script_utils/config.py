@@ -33,7 +33,8 @@ class BaseAuditModel(BaseModel):
     audit_trigger_idx: int = None
 
     # Whether to check parties' inputs for consistency
-    consistency_check: Optional[str] = "pc" # also "sha3" and "ped" for cerebro
+    consistency_check: Optional[str] = "pc" # also "sha3" and "cerebro" for cerebro
+    consistency_check_only: bool = False # whether to only run consistency check and not the auditing function (used for cerebro check)
     class Config:
         extra = "allow"
         smart_union = True

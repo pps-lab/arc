@@ -319,7 +319,7 @@ def convert_shares(task_config, output_prefix):
                 print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
                 time.sleep(task_config.sleep_time)
 
-        if "consistency_check" in task_config.script_args and task_config.script_args["consistency_check"] == "cerebro":
+        if task_config.consistency_args.type == "cerebro":
             # Re-invoke MP-SPDZ with script to compute the commitment
             # This can be grealy simplified once we integrate this functionality into MP-SPDZ
             print("Invoking cerebro to compute the commitments.")

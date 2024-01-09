@@ -1,3 +1,4 @@
+import os
 from dataclasses import dataclass, field
 from typing import Optional, List
 
@@ -28,7 +29,7 @@ def check(inputs: InputObject, player_input_id, type, n_threads):
     elif type == "sha3":
         # for each field in inputobject we should compute a hash
         raise ValueError("SHA3 not implemented yet")
-    elif type == "ped":
+    elif type == "cerebro":
         compute_consistency_cerebro(inputs, player_input_id, n_threads)
     else:
         raise ValueError("Unknown type %s", type)
@@ -195,6 +196,11 @@ def flatten_and_apply_to_all(inputs: InputObject, player_input_id, n_threads, fn
 def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads):
     # compute random combination of inputs
     # compute commitment of random combination
+    program = get_program()
+    if program.options.field != 251:
+        print("WARNING: cerebro consistency check only works for field 251."
+              "Skipping check as we will assume it to be done after share conversion.")
+        return
 
     # this might take a really long time?
     def compute_sz(input_flat, pid, n_t):
@@ -272,6 +278,21 @@ def write_input_format_to_file(fmt, player):
     f.write(content)
     f.flush()
     f.close()
+
+def read_input_format_from_file(player) -> list:
+    # This method should be obsolete once we integrate conversion into MP-SPDZ
+    filename = 'Player-Data/Input-Binary-P%d-0-format' % player
+    print('Read format of binary data from', filename)
+
+    if not os.path.exists(filename):
+        print(f"File {filename} does not exist")
+        return []
+
+    with open(filename, 'r') as f:
+        content = ruamel.yaml.load(f, Loader=ruamel.yaml.RoundTripLoader)
+        if content is not None:
+            return content
+        return []
 
 def write_output_format_to_file(fmt):
     # this function solves the super annoying issue that MP-SPDZ outputs floating point values at 32-bits
