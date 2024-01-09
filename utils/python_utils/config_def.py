@@ -115,6 +115,7 @@ class JsoncMpcConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
 
 class JsonConsistencyConfig(pydantic.BaseModel,extra=pydantic.Extra.forbid):
     hosts_file: str
+    # type: typing.Literal['pc', 'cerebro', 'sha3']
     pc: typing.Literal['kzg', 'ipa', 'ped']
     abs_path_to_code_dir: str
     pp_args: int

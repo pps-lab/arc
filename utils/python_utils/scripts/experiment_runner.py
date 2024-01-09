@@ -45,6 +45,8 @@ import string
 import random
 import time
 
+from python_utils.consistency_cerebro import compile_cerebro_with_args, run_cerebro_with_args
+
 DEFAULT_CONFIG_NAME="config.json"
 DEFAULT_RESULT_FOLDER="results/"
 
@@ -207,7 +209,7 @@ def prove_commitment_opening(task_config, output_prefix):
     # print(result_prove_verify.stdout, file=sys.stdout)
     # print(result_prove_verify.stderr, file=sys.stderr)
 
-def convert_shares(task_config):
+def convert_shares(task_config, output_prefix):
     if task_config.commit_output is None and task_config.consistency_args is None:
         print("No commit or consistency check specified. No need to convert shares.")
         return
@@ -317,64 +319,71 @@ def convert_shares(task_config):
                 print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
                 time.sleep(task_config.sleep_time)
 
-        # compute a polynomial for each party
-        # log the data in player_input_counter
-        print(f"Computing polynomials for the following inputs: {player_input_counter}")
-
-        eval_point = None
-        if task_config.consistency_args.eval_point is not None:
-            eval_point = task_config.consistency_args.eval_point
-        elif task_config.consistency_args.single_random_eval_point:
-            print("Using the same eval point across poly eval runs."
-              "We will run the first eval script first and let the parties agree on a point."
-              "We then use this point in subsequent invocations.")
+        if "consistency_check" in task_config.script_args and task_config.script_args["consistency_check"] == "cerebro":
+            # Re-invoke MP-SPDZ with script to compute the commitment
+            # This can be grealy simplified once we integrate this functionality into MP-SPDZ
+            print("Invoking cerebro to compute the commitments.")
+            compile_cerebro_with_args(task_config)
+            run_cerebro_with_args(task_config, output_prefix)
         else:
-            warnings.warn("Note that if a party has multiple inputs to prove, we do not support using different points at the moment."
-                          "It would be easy to support in the mpc-consistency code.")
+            # compute a polynomial for each party
+            # log the data in player_input_counter
+            print(f"Computing polynomials for the following inputs: {player_input_counter}")
 
-        input_counter = 0
-        for party_id, player_input_counts in player_input_counter.items():
-            if len(player_input_counts) == 0:
-                print("Skipping party", party_id, "because it has no input.")
-                continue
+            eval_point = None
+            if task_config.consistency_args.eval_point is not None:
+                eval_point = task_config.consistency_args.eval_point
+            elif task_config.consistency_args.single_random_eval_point:
+                print("Using the same eval point across poly eval runs."
+                  "We will run the first eval script first and let the parties agree on a point."
+                  "We then use this point in subsequent invocations.")
+            else:
+                warnings.warn("Note that if a party has multiple inputs to prove, we do not support using different points at the moment."
+                              "It would be easy to support in the mpc-consistency code.")
 
-            for player_input_count in player_input_counts:
-                executable = f"./{executable_prefix}-pe-party.x"
-                args = {
-                    "n_shares": player_input_count, # convert all shares
-                    "start": input_counter,
-                    "input_party_i": party_id,
-                }
-                if eval_point is not None:
-                    args['eval_point'] = eval_point
+            input_counter = 0
+            for party_id, player_input_counts in player_input_counter.items():
+                if len(player_input_counts) == 0:
+                    print("Skipping party", party_id, "because it has no input.")
+                    continue
 
-                args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-                executable_str = f"{executable} {spdz_args_str} {args_str}"
-                print(f"Computing polynomial for player {party_id} with command: {executable_str}")
+                for player_input_count in player_input_counts:
+                    executable = f"./{executable_prefix}-pe-party.x"
+                    args = {
+                        "n_shares": player_input_count, # convert all shares
+                        "start": input_counter,
+                        "input_party_i": party_id,
+                    }
+                    if eval_point is not None:
+                        args['eval_point'] = eval_point
 
-                result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-                poly_eval_phase = open(os.path.join(result_dir_path, "consistency_poly_eval.log"), "a+")
-                import subprocess
-                subprocess.run(
-                    executable_str,
-                    shell=True,
-                    cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
-                    check=True,
-                    stdout=poly_eval_phase,
-                    stderr=poly_eval_phase,
-                )
-                input_counter += player_input_count
+                    args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+                    executable_str = f"{executable} {spdz_args_str} {args_str}"
+                    print(f"Computing polynomial for player {party_id} with command: {executable_str}")
 
-                # now look in log file for the eval point
-                if task_config.consistency_args.single_random_eval_point and eval_point is None:
-                    print("Parsing eval point")
-                    eval_point = find_eval_point(os.path.join(result_dir_path, "consistency_poly_eval.log"))
+                    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+                    poly_eval_phase = open(os.path.join(result_dir_path, "consistency_poly_eval.log"), "a+")
+                    import subprocess
+                    subprocess.run(
+                        executable_str,
+                        shell=True,
+                        cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+                        check=True,
+                        stdout=poly_eval_phase,
+                        stderr=poly_eval_phase,
+                    )
+                    input_counter += player_input_count
 
-                if task_config.sleep_time > 0:
-                    print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
-                    time.sleep(task_config.sleep_time)
+                    # now look in log file for the eval point
+                    if task_config.consistency_args.single_random_eval_point and eval_point is None:
+                        print("Parsing eval point")
+                        eval_point = find_eval_point(os.path.join(result_dir_path, "consistency_poly_eval.log"))
 
-        assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
+                    if task_config.sleep_time > 0:
+                        print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
+                        time.sleep(task_config.sleep_time)
+
+            assert input_counter == total_input_length, f"Expected to have processed {total_input_length} shares, but only processed {input_counter} shares."
 
     if task_config.commit_output:
 
@@ -501,7 +510,7 @@ def cli(player_number):
             output_prefix=output_prefix)
         capture_output(task_config=task_config,
             output_prefix=output_prefix)
-        convert_shares(task_config=task_config)
+        convert_shares(task_config=task_config, output_prefix=output_prefix)
         prove_commitment_opening(task_config=task_config,
                                  output_prefix=output_prefix)
         clean_workspace(task_config=task_config, output_prefix=output_prefix)
