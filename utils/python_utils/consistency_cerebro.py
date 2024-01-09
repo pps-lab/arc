@@ -37,9 +37,16 @@ def compile_cerebro_with_args(task_config: config_def.TaskConfig):
     )
     comp_runner.run()
 
+def map_protocol_to_field(task_config: config_def.TaskConfig):
+    protocol = task_config.protocol_setup
+    if protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
+        return config_def.ProtocolChoices.REP_FIELD_PARTY
+    elif protocol == config_def.ProtocolChoices.SY_REP_RING_PARTY:
+        return config_def.ProtocolChoices.SY_REP_FIELD_PARTY
+
 def run_cerebro_with_args(task_config: config_def.TaskConfig, output_prefix: str):
     """Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output"""
-    script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[task_config.protocol_setup.name].value
+    script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[map_protocol_to_field(task_config).name].value
     script_runner_obj = script_runner_constr(
         output_prefix=output_prefix,
         script_name="standalone_cerebro",
