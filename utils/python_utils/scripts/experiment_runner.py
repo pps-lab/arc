@@ -119,6 +119,10 @@ def prove_commitment_opening(task_config, output_prefix):
     if task_config.consistency_args is None:
         print("No consistency check arguments specified. Skipping consistency check.")
         return
+    if task_config.consistency_args.type != "pc":
+        print(f"Consistency check type is {task_config.consistency_args.type}. Skipping PC phase.")
+        return
+
     result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
 
     # GEN PP
