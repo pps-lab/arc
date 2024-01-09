@@ -3,7 +3,8 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 
 from Compiler.types import sfix, sint, Array, cint
-from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread, get_program
+from Compiler.GC.types import sbit, sbitvec
+from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread, get_program, for_range_opt_multithread
 
 from Compiler.script_utils.consistency_cerebro import compute_commitment
 
@@ -28,7 +29,7 @@ def check(inputs: InputObject, player_input_id, type, n_threads):
         compute_and_output_poly_array(inputs, player_input_id, n_threads)
     elif type == "sha3":
         # for each field in inputobject we should compute a hash
-        raise ValueError("SHA3 not implemented yet")
+        compute_sha3(inputs, player_input_id, n_threads)
     elif type == "cerebro":
         compute_consistency_cerebro(inputs, player_input_id, n_threads)
     else:
@@ -200,6 +201,8 @@ def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads)
     if program.options.field != 251:
         print("WARNING: cerebro consistency check only works for field 251."
               "Skipping check as we will assume it to be done after share conversion.")
+        print("Outputting format files for cerebro consistency check")
+        compute_and_output_poly_array(inputs, player_input_id, n_threads)
         return
 
     # this might take a really long time?
@@ -222,6 +225,19 @@ def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads)
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_sz)
 
+
+def compute_sha3(inputs: InputObject, player_input_id, n_threads):
+
+    def compute_hash(input_flat, pid, n_t):
+
+        bit_length = 31
+        @for_range_opt_multithread(n_t, input_flat.length)
+        def f(i):
+            element = input_flat[i]
+            bits = sbitvec(element, bit_length, bit_length)
+            print("bits", bits, "length", input_flat.length)
+
+    flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
 
 def convert_array_sint(arr):
     """
