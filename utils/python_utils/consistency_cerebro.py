@@ -40,7 +40,7 @@ def compile_cerebro_with_args(task_config: config_def.TaskConfig):
 def map_protocol_to_field(task_config: config_def.TaskConfig):
     protocol = task_config.protocol_setup
     print("Protocol is: ", protocol)
-    if protocol == config_def.ProtocolChoices.REP_FIELD_PARTY:
+    if protocol == config_def.ProtocolChoices.REPLICATED_RING_PARTY_X:
         return config_def.ProtocolChoices.REP_FIELD_PARTY
     elif protocol == config_def.ProtocolChoices.SY_REP_RING_PARTY:
         return config_def.ProtocolChoices.SY_REP_FIELD_PARTY
