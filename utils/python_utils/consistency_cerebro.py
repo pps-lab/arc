@@ -11,6 +11,14 @@ def compile_cerebro_with_args(task_config: config_def.TaskConfig):
     if '-F 251' not in compiler_args:
         compiler_args.append('-F 251') # ensure we compile for the right size
 
+    if '-R 64' in compiler_args:
+        # ugly manual override
+        compiler_args.remove('-R 64')
+
+    if '-F 128' in compiler_args:
+        # ugly manual override
+        compiler_args.remove('-F 128')
+
     comp_runner = runner_defs.CompilerRunner(
         script_name="standalone_cerebro",
         script_args=task_config.script_args,
