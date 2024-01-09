@@ -57,8 +57,8 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, output_prefix: str
         args=task_config.script_args,
         player_0_host=task_config.player_0_hostname,
         player_id=task_config.player_id,
-        custom_prime=task_config.custom_prime,
-        custom_prime_length="8444461749428370424248824938781546531375899335154063827935233455917409239041",
+        custom_prime='8444461749428370424248824938781546531375899335154063827935233455917409239041',
+        custom_prime_length=task_config.custom_prime_length,
         player_count=task_config.player_count,
         program_args=task_config.program_args,
     )
