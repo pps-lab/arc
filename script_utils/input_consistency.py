@@ -3,12 +3,15 @@ from dataclasses import dataclass, field
 from typing import Optional, List
 
 from Compiler.types import sfix, sint, Array, cint
-from Compiler.GC.types import sbit, sbitvec
+from Compiler.GC.types import sbits, sbitvec, sbit
 from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread, get_program, for_range_opt_multithread
+from Compiler.circuit import sha3_256
 
 from Compiler.script_utils.consistency_cerebro import compute_commitment
 
 import ruamel.yaml
+
+
 
 @dataclass
 class InputObject:
@@ -229,13 +232,16 @@ def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads)
 def compute_sha3(inputs: InputObject, player_input_id, n_threads):
 
     def compute_hash(input_flat, pid, n_t):
+        elem_length = input_flat.length #min(100, input_flat.length)
+        bit_length = 32
+        sb = sbit.get_type(bit_length)
+        bit_vec = []
+        for i in range(elem_length):
+            bit_vec += sb(input_flat[i]).bit_decompose(bit_length)
+        bits = sbitvec.from_vec(bit_vec)
+        print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
 
-        bit_length = 31
-        @for_range_opt_multithread(n_t, input_flat.length)
-        def f(i):
-            element = input_flat[i]
-            bits = sbitvec(element, bit_length, bit_length)
-            print("bits", bits, "length", input_flat.length)
+        sha3_256(bits).reveal_print_hex()
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
 
