@@ -5,12 +5,12 @@ from typing import Optional, List
 from Compiler.types import sfix, sint, Array, cint
 from Compiler.GC.types import sbits, sbitvec, sbit
 from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread, get_program, for_range_opt_multithread
-from Compiler.circuit import sha3_256
+from Compiler.circuit import sha3_256, sha3_256_approx
 
 from Compiler.script_utils.consistency_cerebro import compute_commitment
 
 import ruamel.yaml
-
+import math
 
 
 @dataclass
@@ -256,7 +256,9 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads):
         print("done sbitvec")
         print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
 
-        sha3_256(bits).reveal_print_hex()
+        n_rounds = math.ceil(elem_length * bit_length / 1088)
+        sha3_256_approx(n_rounds)
+        # sha3_256(bits).reveal_print_hex()
         print("done sha")
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
