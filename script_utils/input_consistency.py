@@ -235,18 +235,29 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads):
         elem_length = input_flat.length #min(100, input_flat.length)
         bit_length = 32
         sb = sbit.get_type(bit_length)
-        bit_vec = Array(elem_length * bit_length, sbit)
+        bit_vec_arr = Array(elem_length * bit_length, sbit)
         # for i in range(elem_length):
         #     bit_vec += sb(input_flat[i]).bit_decompose(bit_length)
-        @for_range_opt_multithread(n_t, elem_length)
+        print(f"Computing hash for bits with length {elem_length} {bit_length} {get_program().budget}")
+        # @for_range_opt_multithread(n_t, elem_length, budget=10000)
+        # @for_range_opt(0, elem_length)
+        # def _(i):
+        bit_vec = [sbit.get_type(1)(0)] * (elem_length * bit_length) # empty array for now
+        @for_range_opt(0, elem_length)
         def _(i):
-            bit_dec = sb(input_flat[i]).bit_decompose(bit_length)
+            bit_dec = input_flat[i].bit_decompose(bit_length)
+            # print_ln("Len %s", len(p))
+            # bit_vec_arr[i]
             for j in range(bit_length):
-                bit_vec[i * bit_length + j] = bit_dec[j]
+                bit_vec_arr[i * bit_length + j] = bit_dec[j]
+        # TODO: find a way to order the instructions to go into SHA3-256 without causing endless compilation time..
+        print("done loop")
         bits = sbitvec.from_vec(bit_vec)
+        print("done sbitvec")
         print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
 
         sha3_256(bits).reveal_print_hex()
+        print("done sha")
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
 

@@ -4,7 +4,7 @@ from Compiler.library import print_ln, start_timer, stop_timer
 from Compiler.types import sint, sfix
 from Compiler.script_utils import input_consistency, timers
 
-from Compiler.ml import FixConv2d, Dense, BatchNorm
+from Compiler.ml import FixConv2d, Dense, BatchNorm, Layer
 
 from Compiler.script_utils.input_consistency import InputObject
 
@@ -179,10 +179,11 @@ class AbstractInputLoader(ABC):
 
         if consistency_check is not None:
             print_ln(f"Consistency check with type {consistency_check}")
+            n_threads = Layer.n_threads
             start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
             for party_id in range(len(train_datasets)):
                 if party_id in input_consistency_array_per_party:
-                    input_consistency.check(input_consistency_array_per_party[party_id], party_id, consistency_check, 1)
+                    input_consistency.check(input_consistency_array_per_party[party_id], party_id, consistency_check, n_threads)
             stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
