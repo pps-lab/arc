@@ -232,6 +232,7 @@ def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads)
 def compute_sha3(inputs: InputObject, player_input_id, n_threads):
 
     def compute_hash(input_flat, pid, n_t):
+        print_ln("Computing hash for bits with length %s", input_flat.length)
         elem_length = input_flat.length #min(100, input_flat.length)
         bit_length = 32
         sb = sbit.get_type(bit_length)
@@ -250,6 +251,7 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads):
             # bit_vec_arr[i]
             for j in range(bit_length):
                 bit_vec_arr[i * bit_length + j] = bit_dec[j]
+
         # TODO: find a way to order the instructions to go into SHA3-256 without causing endless compilation time..
         print("done loop")
         bits = sbitvec.from_vec(bit_vec)
