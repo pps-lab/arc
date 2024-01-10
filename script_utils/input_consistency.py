@@ -235,9 +235,14 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads):
         elem_length = input_flat.length #min(100, input_flat.length)
         bit_length = 32
         sb = sbit.get_type(bit_length)
-        bit_vec = []
-        for i in range(elem_length):
-            bit_vec += sb(input_flat[i]).bit_decompose(bit_length)
+        bit_vec = Array(elem_length * bit_length, sbit)
+        # for i in range(elem_length):
+        #     bit_vec += sb(input_flat[i]).bit_decompose(bit_length)
+        @for_range_opt_multithread(n_t, elem_length)
+        def _(i):
+            bit_dec = sb(input_flat[i]).bit_decompose(bit_length)
+            for j in range(bit_length):
+                bit_vec[i * bit_length + j] = bit_dec[j]
         bits = sbitvec.from_vec(bit_vec)
         print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
 
