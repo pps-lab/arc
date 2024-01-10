@@ -329,6 +329,8 @@ def convert_shares(task_config, output_prefix):
             print("Invoking cerebro to compute the commitments.")
             compile_cerebro_with_args(task_config)
             run_cerebro_with_args(task_config, output_prefix)
+        elif task_config.consistency_args.type == "sha3":
+            print("Computing sha3-based commitments, nothing else needed here.")
         else:
             # compute a polynomial for each party
             # log the data in player_input_counter
