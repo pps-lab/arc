@@ -44,7 +44,7 @@ ml.set_n_threads(cfg.n_threads)
 train_dataset, _, _ = data._load_dataset_args(cfg.dataset)
 n_players = len(train_dataset)
 
-library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
+library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 for player_id in range(0, n_players):
     objects = input_consistency.read_input_format_from_file(player_id)
@@ -63,6 +63,6 @@ for player_id in range(0, n_players):
 
         compute_commitment(output_sum, output_sum_r)
 
-library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
+library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 print_ln("Done computing commitments!")
