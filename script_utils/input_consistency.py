@@ -247,9 +247,10 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_fa
         # @for_range_opt_multithread(n_t, elem_length, budget=10000)
         # @for_range_opt(0, elem_length)
         # def _(i):
-        bit_vec = [sbit.get_type(1)(0)] * (elem_length * bit_length) # empty array for now
+        n_bit_vec_to_decompose = math.ceil(elem_length / sha3_approx_factor)
+        bit_vec = [sbit.get_type(1)(0)] * (n_bit_vec_to_decompose * bit_length) # empty array for now
         library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE)
-        @for_range_opt_multithread(min(n_t, elem_length), math.ceil(elem_length / sha3_approx_factor))
+        @for_range_opt_multithread(min(n_t, elem_length), n_bit_vec_to_decompose)
         def _(i):
             bit_dec = input_flat[i].bit_decompose(bit_length)
             # print_ln("Len %s", len(p))
