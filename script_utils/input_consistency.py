@@ -257,10 +257,11 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_fa
             for j in range(bit_length):
                 bit_vec_arr[i * bit_length + j] = bit_dec[j]
         library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE)
+        print("Done with bit decompose")
 
         # TODO: find a way to order the instructions to go into SHA3-256 without causing endless compilation time..
-        bits = sbitvec.from_vec(bit_vec)
-        print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
+        # bits = sbitvec.from_vec(bit_vec)
+        # print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
 
         library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE)
         n_rounds = math.ceil(elem_length * bit_length / 1088)
