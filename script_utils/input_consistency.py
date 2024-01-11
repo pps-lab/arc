@@ -264,7 +264,7 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_fa
 
         library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE)
         n_rounds = math.ceil(elem_length * bit_length / 1088)
-        n_rounds_downsized = n_rounds / sha3_approx_factor
+        n_rounds_downsized = math.floor(n_rounds / sha3_approx_factor)
         print(f"Approximating number of rounds with factor {sha3_approx_factor}")
         sha3_256_approx(n_rounds_downsized)
         library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE)
@@ -273,7 +273,6 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_fa
         sha3_256_approx(11) # unsqueezing 256 bits
         library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
         # sha3_256(bits).reveal_print_hex()
-        print("done sha")
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
 
