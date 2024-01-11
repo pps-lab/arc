@@ -328,7 +328,7 @@ def convert_shares(task_config, output_prefix):
             # This can be grealy simplified once we integrate this functionality into MP-SPDZ
             print("Invoking cerebro to compute the commitments.")
             compile_cerebro_with_args(task_config)
-            run_cerebro_with_args(task_config, output_prefix)
+            run_cerebro_with_args(task_config, output_prefix, DEFAULT_RESULT_FOLDER)
         elif task_config.consistency_args.type == "sha3":
             print("Computing sha3-based commitments, nothing else needed here.")
         else:
