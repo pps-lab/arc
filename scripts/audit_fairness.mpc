@@ -38,7 +38,7 @@ ml.set_n_threads(cfg.n_threads)
 
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
 input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size,
-                                     debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check,
+                                     debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check, sha3_approx_factor=cfg.sha3_approx_factor,
                                      load_model_weights=True, load_dataset=False)
 library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 

@@ -27,7 +27,7 @@ if not cfg.emulate:
 ml.set_n_threads(cfg.n_threads)
 
 library.start_timer(timer_id=timers.TIMER_AUDIT)
-input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check)
+input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check, sha3_approx_factor=cfg.sha3_approx_factor)
 library.stop_timer(timer_id=timers.TIMER_AUDIT)
 
 

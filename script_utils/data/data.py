@@ -7,7 +7,7 @@ import glob, os, shutil
 import numpy as np
 
 
-def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, load_model_weights=True, load_dataset=True):
+def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, sha3_approx_factor, load_model_weights=True, load_dataset=True):
 
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
     _clean_dataset_folder()
@@ -23,19 +23,19 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
 
     if dataset.lower().startswith("mnist"):
         _prepare_dataset(dataset, emulate)
-        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     elif dataset.lower().startswith("cifar"):
         _prepare_dataset(dataset, emulate)
-        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     elif dataset.lower().startswith("adult"):
-        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     elif dataset.lower().startswith("ember"):
-        il = ember.EmberInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = ember.EmberInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
 
-def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, n_target_test_samples, load_model_weights=True):
+def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, sha3_approx_factor, n_target_test_samples, load_model_weights=True):
 
     n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
     _clean_dataset_folder()
@@ -50,14 +50,14 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
 
     if dataset.lower().startswith("mnist"):
         _prepare_dataset(dataset, emulate)
-        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = mnist.MnistInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx ,batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     elif dataset.lower().startswith("cifar"):
         _prepare_dataset(dataset, emulate)
-        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = cifar.CifarInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     elif dataset.lower().startswith("adult"):
-        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     elif dataset.lower().startswith("ember"):
-        il = ember.EmberInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights)
+        il = ember.EmberInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il

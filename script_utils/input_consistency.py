@@ -5,12 +5,16 @@ from typing import Optional, List
 from Compiler.types import sfix, sint, Array, cint
 from Compiler.GC.types import sbits, sbitvec, sbit
 from Compiler.library import print_ln, for_range_opt, for_range_multithread, multithread, get_program, for_range_opt_multithread
-from Compiler.circuit import sha3_256, sha3_256_approx
+from Compiler.circuit import sha3_256
 
 from Compiler.script_utils.consistency_cerebro import compute_commitment
+from Compiler.script_utils import timers
 
 import ruamel.yaml
 import math
+
+import Compiler.library as library
+from Compiler.circuit import Circuit
 
 
 @dataclass
@@ -23,7 +27,7 @@ class InputObject:
     test_x: Optional[list] = field(default_factory=lambda: [])
     test_y: Optional[list] = field(default_factory=lambda: [])
 
-def check(inputs: InputObject, player_input_id, type, n_threads):
+def check(inputs: InputObject, player_input_id, type, n_threads, sha3_approx_factor: int):
     """
     :param type: string
     :return:
@@ -32,7 +36,7 @@ def check(inputs: InputObject, player_input_id, type, n_threads):
         compute_and_output_poly_array(inputs, player_input_id, n_threads)
     elif type == "sha3":
         # for each field in inputobject we should compute a hash
-        compute_sha3(inputs, player_input_id, n_threads)
+        compute_sha3(inputs, player_input_id, n_threads, sha3_approx_factor)
     elif type == "cerebro":
         compute_consistency_cerebro(inputs, player_input_id, n_threads)
     else:
@@ -229,7 +233,7 @@ def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads)
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_sz)
 
 
-def compute_sha3(inputs: InputObject, player_input_id, n_threads):
+def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_factor: int):
 
     def compute_hash(input_flat, pid, n_t):
         print_ln("Computing hash for bits with length %s", input_flat.length)
@@ -244,6 +248,7 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads):
         # @for_range_opt(0, elem_length)
         # def _(i):
         bit_vec = [sbit.get_type(1)(0)] * (elem_length * bit_length) # empty array for now
+        library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE)
         @for_range_opt(0, elem_length)
         def _(i):
             bit_dec = input_flat[i].bit_decompose(bit_length)
@@ -251,19 +256,52 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads):
             # bit_vec_arr[i]
             for j in range(bit_length):
                 bit_vec_arr[i * bit_length + j] = bit_dec[j]
+        library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE)
 
         # TODO: find a way to order the instructions to go into SHA3-256 without causing endless compilation time..
-        print("done loop")
         bits = sbitvec.from_vec(bit_vec)
-        print("done sbitvec")
         print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
 
+        library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE)
         n_rounds = math.ceil(elem_length * bit_length / 1088)
-        sha3_256_approx(n_rounds)
+        n_rounds_downsized = n_rounds / sha3_approx_factor
+        print(f"Approximating number of rounds with factor {sha3_approx_factor}")
+        sha3_256_approx(n_rounds_downsized)
+        library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE)
+
+        library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
+        sha3_256_approx(11) # unsqueezing 256 bits
+        library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
         # sha3_256(bits).reveal_print_hex()
         print("done sha")
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
+
+
+
+Keccak_f = None
+def sha3_256_approx(n_rounds):
+    """
+    This function implements approximates the runtime of sha3-256 to reduce compile time overhead
+    """
+
+    global Keccak_f
+    if Keccak_f is None:
+        # only one instance
+        Keccak_f = Circuit('Keccak_f')
+
+    # unsqueeze_times = 11
+
+    sbn = sbits.get_type(1)
+    S = [sbn(0)] * 1600
+
+    print(f"Running {n_rounds} times")
+
+    @library.for_range(0, n_rounds)
+    def _(i):
+        Keccak_f(S)
+
+    library.print_ln("Done running %s times!", n_rounds)
 
 def convert_array_sint(arr):
     """

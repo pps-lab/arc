@@ -34,6 +34,7 @@ class BaseAuditModel(BaseModel):
 
     # Whether to check parties' inputs for consistency
     consistency_check: Optional[str] = "pc" # also "sha3" and "cerebro" for cerebro
+    sha3_approx_factor: int = 1
 
     class Config:
         extra = "allow"

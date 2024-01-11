@@ -67,7 +67,7 @@ class AbstractInputLoader(ABC):
         return len(self._audit_trigger_samples)
 
 
-    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: Optional[str], load_model_weights: bool):
+    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: Optional[str], load_model_weights: bool, sha3_approx_factor: int):
 
         self._batch_size = batch_size
         self._train_index = {}
@@ -183,7 +183,7 @@ class AbstractInputLoader(ABC):
             start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
             for party_id in range(len(train_datasets)):
                 if party_id in input_consistency_array_per_party:
-                    input_consistency.check(input_consistency_array_per_party[party_id], party_id, consistency_check, n_threads)
+                    input_consistency.check(input_consistency_array_per_party[party_id], party_id, consistency_check, n_threads, sha3_approx_factor)
             stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
 
 
