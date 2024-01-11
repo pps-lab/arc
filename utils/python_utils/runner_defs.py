@@ -157,14 +157,16 @@ class BaseRunner(abc.ABC):
     def _env(self):
         pass
 
-    def run(self):
+    def run(self, stdout=None, stderr=None):
         subprocess.run(
             " ".join([self.program] + self.args),
             shell=True,
             cwd="./MP-SPDZ/",
             check=True,
             capture_output=False,
-            env=self.env
+            env=self.env,
+            stdout=stdout,
+            stderr=stderr
         )
 
 

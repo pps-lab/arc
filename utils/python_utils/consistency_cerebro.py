@@ -1,7 +1,7 @@
 # This file only exists because we do not have arithmetic to arithmetic conversion in MP-SPDZ yet.
 # After running the main script and the share conversion, we then invoke this function to compute the secret shares of the input.
 from python_utils import runner_defs, config_def
-
+import os
 
 def compile_cerebro_with_args(task_config: config_def.TaskConfig):
     """Executes the Script compilation phase of the experiment."""
@@ -48,8 +48,12 @@ def map_protocol_to_field(task_config: config_def.TaskConfig):
 
     return protocol
 
-def run_cerebro_with_args(task_config: config_def.TaskConfig, output_prefix: str):
+def run_cerebro_with_args(task_config: config_def.TaskConfig, output_prefix: str, results_folder: str):
     """Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output"""
+    result_dir_path = os.path.join(task_config.result_dir, results_folder)
+    cerebro_stdout = open(os.path.join(result_dir_path, "cerebro_stdout.log"), "a+")
+    cerebro_stderr = open(os.path.join(result_dir_path, "cerebro_stderr.log"), "a+")
+
     script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[map_protocol_to_field(task_config).name].value
     script_runner_obj = script_runner_constr(
         output_prefix=output_prefix,
@@ -62,4 +66,4 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, output_prefix: str
         player_count=task_config.player_count,
         program_args=task_config.program_args,
     )
-    script_runner_obj.run()
+    script_runner_obj.run(cerebro_stdout, cerebro_stderr)
