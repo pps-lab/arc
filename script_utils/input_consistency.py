@@ -292,6 +292,8 @@ def sha3_256_approx(n_rounds):
         Keccak_f = Circuit('Keccak_f')
 
     # unsqueeze_times = 11
+    if n_rounds == 0:
+        return
 
     sbn = sbits.get_type(1)
     S = [sbn(0)] * 1600
