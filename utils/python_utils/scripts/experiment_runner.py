@@ -268,7 +268,8 @@ def convert_shares(task_config, output_prefix):
 
     if task_config.consistency_args is not None:
 
-        if task_config.convert_ring_if_needed:
+        if (task_config.convert_ring_if_needed and
+            task_config.consistency_args.type != "sha3"): # manual check to avoid error
             executable = f"./{conversion_prefix}-switch-party.x"
             if need_input_sharing:
                 print("Actually doing input sharing instead of conversion. We need to adapt this if we are also going to mascot convert")
