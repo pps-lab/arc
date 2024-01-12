@@ -405,6 +405,7 @@ class SyReplicatedFieldPartyRunner(ScriptBaseRunner):
         return "./sy-rep-field-party.x"
 
     def _args(self):
+        program_args_flat = program_args_cmdline(self.program_args)
         custom_prime_arg = f"-P {self.custom_prime}" if self.custom_prime is not None else ""
         custom_prime_length_arg = f"-lgp {self.custom_prime_length}" if self.custom_prime is not None else ""
         return ["-OF", self.output_prefix,
@@ -412,7 +413,7 @@ class SyReplicatedFieldPartyRunner(ScriptBaseRunner):
                 "-h", f"{self.player_0_host}",
                 "-pn", "12300",
                 "-v",
-                f"{self.player_id}",
+                f"{self.player_id}"] + program_args_flat + [
                 script_name_and_args_to_correct_execution_name(self.script_name, self.script_args)
                 ]
 
