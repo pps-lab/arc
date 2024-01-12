@@ -180,11 +180,13 @@ class AbstractInputLoader(ABC):
         if consistency_check is not None:
             print_ln(f"Consistency check with type {consistency_check}")
             n_threads = Layer.n_threads
+            stop_timer(timers.TIMER_LOAD_DATA)
             start_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
             for party_id in range(len(train_datasets)):
                 if party_id in input_consistency_array_per_party:
                     input_consistency.check(input_consistency_array_per_party[party_id], party_id, consistency_check, n_threads, sha3_approx_factor)
             stop_timer(timers.TIMER_INPUT_CONSISTENCY_CHECK)
+            start_timer(timers.TIMER_LOAD_DATA)
 
 
     def _load_input_data(self, n_train_samples: List[int], audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool):
