@@ -224,7 +224,7 @@ def cerebro_verify(task_config, input_size):
     print(f"Running cerebro exponentiate with command: {executable_str}")
 
     result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-    consistency_cerebro_verify_output_file = open(os.path.join(result_dir_path, "consistency_cerebro_verify.log"), "w+")
+    consistency_cerebro_verify_output_file = open(os.path.join(result_dir_path, "consistency_cerebro_verify.log"), "a+")
     import subprocess
     result_cerebro_verify = subprocess.run(
         executable_str,
@@ -357,7 +357,8 @@ def convert_shares(task_config, output_prefix):
             # now we need to verify the commitment output
             for player_id, inputs in player_input_counter.items():
                 for input_size in inputs:
-                    cerebro_verify(task_config, input_size)
+                    if input_size > 0:
+                        cerebro_verify(task_config, input_size)
         elif task_config.consistency_args.type == "sha3":
             print("Computing sha3-based commitments, nothing else needed here.")
         else:
