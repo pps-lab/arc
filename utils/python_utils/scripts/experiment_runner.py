@@ -213,6 +213,29 @@ def prove_commitment_opening(task_config, output_prefix):
     # print(result_prove_verify.stdout, file=sys.stdout)
     # print(result_prove_verify.stderr, file=sys.stderr)
 
+def cerebro_verify(task_config, input_size):
+    executable = f"target/release/exponentiate_cerebro"
+    args = {
+        "n-parameters": input_size,
+        "debug": "",
+    }
+    args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+    executable_str = f"{executable} {args_str}"
+    print(f"Running cerebro exponentiate with command: {executable_str}")
+
+    result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+    consistency_cerebro_verify_output_file = open(os.path.join(result_dir_path, "consistency_cerebro_verify.log"), "w+")
+    import subprocess
+    result_cerebro_verify = subprocess.run(
+        executable_str,
+        shell=True,
+        cwd=task_config.consistency_args.abs_path_to_code_dir,
+        check=True,
+        stdout=consistency_cerebro_verify_output_file,
+        stderr=consistency_cerebro_verify_output_file,
+        # text=True
+    )
+
 def convert_shares(task_config, output_prefix):
     if task_config.commit_output is None and task_config.consistency_args is None:
         print("No commit or consistency check specified. No need to convert shares.")
@@ -330,6 +353,11 @@ def convert_shares(task_config, output_prefix):
             print("Invoking cerebro to compute the commitments.")
             compile_cerebro_with_args(task_config)
             run_cerebro_with_args(task_config, output_prefix, DEFAULT_RESULT_FOLDER)
+
+            # now we need to verify the commitment output
+            for player_id, inputs in player_input_counter.items():
+                for input_size in inputs:
+                    cerebro_verify(task_config, input_size)
         elif task_config.consistency_args.type == "sha3":
             print("Computing sha3-based commitments, nothing else needed here.")
         else:
