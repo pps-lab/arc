@@ -391,7 +391,7 @@ def output_format(inputs: InputObject):
         sfix.write_to_file(prediction_x.to_array())
         fmt.append({ "type": prediction_x.value_type.__name__, "object_type": "x", "length": prediction_x.total_size() })
 
-    if inputs.y is not None:
+    if len(inputs.y) > 0:
         assert len(inputs.y) == 1
         prediction_y = inputs.y[0]
         if isinstance(prediction_y, sfix):
