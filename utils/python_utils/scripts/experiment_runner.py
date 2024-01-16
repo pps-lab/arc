@@ -384,6 +384,9 @@ def convert_shares(task_config, output_prefix):
                     continue
 
                 for player_input_count in player_input_counts:
+                    if player_input_count == 0:
+                        print("Skipping party", party_id, "because it has no input (player_input_count=0).")
+                        continue
                     executable = f"./{executable_prefix}-pe-party.x"
                     args = {
                         "n_shares": player_input_count, # convert all shares
