@@ -128,7 +128,10 @@ else:
 library.stop_timer(timer_id=timers.TIMER_TRAINING)
 
 library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
-input_consistency.output(model, None, None)
+
+output_object = input_consistency.InputObject(model=model)
+input_consistency.output(output_object, cfg.consistency_check, cfg.n_threads, cfg.sha3_approx_factor, cfg.cerebro_output_approx_factor)
+
 library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
 
 
