@@ -17,6 +17,9 @@ from Compiler.script_utils import config, timers, input_consistency
 class TrainingConfig(config.BaseAuditModel):
     n_epochs: int = 1 # -1 = all
 
+    # only run n_batches
+    n_batches: int = 0
+
 program.options_from_args()
 cfg = config.from_program_args(program.args, TrainingConfig)
 
@@ -61,8 +64,17 @@ model.summary()
 
 model.reset()
 
-model.layers[-1].Y.address = train_labels.address
-model.layers[0].X.address = train_samples.address
+if cfg.n_batches > 0:
+    train_samples = train_samples.get_part(0, cfg.n_batches * cfg.batch_size)
+    print("Train_samples", train_samples, train_samples)
+    train_labels = train_labels.get_part(0, cfg.n_batches * cfg.batch_size)
+    print("Running on", len(train_samples), "samples")
+    model.layers[-1].Y = train_labels
+    model.layers[0].X = train_samples
+    model.layers[0].N = cfg.n_batches * cfg.batch_size
+else:
+    model.layers[-1].Y.address = train_labels.address
+    model.layers[0].X.address = train_samples.address
 
 print(model.layers)
 
