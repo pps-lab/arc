@@ -17,6 +17,9 @@ $SUITE_VARS$:
     hosts_file: "{{ exp_consistency_hosts_file }}"
     pc: kzg
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
+    gen_pp: True
+    type:
+      $FACTOR$: [ sha3, cerebro, pc ]
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -32,8 +35,10 @@ $SUITE_VARS$:
 
     script_args:
       n_input_parties: 3
+      sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
 
-#      n_epochs: 0
+
+      #      n_epochs: 0
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
@@ -75,7 +80,8 @@ sh:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-    x: 1
+    network_type: lan
+    mpc_type: sh
 
   factor_levels:
 
@@ -125,6 +131,9 @@ mal:
   base_experiment:
     convert_chunk_size: 150000
 
+    network_type: lan
+    mpc_type: mal
+
     mpc:
       script_args:
         batch_size: 64
@@ -148,5 +157,53 @@ mal:
 #        domain: custom_256
 #        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
 #        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
+
+wan:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+        - setup-spdz-secrets
+        - setup-network-delay
+      #        - download-dataset
+      #        - setup-largeprimes
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+    convert_chunk_size: 150000
+
+    network_type: wan
+    mpc_type: mal
+
+    mpc:
+      script_args:
+        batch_size: $FACTOR$
+
+  factor_levels:
+
+    - mpc:
+        protocol_setup: "semi_honest_3"
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
+        custom_prime: null
+        script_args:
+          batch_size: 128
+
+    - mpc:
+        protocol_setup: "sy-rep-ring-party"
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
+        custom_prime: null
+        script_args:
+          batch_size: 64
+
 
 $ETL$: {}

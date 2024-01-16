@@ -351,8 +351,8 @@ def convert_shares(task_config, output_prefix):
             # Re-invoke MP-SPDZ with script to compute the commitment
             # This can be grealy simplified once we integrate this functionality into MP-SPDZ
             print("Invoking cerebro to compute the commitments.")
-            compile_cerebro_with_args(task_config)
-            run_cerebro_with_args(task_config, output_prefix, DEFAULT_RESULT_FOLDER)
+            compile_cerebro_with_args(task_config, "standalone_cerebro")
+            run_cerebro_with_args(task_config, "standalone_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
 
             # now we need to verify the commitment output
             for player_id, inputs in player_input_counter.items():
@@ -426,66 +426,77 @@ def convert_shares(task_config, output_prefix):
 
     if task_config.commit_output:
 
-        if total_output_length == 0:
-            print("No output to convert. Is this a mistake?")
+        if task_config.consistency_args.type == "sha3":
+            print("Computing sha3 hash in script, nothing else needed here.")
+        else:
 
-        if task_config.convert_ring_if_needed:
-            # convert the output shares
-            executable = f"./{conversion_prefix}-switch-party.x"
-            args = {
-                "n_shares": total_output_length, # convert all shares
-                # "start": None,
-                "n_bits": task_config.convert_ring_bits,
-                "n_threads": task_config.convert_n_threads,
-                "chunk_size": task_config.convert_chunk_size,
-                "out_start": total_input_length,
-            }
-            args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-            executable_str = f"{executable} {spdz_args_str} {debug_flag} {args_str}"
-            print(f"Converting shares with command: {executable_str}")
+            if total_output_length == 0:
+                print("No output to convert. Is this a mistake?")
 
-            result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-            convert_shares_phase = open(os.path.join(result_dir_path, "consistency_convert_shares.log"), "a+")
-            import subprocess
-            try:
+            if task_config.convert_ring_if_needed:
+                # convert the output shares
+                executable = f"./{conversion_prefix}-switch-party.x"
+                args = {
+                    "n_shares": total_output_length, # convert all shares
+                    # "start": None,
+                    "n_bits": task_config.convert_ring_bits,
+                    "n_threads": task_config.convert_n_threads,
+                    "chunk_size": task_config.convert_chunk_size,
+                    "out_start": total_input_length,
+                }
+                args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
+                executable_str = f"{executable} {spdz_args_str} {debug_flag} {args_str}"
+                print(f"Converting shares with command: {executable_str}")
+
+                result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+                convert_shares_phase = open(os.path.join(result_dir_path, "consistency_convert_shares.log"), "a+")
+                import subprocess
+                try:
+                    subprocess.run(
+                        executable_str,
+                        shell=True,
+                        cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+                        check=True,
+                        stdout=convert_shares_phase,
+                        stderr=convert_shares_phase,
+                    )
+                except subprocess.CalledProcessError as e:
+                    print(f"Error converting shares. Continuing without converting shares. {conversion_not_needed}")
+                    print(e)
+                    copy_transaction_files(conversion_not_needed, task_config)
+
+                if task_config.sleep_time > 0:
+                    print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
+                    time.sleep(task_config.sleep_time)
+
+            if task_config.consistency_args.type == "cerebro":
+                # compute commitments
+                print("Invoking cerebro to compute the commitments (output).")
+                compile_cerebro_with_args(task_config, "individual_cerebro")
+                run_cerebro_with_args(task_config, "individual_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
+            else:
+                # check how many commitments we need
+                # for each item in list output_data, add an arg with object_type
+                args = { c['object_type']: c['length'] for c in output_data }
+                args['s'] = total_input_length
+                args_str = " ".join([f"-{k} {v}" for k,v in args.items()])
+
+                executable = f"./{executable_prefix}-pc-party.x"
+
+                executable_str = f"{executable} {spdz_args_str} {args_str}"
+                print(f"Computing commitments with command: {executable_str}")
+
+                result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+                poly_commit_phase = open(os.path.join(result_dir_path, "consistency_poly_commit.log"), "w+")
+                import subprocess
                 subprocess.run(
                     executable_str,
                     shell=True,
                     cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
                     check=True,
-                    stdout=convert_shares_phase,
-                    stderr=convert_shares_phase,
+                    stdout=poly_commit_phase,
+                    stderr=poly_commit_phase,
                 )
-            except subprocess.CalledProcessError as e:
-                print(f"Error converting shares. Continuing without converting shares. {conversion_not_needed}")
-                print(e)
-                copy_transaction_files(conversion_not_needed, task_config)
-
-            if task_config.sleep_time > 0:
-                print(f"Sleeping for {task_config.sleep_time} seconds to allow the process on all clients to finish.")
-                time.sleep(task_config.sleep_time)
-        # check how many commitments we need
-        # for each item in list output_data, add an arg with object_type
-        args = { c['object_type']: c['length'] for c in output_data }
-        args['s'] = total_input_length
-        args_str = " ".join([f"-{k} {v}" for k,v in args.items()])
-
-        executable = f"./{executable_prefix}-pc-party.x"
-
-        executable_str = f"{executable} {spdz_args_str} {args_str}"
-        print(f"Computing commitments with command: {executable_str}")
-
-        result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-        poly_commit_phase = open(os.path.join(result_dir_path, "consistency_poly_commit.log"), "w+")
-        import subprocess
-        subprocess.run(
-            executable_str,
-            shell=True,
-            cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
-            check=True,
-            stdout=poly_commit_phase,
-            stderr=poly_commit_phase,
-        )
 
 
 def copy_transaction_files(conversion_not_needed, task_config):

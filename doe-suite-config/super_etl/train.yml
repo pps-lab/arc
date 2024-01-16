@@ -32,6 +32,8 @@ $ETL$:
         stats:
           mpc_time_s: ["spdz_timer_98", "spdz_timer_99", "spdz_timer_1102"]
 
+  # TODO: SPDZ TIMER 97!!!
+
           auditing_overhead_s: ["consistency_convert_shares_share_switch_output_mus",
                                 "consistency_poly_commit_commit_mus",
                                 "consistency_poly_commit_sign_mus",

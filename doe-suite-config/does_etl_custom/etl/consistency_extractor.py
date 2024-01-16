@@ -17,7 +17,6 @@ class ConsistencyExtractor(Extractor):
         return [r"consistency_.*\.log$"]
 
     def extract(self, path: str, options: Dict) -> List[Dict]:
-        print("MyExtractor: do nothing")
 
         with open(path, "r") as f:
             content = f.read()

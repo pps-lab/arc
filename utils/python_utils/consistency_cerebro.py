@@ -3,7 +3,7 @@
 from python_utils import runner_defs, config_def
 import os
 
-def compile_cerebro_with_args(task_config: config_def.TaskConfig):
+def compile_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str):
     """Executes the Script compilation phase of the experiment."""
     compiler_args = task_config.compiler_args if task_config.compiler_args is not None else \
         runner_defs.CompilerArguments[task_config.protocol_setup.name].value
@@ -31,7 +31,7 @@ def compile_cerebro_with_args(task_config: config_def.TaskConfig):
         compiler_args.remove('-F 128')
 
     comp_runner = runner_defs.CompilerRunner(
-        script_name="standalone_cerebro",
+        script_name=script_name,
         script_args=task_config.script_args,
         compiler_args=compiler_args,
         code_dir=task_config.abs_path_to_code_dir
@@ -48,7 +48,7 @@ def map_protocol_to_field(task_config: config_def.TaskConfig):
 
     return protocol
 
-def run_cerebro_with_args(task_config: config_def.TaskConfig, output_prefix: str, results_folder: str):
+def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, output_prefix: str, results_folder: str):
     """Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output"""
     result_dir_path = os.path.join(task_config.result_dir, results_folder)
     cerebro_stdout = open(os.path.join(result_dir_path, "cerebro_stdout.log"), "a+")
@@ -57,7 +57,7 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, output_prefix: str
     script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[map_protocol_to_field(task_config).name].value
     script_runner_obj = script_runner_constr(
         output_prefix=output_prefix,
-        script_name="standalone_cerebro",
+        script_name=script_name,
         args=task_config.script_args,
         player_0_host=task_config.player_0_hostname,
         player_id=task_config.player_id,

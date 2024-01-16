@@ -18,6 +18,7 @@ $SUITE_VARS$:
     hosts_file: "{{ exp_consistency_hosts_file }}"
     pc: kzg
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
+    gen_pp: True
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -37,8 +38,8 @@ $SUITE_VARS$:
       n_samples: 1
       n_input_parties: "[% my_run.n_parties %]"
 
-      dataset:
-        $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
+      dataset: adult_3p
+#        $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False

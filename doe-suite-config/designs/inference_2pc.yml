@@ -6,8 +6,18 @@ $SUITE_VARS$:
 
   commit_output: True
   convert_ring_bits: 31
-  convert_n_threads: 1
+  convert_n_threads: 36
   convert_chunk_size: 150000
+
+  $INCLUDE_VARS$: dataset.yml
+
+  consistency_args:
+    abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+    hosts_file: "{{ exp_consistency_hosts_file }}"
+    pc: kzg
+    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].model_input_size %]"
+    gen_pp: True
+    type: pc
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -60,9 +70,15 @@ sh:
 
   base_experiment:
 
-    x: 1
+    mpc_type: sh
+    network_type: lan
 
   factor_levels:
+    - mpc:
+        protocol_setup: "semi-party"
+        domain: field_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+        custom_prime: null
 
     - mpc:
         protocol_setup: "semi-party"
@@ -89,11 +105,73 @@ mal:
 
   base_experiment:
 
-    x: 1
+    mpc_type: mal
+    network_type: lan
 
   factor_levels:
 
     - mpc:
+        protocol_setup: "lowgear-party"
+        domain: field_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+        custom_prime: null
+
+    - mpc:
+        protocol_setup: "lowgear-party"
+        domain: custom_256
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
+
+wan:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+        - setup-spdz-secrets
+        - setup-network-delay
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+
+    network_type: wan
+    mpc_type: $FACTOR$
+#    mpc:
+#      program_args:
+#        b: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].edabit_batch_size_inference.sh %]"
+
+  factor_levels:
+
+    - mpc_type: sh
+      mpc:
+        protocol_setup: "semi-party"
+        domain: field_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+        custom_prime: null
+
+    - mpc_type: sh
+      mpc:
+        protocol_setup: "semi-party"
+        domain: custom_256
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
+        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+
+    - mpc_type: mal
+      mpc:
+        protocol_setup: "lowgear-party"
+        domain: field_128
+        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+        custom_prime: null
+
+    - mpc_type: mal
+      mpc:
         protocol_setup: "lowgear-party"
         domain: custom_256
         compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]

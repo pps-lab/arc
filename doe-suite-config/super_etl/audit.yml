@@ -11,43 +11,282 @@ $SUITE_ID$:
   audit_only_adult: 1702401149
   audit_only_unlearn: 1702422980
 
-$ETL$:
-  raw:
-    experiments:
-      audit: "*"
-    extractors:
-      $INCLUDE_STEPS$: [ { config: audit, pipeline: all_datasets } ]
-    transformers: [ ]
-    loaders:
-      PickleSummaryLoader: { }
-      CsvSummaryLoader: { }
+#  audit_consistency_
+  audit_consistency: { audit_sample_knnshapley: 1705060337, audit_sample_knnshapley_mal: 1705060337,
+                       audit_robustness_3pc: 1705346063 } # 1704985317 # 1704882255
 
-  all_datasets:
-    experiments:
-      audit: [ audit_robustness, audit_sample_knnshapley ]
+
+$ETL$:
+#  raw:
+#    experiments:
+#      audit: "*"
+#    extractors:
+#      $INCLUDE_STEPS$: [ { config: audit, pipeline: all_datasets } ]
+#    transformers: [ ]
+#    loaders:
+#      PickleSummaryLoader: { }
+#      CsvSummaryLoader: { }
+
+#  all_datasets:
+#    experiments:
+#      audit: [ audit_robustness, audit_sample_knnshapley ]
+##      audit_only_adult: [ threepc ]
+#      audit_only_unlearn: [ audit_owner_unlearn ]
+#
+#    extractors:
+#      MpSpdzResultExtractor: { }
+#      MpSpdzStderrExtractor: { }
+#      ConsistencyExtractor: { }
+#      IgnoreExtractor:
+#        file_regex:
+#          - ^stdout\.log$
+#    transformers:
+#      - name: StatTransformer
+#        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'mpc.script_args.round_nearest' ]
+#        stats:
+#          mpc_time_s: [ "spdz_timer_98", "spdz_timer_99", "spdz_timer_100" ]
+#
+#          auditing_overhead_s: [ "consistency_convert_shares_share_switch_input_mus",
+#                                 "consistency_poly_eval_poly_eval_mus",
+#                                 "consistency_prove_verify_Prove Verify_mus" ]
+#
+#          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
+#                                     "consistency_poly_eval_poly_eval_global_bytes",
+#                                     "consistency_prove_verify_global_bytes" ]
+#
+#          global_data_sent_mb: [ "spdz_global_data_sent" ]
+#
+#          n_rounds: [ "spdz_player_round_number" ]
+#
+#      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+#      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+#      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+#
+#    loaders:
+#      CsvSummaryLoader: { }
+#      BarPlotLoader:
+#
+#        cols_values_filter:
+#          mpc.script_name: [ 'audit_sample_knnshapley', 'audit_owner_unlearn', 'audit_prediction_shap', 'audit_fairness', 'audit_robustness' ]
+#
+#          host_idx: [ 0 ] # only plot one party
+#          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ]
+#          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
+#          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+#          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+#
+#        plot_cols: [ 'mpc.script_name', 'host_idx', 'mpc.domain' ]
+#        group_cols: [ mpc.script_args.dataset ]
+#        bar_cols: [ 'mpc.protocol_setup' ]
+#
+#        colors:  ['#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786']
+#
+#        legend:
+#          format: "{} {}"
+#          cols: [ "mpc.protocol_setup", "$bar_part_col$" ]
+#
+#        title:
+#          format: "3PC - {}"
+#          plot_cols: [ 'mpc.script_name' ]
+#
+#        labels:
+#          mpc_time_s: ""
+#          global_data_sent_mb: ""
+#          auditing_overhead_s: "(Overhead)"
+#          auditing_overhead_bytes: "(Overhead)"
+#          n_rounds: ""
+#
+#          ring: "Ring"
+#          ring_split: "Ring"
+#          custom_256: "Field"
+#
+#          audit_sample_knnshapley: "KNNShapley"
+#          audit_owner_unlearn: "Camel Unlearning"
+#          audit_robustness: "Robustness"
+#
+#          audit_prediction_shap: "KernelSHAP"
+#          audit_fairness: "Individual Fairness"
+#
+#          adult: "Adult"
+#          mnist_full: "MNIST"
+#          cifar_alexnet: "Cifar10"
+#
+#          semi_honest_3: "SH"
+#          sy-rep-ring-party: "MAL"
+#
+#        show_debug_info: False
+#
+#        metrics:
+#          time:
+#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+#            y_unit_divider: 60.0 # switch to mins from secs
+#            y_label: "Time [min]"
+#            legend_order: [ 0, 2, 1, 3 ]
+#            legend_ncol: 4
+#
+#          rounds:
+#            bar_part_cols: [ n_rounds ]
+#            y_label: "Rounds"
+#
+#          bandwidth:
+#            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
+#            y_label: "Bandwidth [MB]"
+#            y_unit_multiplicator: 1.0e-6 # transform to MB
+#            log_y: True
+#            legend_order: [ 0, 2, 1, 3 ]
+#            legend_ncol: 4
+
+#  audit_adult:
+#    experiments:
 #      audit_only_adult: [ threepc ]
-      audit_only_unlearn: [ audit_owner_unlearn ]
+#
+#    extractors:
+#      MpSpdzResultExtractor: { }
+#      MpSpdzStderrExtractor: { }
+#      ConsistencyExtractor: { }
+#      IgnoreExtractor:
+#        file_regex:
+#          - ^stdout\.log$
+#    transformers:
+#      - name: StatTransformer
+#        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'mpc.script_args.round_nearest' ]
+#        stats:
+#          mpc_time_s: [ "spdz_timer_98", "spdz_timer_99", "spdz_timer_100" ]
+#
+#          auditing_overhead_s: [ "consistency_convert_shares_share_switch_input_mus",
+#                                 "consistency_poly_eval_poly_eval_mus",
+#                                 "consistency_prove_verify_Prove Verify_mus" ]
+#
+#          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
+#                                     "consistency_poly_eval_poly_eval_global_bytes",
+#                                     "consistency_prove_verify_global_bytes" ]
+#
+#          global_data_sent_mb: [ "spdz_global_data_sent" ]
+#
+#          n_rounds: [ "spdz_player_round_number" ]
+#
+#      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+#      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+#      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+#
+#    loaders:
+#      CsvSummaryLoader: { }
+#      BarPlotLoader:
+#
+#        cols_values_filter:
+#          mpc.script_name: [ 'audit_prediction_shap', 'audit_fairness' ]
+#
+#          host_idx: [ 0 ] # only plot one party
+#          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ]
+#          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
+#          'mpc.script_args.dataset': [ adult ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+#          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+#
+#        plot_cols: [ 'host_idx', 'mpc.domain' ]
+#        group_cols: [ 'mpc.script_name' ]
+#        bar_cols: [ 'mpc.protocol_setup' ]
+#
+#        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ]
+#
+#        legend:
+#          format: "{} {}"
+#          cols: [ "mpc.protocol_setup", "$bar_part_col$" ]
+#
+#        title:
+#          format: "3PC - Adult"
+#          plot_cols: []
+#
+#        bar_width: 0.8
+#
+#        labels:
+#          mpc_time_s: ""
+#          global_data_sent_mb: ""
+#          auditing_overhead_s: "(Overhead)"
+#          auditing_overhead_bytes: "(Overhead)"
+#          n_rounds: ""
+#
+#          ring: "Ring"
+#          ring_split: "Ring"
+#          custom_256: "Field"
+#
+#          audit_sample_knnshapley: "KNNShapley"
+#          audit_owner_unlearn: "Camel Unlearning"
+#          audit_robustness: "Robustness"
+#
+#          audit_prediction_shap: "SHAP"
+#          audit_fairness: "IF"
+#
+#          adult: "Adult"
+#          mnist_full: "MNIST"
+#          cifar_alexnet: "Cifar10"
+#
+#          semi_honest_3: "SH"
+#          sy-rep-ring-party: "MAL"
+#
+#        show_debug_info: False
+#
+#        metrics:
+#          time:
+#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+#            y_unit_divider: 60.0 # switch to mins from secs
+#            y_label: "Time [min]"
+#            legend_order: [ 0, 2, 1, 3 ]
+#            legend_ncol: 4
+#
+#          rounds:
+#            bar_part_cols: [ n_rounds ]
+#            y_label: "Rounds"
+#
+#          bandwidth:
+#            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
+#            y_label: "Bandwidth [MB]"
+#            y_unit_multiplicator: 1.0e-6 # transform to MB
+#            log_y: True
+#            legend_order: [ 0, 2, 1, 3 ]
+#            legend_ncol: 4
+
+  audit_consistency_adult:
+    experiments:
+      audit_consistency: [ audit_sample_knnshapley, audit_sample_knnshapley_mal, audit_robustness_3pc ]
 
     extractors:
       MpSpdzResultExtractor: { }
-      MpSpdzStderrExtractor: { }
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_stderr\.log$
       ConsistencyExtractor: { }
       IgnoreExtractor:
         file_regex:
           - ^stdout\.log$
+          - ^cerebro_stdout\.log$
     transformers:
+      - name: Sha3MultiplierTransformer
       - name: StatTransformer
-        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'mpc.script_args.round_nearest' ]
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'consistency_args.type' ]
         stats:
-          mpc_time_s: [ "spdz_timer_98", "spdz_timer_99", "spdz_timer_100" ]
+          mpc_time_s: [ "spdz_timer_99", "spdz_timer_100" ]
 
           auditing_overhead_s: [ "consistency_convert_shares_share_switch_input_mus",
                                  "consistency_poly_eval_poly_eval_mus",
-                                 "consistency_prove_verify_Prove Verify_mus" ]
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "cerebro_spdz_timer_98",
+                                 "spdz_timer_98",
+                                  # + sha3 multiplier?
+          ]
 
           auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
                                      "consistency_poly_eval_poly_eval_global_bytes",
-                                     "consistency_prove_verify_global_bytes" ]
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98",
+
+                                     "cerebro_spdz_global_data_sent"
+                                     # + sha3?
+          ]
 
           global_data_sent_mb: [ "spdz_global_data_sent" ]
 
@@ -62,136 +301,33 @@ $ETL$:
       BarPlotLoader:
 
         cols_values_filter:
-          mpc.script_name: [ 'audit_sample_knnshapley', 'audit_owner_unlearn', 'audit_prediction_shap', 'audit_fairness', 'audit_robustness' ]
+          mpc.script_name: [ 'audit_sample_knnshapley', 'audit_robustness' ]
+          'consistency_args.type': [ 'pc', 'cerebro', 'sha3']
 
           host_idx: [ 0 ] # only plot one party
-          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ]
+          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
           'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
           'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
           'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
 
-        plot_cols: [ 'mpc.script_name', 'host_idx', 'mpc.domain' ]
-        group_cols: [ mpc.script_args.dataset ]
-        bar_cols: [ 'mpc.protocol_setup' ]
+        plot_cols: [ 'host_idx', 'mpc.script_name', 'mpc.script_args.dataset' ]
+#        group_cols: [ 'consistency_args.type' ]
+#        bar_cols: [ 'mpc.protocol_setup' ]
 
-        colors:  ['#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786']
+        group_cols: [ 'mpc.protocol_setup' ]
+        bar_cols: [ 'consistency_args.type' ]
+
+        colors: [ '#D5E1A3', '#C7B786', '#a6b8d8', '#D5E1A3', '#C7B786', '#a6b8d8' ] # 4c72b0
 
         legend:
           format: "{} {}"
-          cols: [ "mpc.protocol_setup", "$bar_part_col$" ]
+          cols: [ 'consistency_args.type', "$bar_part_col$" ]
 
         title:
           format: "3PC - {}"
-          plot_cols: [ 'mpc.script_name' ]
+          plot_cols: [ "mpc.script_args.dataset" ]
 
-        labels:
-          mpc_time_s: ""
-          global_data_sent_mb: ""
-          auditing_overhead_s: "(Overhead)"
-          auditing_overhead_bytes: "(Overhead)"
-          n_rounds: ""
-
-          ring: "Ring"
-          ring_split: "Ring"
-          custom_256: "Field"
-
-          audit_sample_knnshapley: "KNNShapley"
-          audit_owner_unlearn: "Camel Unlearning"
-          audit_robustness: "Robustness"
-
-          audit_prediction_shap: "KernelSHAP"
-          audit_fairness: "Individual Fairness"
-
-          adult: "Adult"
-          mnist_full: "MNIST"
-          cifar_alexnet: "Cifar10"
-
-          semi_honest_3: "SH"
-          sy-rep-ring-party: "MAL"
-
-        show_debug_info: False
-
-        metrics:
-          time:
-            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-            y_unit_divider: 60.0 # switch to mins from secs
-            y_label: "Time [min]"
-            legend_order: [ 0, 2, 1, 3 ]
-            legend_ncol: 4
-
-          rounds:
-            bar_part_cols: [ n_rounds ]
-            y_label: "Rounds"
-
-          bandwidth:
-            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
-            y_label: "Bandwidth [MB]"
-            y_unit_multiplicator: 1.0e-6 # transform to MB
-            log_y: True
-            legend_order: [ 0, 2, 1, 3 ]
-            legend_ncol: 4
-
-  audit_adult:
-    experiments:
-      audit_only_adult: [ threepc ]
-
-    extractors:
-      MpSpdzResultExtractor: { }
-      MpSpdzStderrExtractor: { }
-      ConsistencyExtractor: { }
-      IgnoreExtractor:
-        file_regex:
-          - ^stdout\.log$
-    transformers:
-      - name: StatTransformer
-        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'mpc.script_args.round_nearest' ]
-        stats:
-          mpc_time_s: [ "spdz_timer_98", "spdz_timer_99", "spdz_timer_100" ]
-
-          auditing_overhead_s: [ "consistency_convert_shares_share_switch_input_mus",
-                                 "consistency_poly_eval_poly_eval_mus",
-                                 "consistency_prove_verify_Prove Verify_mus" ]
-
-          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
-                                     "consistency_poly_eval_poly_eval_global_bytes",
-                                     "consistency_prove_verify_global_bytes" ]
-
-          global_data_sent_mb: [ "spdz_global_data_sent" ]
-
-          n_rounds: [ "spdz_player_round_number" ]
-
-      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
-      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
-      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
-
-    loaders:
-      CsvSummaryLoader: { }
-      BarPlotLoader:
-
-        cols_values_filter:
-          mpc.script_name: [ 'audit_prediction_shap', 'audit_fairness' ]
-
-          host_idx: [ 0 ] # only plot one party
-          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ]
-          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
-          'mpc.script_args.dataset': [ adult ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
-          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
-
-        plot_cols: [ 'host_idx', 'mpc.domain' ]
-        group_cols: [ 'mpc.script_name' ]
-        bar_cols: [ 'mpc.protocol_setup' ]
-
-        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ]
-
-        legend:
-          format: "{} {}"
-          cols: [ "mpc.protocol_setup", "$bar_part_col$" ]
-
-        title:
-          format: "3PC - Adult"
-          plot_cols: []
-
-        bar_width: 0.8
+        bar_width: 0.6
 
         labels:
           mpc_time_s: ""
@@ -218,6 +354,10 @@ $ETL$:
           semi_honest_3: "SH"
           sy-rep-ring-party: "MAL"
 
+          pc: "PC"
+          cerebro: "CC"
+          sha3: "SHA3"
+
         show_debug_info: False
 
         metrics:
@@ -225,7 +365,10 @@ $ETL$:
             bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
             y_unit_divider: 60.0 # switch to mins from secs
             y_label: "Time [min]"
-            legend_order: [ 0, 2, 1, 3 ]
+#            log_y: True
+#            y_ticks: [ 0.1, 1, 10, 100 ]
+
+            legend_order: [ 0, 3, 1, 4, 2, 5] # [ 0, 2, 1, 3 ]
             legend_ncol: 4
 
           rounds:
@@ -236,6 +379,6 @@ $ETL$:
             bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
             y_label: "Bandwidth [MB]"
             y_unit_multiplicator: 1.0e-6 # transform to MB
-            log_y: True
-            legend_order: [ 0, 2, 1, 3 ]
+#            log_y: True
+            legend_order: [ 0, 3, 1, 4, 2, 5]
             legend_ncol: 4

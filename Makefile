@@ -9,6 +9,7 @@ RING_64=-R 64
 AUDITARGS:= dataset__$(dataset) audit_trigger_idx__1
 
 
+
 LINK_UTILS=$(PWD)/MP-SPDZ/Compiler/script_utils
 
 LINK=$(PWD)/MP-SPDZ/Programs/Source/$(script).mpc
@@ -31,7 +32,6 @@ setup-mpspdz:
 simlink:
 	[ -L $(LINK_UTILS) ] && [ -e $(LINK_UTILS) ] || ln -s  $(PWD)/script_utils $(LINK_UTILS)
 	[ -L $(LINK) ] && [ -e $(LINK) ] || ln -s  $(PWD)/scripts/$(script).mpc $(LINK)
-	[ -L $(TEST) ] && [ -e $(TEST) ] || ln -s  $(PWD)/tests/$(test).mpc $(TEST)
 
 
 
@@ -72,6 +72,9 @@ ring-mal: simlink
 ring-test: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(test) $(RING_64) -Y --budget 1000 -C $(AUDITARGS) emulate__True debug__False
 
+ring-sha: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False consistency_check__sha3
+
 
 compile-field: simlink
 	cd MP-SPDZ && ./compile.py $(script) $(AUDITARGS) emulate__True debug__True
@@ -83,13 +86,16 @@ field-256: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -F 256 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -lgp 256
 
 field: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -Y -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__False -- -lgp 128 -v
+	cd MP-SPDZ && ./Scripts/compile-run.py -Y -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__False batch_size__128 -- -lgp 128 -v -b 50
 
 field-std: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -C --budget 10000 -E $(protocol) $(script) $(AUDITARGS) emulate__False debug__False -- -lgp 128 -v
 
 field-bls377: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -F 251 -E $(protocol) $(script) $(AUDITARGS) debug__False -- -P 8444461749428370424248824938781546531375899335154063827935233455917409239041
+
+field-bls377-ped: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -F 251 -E $(protocol) $(script) $(AUDITARGS) consistency_check__cerebro debug__False -- -P 8444461749428370424248824938781546531375899335154063827935233455917409239041
 
 deb: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -Z 3 --budget 1000 -C audit_trigger_idx__0 batch_size__128 consistency_check__False dataset__mnist_full_3party debug__False emulate__False n_input_parties__3 n_threads__36 trunc_pr__True

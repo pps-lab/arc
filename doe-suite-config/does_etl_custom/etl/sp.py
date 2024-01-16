@@ -39,6 +39,53 @@ class CompilerArgsTransformer(Transformer):
         return df
 
 
+class Sha3MultiplierTransformer(Transformer):
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        timer_ids_variable = [
+            "90", # TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE
+            "91", # TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE
+                      ]
+        # timer_ids_fixed = [
+        #     "92", # TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED
+        # ]
+        timer_id_input_consistency = "98" # TIMER_INPUT_CONSISTENCY_CHECK
+
+        def tran(x):
+            # access stat_value for stat spdz_timer_98
+            for timer_value_type in ["", "_bw", "_rounds"]:
+                print("Running for timer_value_type: ", timer_value_type)
+                total_time_fixed_old = x[x['stat'] == f"spdz_timer{timer_value_type}_{timer_id_input_consistency}"]['stat_value'].values[0]
+                total_time_fixed = total_time_fixed_old
+                # print("Total time fixed: ", total_time_fixed)
+                total_time_var = 0
+                for var in timer_ids_variable:
+                    if x[x['stat'] == f"spdz_timer{timer_value_type}_{var}"].empty:
+                        print(f"Skipping run because it does not contain variable timer", f"spdz_timer{timer_value_type}_{var}")
+                        return x
+                    var_time = float(x[x['stat'] == f"spdz_timer{timer_value_type}_{var}"]['stat_value'].values[0])
+                    total_time_fixed -= var_time
+                    total_time_var += var_time
+                # print("Total time fixed minus variable part: ", total_time_fixed)
+                multiplier = float(x['mpc.script_args.sha3_approx_factor'].unique()[0])
+                dataset = x['mpc.script_args.dataset'].unique()
+                # print("Multiplier: ", multiplier, total_time_var, dataset)
+                total_time_fixed += total_time_var * multiplier
+                # now set the value for x
+                x.loc[x['stat'] == f"spdz_timer{timer_value_type}_{timer_id_input_consistency}", 'stat_value'] = total_time_fixed
+                print("Set to total_time_fixed: ", total_time_fixed, timer_value_type)
+            # print(x)
+            return x
+
+        # print(df.columns)
+        df = df.groupby(['suite_name', 'exp_name', 'run']).apply(tran).reset_index(drop=True)
+        # print(df)
+
+        return df
+
+
+
 class StatTransformer(Transformer):
 
     groupby_columns: List[str]
@@ -437,7 +484,10 @@ class BarPlotLoader(PlotLoader):
         for col, allowed in plot_cols + group_cols + bar_cols:
 
             # convert column to string for filtering
-            df_filtered[col] = df_filtered[col].astype(str)
+            try:
+                df_filtered[col] = df_filtered[col].astype(str)
+            except KeyError:
+                raise KeyError(f"col={col} not in df.columns={df.columns}")
 
             print(f"Filtering {col} to {allowed}    all={df[col].unique()}")
             # filter out non-relevant results
@@ -614,7 +664,7 @@ class BarPlotLoader(PlotLoader):
 
                     if metric_cfg.legend_order is not None:
                         # adjust order if specified
-                        assert len(handles) == len(metric_cfg.legend_order), f"len(handles)={len(handles)} != len(metric_cfg.legend_order)={len(metric_cfg.legend_order)}"
+                        assert len(handles) == len(metric_cfg.legend_order), f"len(handles)={len(handles)} != len(metric_cfg.legend_order)={len(metric_cfg.legend_order)} for {metric_cfg.bar_part_cols}"
                         handles = [handles[i] for i in metric_cfg.legend_order]
                         labels = [labels[i] for i in metric_cfg.legend_order]
 

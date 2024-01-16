@@ -1,3 +1,4 @@
+
 import os
 from dataclasses import dataclass, field
 from typing import Optional, List
@@ -233,7 +234,9 @@ def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads)
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_sz)
 
 
-def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_factor: int):
+def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_factor: int,
+                 timer_bit_decompose=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
+                 timer_hash_variable=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE):
 
     def compute_hash(input_flat, pid, n_t):
         print_ln("Computing hash for bits with length %s", input_flat.length)
@@ -249,7 +252,7 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_fa
         # @for_range_opt(0, elem_length)
         # def _(i):
         # bit_vec = [sbit.get_type(1)(0)] * (n_bit_vec_to_decompose * bit_length) # empty array for now
-        library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE)
+        library.start_timer(timer_id=timer_bit_decompose)
         @for_range_opt_multithread(min(n_t, elem_length), n_bit_vec_to_decompose)
         def _(i):
             bit_dec = input_flat[i].bit_decompose(bit_length)
@@ -257,27 +260,55 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_fa
             # bit_vec_arr[i]
             for j in range(bit_length):
                 bit_vec_arr[i * bit_length + j] = bit_dec[j]
-        library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE)
+        library.stop_timer(timer_id=timer_bit_decompose)
         print("Done with bit decompose")
 
         # TODO: find a way to order the instructions to go into SHA3-256 without causing endless compilation time..
         # bits = sbitvec.from_vec(bit_vec)
         # print_ln("Computing hash for bits with length %s %s", len(bits.v), len(bits.elements()))
 
-        library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE)
+        library.start_timer(timer_id=timer_hash_variable)
         n_rounds = math.ceil(elem_length * bit_length / 1088)
         n_rounds_downsized = math.floor(n_rounds / sha3_approx_factor)
         print(f"Approximating number of rounds with factor {sha3_approx_factor}")
         sha3_256_approx(n_rounds_downsized)
-        library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE)
+        library.stop_timer(timer_id=timer_hash_variable)
 
-        library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
+        # library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
         sha3_256_approx(11) # unsqueezing 256 bits
-        library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
+        # library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
         # sha3_256(bits).reveal_print_hex()
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
 
+def compute_cerebro_individual(inputs: InputObject, player_input_id, n_threads, cerebro_output_approx_factor: int):
+    # compute random combination of inputs
+    # compute commitment of random combination
+    program = get_program()
+    if program.options.field != "251":
+        print(f"WARNING: cerebro consistency check only works for field 251. (field={program.options.field}) "
+              "Skipping check as we will assume it to be done after share conversion.")
+        print("Outputting format files for cerebro consistency check")
+        output_format(inputs)
+        return
+
+    # this might take a really long time?
+    def compute_indiv(input_flat, pid, n_t):
+
+        n_runs = input_flat.length // cerebro_output_approx_factor
+
+        print("Computing commitment for individual input with n_runs", n_runs)
+        print_ln("Approximating %s with %s", input_flat.length, n_runs)
+
+        random_r = sint(384882923483823)
+
+        library.start_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CEREBRO_VARIABLE)
+        @for_range_opt(0, n_runs)
+        def _(i):
+            compute_commitment(input_flat[i], random_r)
+        library.stop_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CEREBRO_VARIABLE)
+
+    flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_indiv)
 
 
 Keccak_f = None
@@ -320,10 +351,29 @@ def convert_array_sint(arr):
 
     return arr_out
 
-def output(model, prediction_x, prediction_y):
+def output(inputs: InputObject, type, n_threads: int, sha3_approx_factor: int, cerebro_output_approx_factor: int):
+    """
+    :param type: string
+    :return:
+    """
+    if type == "pc":
+        output_format(inputs)
+    elif type == "sha3":
+        # for each field in inputobject we should compute a hash
+        compute_sha3(inputs, None, n_threads, sha3_approx_factor,
+                     timer_bit_decompose=timers.TIMER_OUTPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
+                        timer_hash_variable=timers.TIMER_OUTPUT_CONSISTENCY_SHA_HASH_VARIABLE)
+    elif type == "cerebro":
+        compute_cerebro_individual(inputs, None, n_threads, cerebro_output_approx_factor)
+    else:
+        raise ValueError("Unknown type %s", type)
+
+    print("Done with input consistency check")
+
+def output_format(inputs: InputObject):
     from Compiler.script_utils.data import AbstractInputLoader
     fmt = []
-    if model is not None:
+    if len(inputs.model) > 0:
         output_matrices = AbstractInputLoader._extract_model_weights(model)
         total_len = sum([m.total_size() for m in output_matrices])
         full_arr = Array(total_len, sfix)
@@ -336,11 +386,15 @@ def output(model, prediction_x, prediction_y):
         sfix.write_to_file(full_arr)
         fmt.append({ "type": full_arr.value_type.__name__, "object_type": "m", "length": total_len })
 
-    if prediction_x is not None:
+    if len(inputs.x) > 0:
+        assert len(inputs.x) == 1
+        prediction_x = inputs.x[0]
         sfix.write_to_file(prediction_x.to_array())
         fmt.append({ "type": prediction_x.value_type.__name__, "object_type": "x", "length": prediction_x.total_size() })
 
-    if prediction_y is not None:
+    if inputs.y is not None:
+        assert len(inputs.y) == 1
+        prediction_y = inputs.y[0]
         if isinstance(prediction_y, sfix):
             sfix.write_to_file(prediction_y)
             fmt.append({ "type": type(sfix).__name__, "object_type": "y", "length": 1 })

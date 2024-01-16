@@ -1,3 +1,5 @@
+import os.path
+
 from doespy.etl.steps.extractors import Extractor
 from doespy.etl.steps.transformers import Transformer
 from doespy.etl.steps.loaders import Loader, PlotLoader
@@ -17,6 +19,11 @@ class MpSpdzStderrExtractor(Extractor):
         with open(path, "r") as f:
             content = f.read()
 
+        output_prefix = ""
+        filename = os.path.basename(path)
+        if filename != "stderr.log":
+            output_prefix = filename.split("_")[0] + "_"
+
         print("Extracting path" ,path)
         print(content[:100])
         # Extract transfered data, round number and host
@@ -26,7 +33,7 @@ class MpSpdzStderrExtractor(Extractor):
         regex2 = r"Global data sent = ([\d\.e\+]+) MB \(all parties\)"
         matcher2 = re.compile(regex2)
         results2 = list(matcher2.finditer(content))
-        time_regex = r"^Time([0-9]+)? = ([0-9]+\.[0-9]+|[0-9]+) seconds \((.+) MB, (\d+) rounds\)$"
+        time_regex = r"^Time([0-9]+)? = (.*) seconds \((.+) MB, (\d+) rounds\)$"
         time_matcher = re.compile(time_regex, re.MULTILINE)
         time_results = list(time_matcher.finditer(content)) 
         dicts = []
@@ -66,14 +73,14 @@ class MpSpdzStderrExtractor(Extractor):
                 print("OH OH", (timer_number,timer_value,timer_mb,timer_rounds))
                 return (timer_number,timer_value,timer_mb,timer_rounds)
             mapped_timer_results = list(map(map_timer, time_results))
-            dicts += [{'stat': f"spdz_timer_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,t_val,_,_) in mapped_timer_results]
-            dicts += [{'stat': f"spdz_timer_bw_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,_,t_val,_) in mapped_timer_results]
-            dicts += [{'stat': f"spdz_timer_rounds_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,_,_,t_val) in mapped_timer_results]
+            dicts += [{'stat': f"{output_prefix}spdz_timer_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,t_val,_,_) in mapped_timer_results]
+            dicts += [{'stat': f"{output_prefix}spdz_timer_bw_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,_,t_val,_) in mapped_timer_results]
+            dicts += [{'stat': f"{output_prefix}spdz_timer_rounds_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,_,_,t_val) in mapped_timer_results]
 
             additional_values = { "player_number": player_num, "player_data_sent": party_data_sent, "player_round_number": party_round_number, "global_data_sent": global_data_sent}
 
             for label, value in additional_values.items():
-                dicts += [{'stat': f"spdz_{label}", 'stat_value': value, 'player_number': player_num}]
+                dicts += [{'stat': f"{output_prefix}spdz_{label}", 'stat_value': value, 'player_number': player_num}]
             # dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
         print(dicts)
         return dicts
