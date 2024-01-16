@@ -31,6 +31,8 @@ library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
 
 objects = input_consistency.read_output_format_from_file()
 
+input_x = sint(38329283)
+
 for object in objects:
     len_items = object["length"]
 
@@ -44,7 +46,7 @@ for object in objects:
     library.start_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CEREBRO_VARIABLE)
     @for_range_opt(0, n_runs)
     def _(i):
-        compute_commitment(sint(38329283), random_r)
+        compute_commitment(input_x, random_r)
     library.stop_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CEREBRO_VARIABLE)
 
 library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
