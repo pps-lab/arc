@@ -351,13 +351,14 @@ def convert_shares(task_config, output_prefix):
             # Re-invoke MP-SPDZ with script to compute the commitment
             # This can be grealy simplified once we integrate this functionality into MP-SPDZ
             print("Invoking cerebro to compute the commitments.")
-            compile_cerebro_with_args(task_config, "standalone_cerebro")
-            run_cerebro_with_args(task_config, "standalone_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
+            compile_cerebro_with_args(task_config, "single_cerebro") # standalone_cerebro
+            run_cerebro_with_args(task_config, "single_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
 
             # now we need to verify the commitment output
             for player_id, inputs in player_input_counter.items():
                 for input_size in inputs:
                     if input_size > 0:
+                        print(f"CEREBRO_INPUT_SIZE=({player_id},{input_size})")
                         cerebro_verify(task_config, input_size)
         elif task_config.consistency_args.type == "sha3":
             print("Computing sha3-based commitments, nothing else needed here.")
@@ -472,8 +473,11 @@ def convert_shares(task_config, output_prefix):
             if task_config.consistency_args.type == "cerebro":
                 # compute commitments
                 print("Invoking cerebro to compute the commitments (output).")
-                compile_cerebro_with_args(task_config, "individual_cerebro")
-                run_cerebro_with_args(task_config, "individual_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
+                compile_cerebro_with_args(task_config, "single_cerebro")
+                run_cerebro_with_args(task_config, "single_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
+
+                for c in output_data:
+                    print(f"CEREBRO_OUTPUT_SIZE=({c['object_type']},{c['length']})")
             else:
                 # check how many commitments we need
                 # for each item in list output_data, add an arg with object_type
