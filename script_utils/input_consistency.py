@@ -374,8 +374,7 @@ def output_format(inputs: InputObject):
     from Compiler.script_utils.data import AbstractInputLoader
     fmt = []
     if len(inputs.model) > 0:
-        output_matrices = AbstractInputLoader._extract_model_weights(model)
-        total_len = sum([m.total_size() for m in output_matrices])
+        total_len = sum([m.total_size() for m in inputs.model])
         full_arr = Array(total_len, sfix)
         idx = 0
         for i in range(len(output_matrices)):
@@ -442,3 +441,19 @@ def write_output_format_to_file(fmt):
     f.write(content)
     f.flush()
     f.close()
+
+
+def read_output_format_from_file() -> list:
+    # This method should be obsolete once we integrate conversion into MP-SPDZ
+    filename = 'Player-Data/Output-format'
+    print('Read format of binary data from', filename)
+
+    if not os.path.exists(filename):
+        print(f"File {filename} does not exist")
+        return []
+
+    with open(filename, 'r') as f:
+        content = ruamel.yaml.load(f, Loader=ruamel.yaml.RoundTripLoader)
+        if content is not None:
+            return content
+        return []
