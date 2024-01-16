@@ -62,8 +62,12 @@ library.stop_timer(timer_id=timers.TIMER_INFERENCE)
 
 # write output to file
 library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
-y_arr = Array(1, sfix)
-y_arr[0] = prediction_results[0]
+
+if isinstance(prediction_results[0], sfix):
+    y_arr = Array(1, sfix)
+    y_arr[0] = prediction_results[0]
+else:
+    y_arr = prediction_results[0]
 output_object = input_consistency.InputObject(x=[inf_samples[0]], y=[y_arr])
 input_consistency.output(output_object, cfg.consistency_check, cfg.n_threads, cfg.sha3_approx_factor, cfg.cerebro_output_approx_factor)
 library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
