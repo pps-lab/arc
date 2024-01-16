@@ -377,7 +377,7 @@ def output_format(inputs: InputObject):
         total_len = sum([m.total_size() for m in inputs.model])
         full_arr = Array(total_len, sfix)
         idx = 0
-        for i in range(len(output_matrices)):
+        for i in range(len(inputs.model)):
             arr = output_matrices[i].to_array()
             full_arr.assign(arr, idx)
             idx += arr.length
