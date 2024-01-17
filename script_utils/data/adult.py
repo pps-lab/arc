@@ -14,7 +14,7 @@ import time
 
 class AdultInputLoader(AbstractInputLoader):
 
-    def __init__(self, dataset, n_train_samples: List[int], n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: Optional[str], sha3_approx_factor, load_model_weights: bool = True):
+    def __init__(self, dataset, n_train_samples: List[int], n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: Optional[str], sha3_approx_factor, input_shape_size: int, load_model_weights: bool = True):
         """The first part of the input of every party is their training set.
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples
@@ -42,7 +42,7 @@ class AdultInputLoader(AbstractInputLoader):
         self._load_input_data_pytorch(train_datasets, backdoor_dataset, test_dataset,
                                       n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_wanted_test_samples,
                                       audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug, consistency_check=consistency_check, load_model_weights=load_model_weights,
-                                      sha3_approx_factor=sha3_approx_factor)
+                                      sha3_approx_factor=sha3_approx_factor, input_shape_size=input_shape_size)
 
         # self._load_input_data(n_train_samples=n_train_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug)
 

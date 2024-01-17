@@ -67,7 +67,7 @@ class AbstractInputLoader(ABC):
         return len(self._audit_trigger_samples)
 
 
-    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: Optional[str], load_model_weights: bool, sha3_approx_factor: int):
+    def _load_input_data_pytorch(self, train_datasets, backdoor_dataset, test_dataset, n_wanted_train_samples: List[int], n_wanted_trigger_samples: int, n_wanted_test_samples: int, audit_trigger_idx: int, batch_size: int, emulate: bool, debug: bool, consistency_check: Optional[str], load_model_weights: bool, sha3_approx_factor: int, input_shape_size: int):
 
         self._batch_size = batch_size
         self._train_index = {}
@@ -168,6 +168,9 @@ class AbstractInputLoader(ABC):
         input_shape = self._train_samples.shape
         # print(input_shape, "INPUT SHAPE")
         input_shape[0] = batch_size if input_shape[0] == 0 else input_shape[0]
+        if input_shape_size is not None:
+            input_shape[0] = input_shape_size
+            print("Manually set input shape size to", input_shape_size)
         # print(input_shape, "INP")
         self._model = self._load_model(input_shape=input_shape, batch_size=batch_size, input_via=0 if load_model_weights else None)
         # parse weights from model layers

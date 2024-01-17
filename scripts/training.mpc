@@ -46,9 +46,10 @@ ml.set_n_threads(cfg.n_threads)
 ml.Layer.back_batch_size = cfg.batch_size
 
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
+input_shape_size = cfg.batch_size * cfg.n_batches if cfg.n_batches > 0 else None
 input_loader: AbstractInputLoader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx,
                                                                     batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check="pc", sha3_approx_factor=cfg.sha3_approx_factor,
-                                                          load_model_weights=False
+                                                          load_model_weights=False, input_shape_size=input_shape_size
                                                           )
 library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 
@@ -71,7 +72,8 @@ if cfg.n_batches > 0:
     print("Running on", len(train_samples), "samples")
     model.layers[-1].Y = train_labels
     model.layers[0].X = train_samples
-    model.layers[0].N = cfg.n_batches * cfg.batch_size
+    print(model.layers[0])
+    # model.layers[0].N = cfg.n_batches * cfg.batch_size
 else:
     model.layers[-1].Y.address = train_labels.address
     model.layers[0].X.address = train_samples.address

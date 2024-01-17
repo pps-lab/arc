@@ -299,8 +299,8 @@ def compute_commitment(x, r):
     # print_ln('H.x: %s', H.x.reveal())
     # print_ln('H.y: %s', H.y.reveal())
     H = H * r
-    print_ln('H.x: %s', H.x.reveal())
-    print_ln('H.y: %s', H.y.reveal())
+    # print_ln('H.x: %s', H.x.reveal())
+    # print_ln('H.y: %s', H.y.reveal())
 
     a_times_G = generator * x
     # print_ln("a_times_G.x: %s", a_times_G.x.reveal())
