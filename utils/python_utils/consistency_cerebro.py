@@ -48,11 +48,11 @@ def map_protocol_to_field(task_config: config_def.TaskConfig):
 
     return protocol
 
-def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, output_prefix: str, results_folder: str):
+def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, output_prefix: str, results_folder: str, std_prefix: str):
     """Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output"""
     result_dir_path = os.path.join(task_config.result_dir, results_folder)
-    cerebro_stdout = open(os.path.join(result_dir_path, "cerebro_stdout.log"), "a+")
-    cerebro_stderr = open(os.path.join(result_dir_path, "cerebro_stderr.log"), "a+")
+    cerebro_stdout = open(os.path.join(result_dir_path, f"cerebro_{std_prefix}_stdout.log"), "a+")
+    cerebro_stderr = open(os.path.join(result_dir_path, f"cerebro_{std_prefix}_stderr.log"), "a+")
 
     script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[map_protocol_to_field(task_config).name].value
     script_runner_obj = script_runner_constr(

@@ -352,7 +352,7 @@ def convert_shares(task_config, output_prefix):
             # This can be grealy simplified once we integrate this functionality into MP-SPDZ
             print("Invoking cerebro to compute the commitments.")
             compile_cerebro_with_args(task_config, "single_cerebro") # standalone_cerebro
-            run_cerebro_with_args(task_config, "single_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
+            run_cerebro_with_args(task_config, "single_cerebro", output_prefix, DEFAULT_RESULT_FOLDER, "input")
 
             # now we need to verify the commitment output
             for player_id, inputs in player_input_counter.items():
@@ -474,7 +474,7 @@ def convert_shares(task_config, output_prefix):
                 # compute commitments
                 print("Invoking cerebro to compute the commitments (output).")
                 compile_cerebro_with_args(task_config, "single_cerebro")
-                run_cerebro_with_args(task_config, "single_cerebro", output_prefix, DEFAULT_RESULT_FOLDER)
+                run_cerebro_with_args(task_config, "single_cerebro", output_prefix, DEFAULT_RESULT_FOLDER, "output")
 
                 for c in output_data:
                     print(f"CEREBRO_OUTPUT_SIZE=({c['object_type']},{c['length']})")
