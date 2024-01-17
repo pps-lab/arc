@@ -48,7 +48,7 @@ ml.Layer.back_batch_size = cfg.batch_size
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
 input_shape_size = cfg.batch_size * cfg.n_batches if cfg.n_batches > 0 else None
 input_loader: AbstractInputLoader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx,
-                                                                    batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check="pc", sha3_approx_factor=cfg.sha3_approx_factor,
+                                                                    batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check, sha3_approx_factor=cfg.sha3_approx_factor,
                                                           load_model_weights=False, input_shape_size=input_shape_size
                                                           )
 library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
