@@ -15,6 +15,28 @@ class MpSpdzStderrExtractor(Extractor):
     def default_file_regex():
         return ["^stderr\\.log$"]
 
+    def extract_cerebro_counts(self, content) -> List[Dict]:
+        input_regex = "CEREBRO_INPUT_SIZE=\((\d*),(\d*)\)"
+        input_results = re.findall(input_regex, content)
+
+        n_input_cerebro = len(input_results)
+        print("Found n_input results", n_input_cerebro)
+
+        output_regex = "CEREBRO_OUTPUT_SIZE=\((.*),(\d*)\)"
+        output_results = re.findall(output_regex, content)
+
+        # add up second group
+        n_output_cerebro = sum([int(x[1]) for x in output_results])
+        print("Found n_output results", n_output_cerebro)
+
+        output_list = []
+        if n_input_cerebro > 0:
+            output_list.append({"stat": f"n_input_cerebro", "stat_value": n_input_cerebro})
+        if n_output_cerebro > 0:
+            output_list.append({"stat": f"n_output_cerebro", "stat_value": n_output_cerebro})
+
+        return output_list
+
     def extract(self, path: str, options: Dict) -> List[Dict]:
         with open(path, "r") as f:
             content = f.read()
@@ -22,7 +44,7 @@ class MpSpdzStderrExtractor(Extractor):
         output_prefix = ""
         filename = os.path.basename(path)
         if filename != "stderr.log":
-            output_prefix = filename.split("_")[0] + "_"
+            output_prefix = "_".join(filename.split("_")[:-1]) + "_"
 
         print("Extracting path" ,path)
         print(content[:100])
@@ -82,6 +104,10 @@ class MpSpdzStderrExtractor(Extractor):
             for label, value in additional_values.items():
                 dicts += [{'stat': f"{output_prefix}spdz_{label}", 'stat_value': value, 'player_number': player_num}]
             # dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
+
+        lists = self.extract_cerebro_counts(content)
+        dicts += lists
+
         print(dicts)
         return dicts
 

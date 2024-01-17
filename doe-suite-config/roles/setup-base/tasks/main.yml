@@ -36,6 +36,7 @@
       - git
       - libboost-dev
       - libboost-thread-dev
+      - libboost-iostreams-dev
       - libntl-dev
       - libgmp-dev
       - libsodium-dev

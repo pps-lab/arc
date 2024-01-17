@@ -13,6 +13,9 @@ dataset_info:
       sh: 50
       mal: 10000
 
+    sha3_approx_factor: 1
+    sha3_approx_factor_full: 1000
+
 
   mnist_full_3party:
     max_input_size: 16521393 # 15925258
@@ -21,6 +24,8 @@ dataset_info:
       sh: 50
       mal: 10000
     sha3_approx_factor: 100
+    sha3_approx_factor_full: 5000
+
 
   cifar_alexnet_3party:
     max_input_size: 55402973 # 51500211
@@ -30,6 +35,7 @@ dataset_info:
       sh: 50
       mal: 10000
     sha3_approx_factor: 1000
+    sha3_approx_factor_full: 10000
 
 #  ember_3party:
 #    max_input_size: 488267184 # 471263184

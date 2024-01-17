@@ -8,6 +8,7 @@ import pandas as pd
 from typing import Dict, List
 import re
 
+
 class ConsistencyExtractor(Extractor):
 
     # transformer specific parameters with default values (see pydantic)

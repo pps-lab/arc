@@ -37,7 +37,6 @@ $SUITE_VARS$:
       n_input_parties: 3
       sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
 
-
       #      n_epochs: 0
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
@@ -53,9 +52,8 @@ $SUITE_VARS$:
       n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
       audit_trigger_idx: 0 # select single audit trigger (from all)
-      trunc_pr: False
 
-      round_nearest: False
+      consistency_check: "[% my_run.consistency_args.type %]"
 
 
     stage: # "compile" in run and then in next run "run"
@@ -68,7 +66,7 @@ sh:
       n: 3
       check_status: True
       init_roles:
-        - setup-base
+#        - setup-base
         - setup-consistency
         - setup-spdz-secrets
 #        - download-dataset
@@ -117,7 +115,7 @@ mal:
       n: 3
       check_status: True
       init_roles:
-        - setup-base
+#        - setup-base
         - setup-consistency
         - setup-spdz-secrets
 #        - download-dataset
@@ -129,14 +127,20 @@ mal:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-    convert_chunk_size: 150000
+    consistency_args:
+      type:
+          $FACTOR$: [ sha3, cerebro, pc ]
+    convert_chunk_size: 100000
 
     network_type: lan
     mpc_type: mal
 
+    sleep_time: 10
+
     mpc:
       script_args:
         batch_size: 64
+        n_batches: 50
 
   factor_levels:
 
@@ -166,7 +170,7 @@ wan:
       n: 3
       check_status: True
       init_roles:
-        - setup-base
+#        - setup-base
         - setup-consistency
         - setup-spdz-secrets
         - setup-network-delay
@@ -178,18 +182,26 @@ wan:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-    convert_chunk_size: 150000
+    consistency_args:
+      type:
+        $FACTOR$: [ sha3, cerebro, pc ]
+
+    convert_chunk_size: $FACTOR$
 
     network_type: wan
     mpc_type: mal
 
+    sleep_time: 10
+
     mpc:
       script_args:
+        n_batches: 10
         batch_size: $FACTOR$
 
   factor_levels:
 
-    - mpc:
+    - convert_chunk_size: 200000
+      mpc:
         protocol_setup: "semi_honest_3"
         domain: ring
         compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
@@ -197,7 +209,8 @@ wan:
         script_args:
           batch_size: 128
 
-    - mpc:
+    - convert_chunk_size: 100000
+      mpc:
         protocol_setup: "sy-rep-ring-party"
         domain: ring
         compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]

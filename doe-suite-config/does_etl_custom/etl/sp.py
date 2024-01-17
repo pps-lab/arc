@@ -23,21 +23,92 @@ import numpy as np
 
 COLOR_GRAY = '#999999'
 
-class CompilerArgsTransformer(Transformer):
+class CerebroMultiplierTransformer(Transformer):
+
+    run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
+    timer_value_types: List[str] = ["", "_bw", "_rounds"]
+
+    timer_id_cerebro: str = "95"
+
+    timer_thread_help: int = 36 # we assume cerebro can be perfectly parallelized over 36 threads
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
-        # find columns where compiler_args = [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
 
-        # and set domain to ring_noopt
-        # print(df['mpc.compiler_args'])
-        # print(df['mpc.compiler_args'] == [ '-R', '64', '-C', '--budget', '10000', '-Y' ])
-        # df.loc[(df['mpc.compiler_args'] == [ '-R', '64', '-C', '--budget', '10000', '-Y' ]), 'domain'] = 'ring_noopt'
+        def t_wrap(type):
+            def t(x):
+                # check if this group contains all 0s for n_batches
+                for timer_value_type in self.timer_value_types:
+                    timer_id = f"cerebro_{type}_spdz_timer{timer_value_type}_{self.timer_id_cerebro}"
+                    if timer_id not in x['stat'].unique():
+                        # print(f"Skipping run because it does not contain timer {timer_id}")
+                        return x
+                    n_amount_needed_id = f"n_{type}_cerebro"
+                    if len(x[x['stat'] == n_amount_needed_id]['stat_value'].unique()) != 1:
+                        print(f"Error: n_amount_needed_id is not unique for this group. Aborting")
+                        print(x)
+                        print(x[x['stat'] == n_amount_needed_id]['stat_value'])
+                        exit(1)
+                    n_amount_needed_id_value = int(x[x['stat'] == n_amount_needed_id]['stat_value'].values[0])
 
-        # really ugly hack
-        df.loc[(df['mpc.compiler_args'].apply(lambda x: x == ['-R', '64', '-C', '--budget', '10000', '-Y']) & df['exp_name'] == 'inference_3pc'), 'mpc.domain'] = 'ring_noopt'
+                    timer_value = float(x[x['stat'] == timer_id]['stat_value'].values[0])
+                    timer_value *= n_amount_needed_id_value
+                    if timer_value_type == "":
+                        timer_value /= self.timer_thread_help
+                    x.loc[x['stat'] == timer_id, 'stat_value'] = timer_value
 
+                    run_id = x['run'].unique()
+                    print("Multiplied cerebro timer value by ", n_amount_needed_id_value, " for timer ", timer_id, run_id)
+
+                return x
+            return t
+
+        df = df.groupby(self.run_def_cols).apply(t_wrap("input")).reset_index(drop=True)
+        df = df.groupby(self.run_def_cols).apply(t_wrap("output")).reset_index(drop=True)
         return df
 
+class TrainMultiplierTransformer(Transformer):
+
+    run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
+    timer_value_types: List[str] = ["", "_bw", "_rounds"]
+
+    timer_id_train: str = "1102"
+
+    batches_per_epoch: Dict[str, int] = {
+        "cifar_alexnet": 391,
+        "mnist_full": 469,
+        "adult": 204,
+    }
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        def t(x):
+            # check if this group contains an n_batches that is set
+            if x['mpc.script_args.n_batches'].isna().any():
+                return x
+
+            assert x['mpc.script_args.dataset'].unique().size == 1
+            assert x['mpc.script_args.n_batches'].unique().size == 1
+
+            dataset = x['mpc.script_args.dataset'].unique()[0]
+            n_batches = int(x['mpc.script_args.n_batches'].unique()[0])
+            full_epoch = self.batches_per_epoch[dataset]
+
+            multiplier = full_epoch / n_batches
+            print(f"Multiplier: {multiplier} for dataset {dataset} and n_batches {n_batches}")
+
+            for timer_value_type in self.timer_value_types:
+                timer_id = f"spdz_timer{timer_value_type}_{self.timer_id_train}"
+                if timer_id not in x['stat'].unique():
+                    print(f"Skipping run because it does not contain timer {timer_id}")
+                    return x
+                timer_value = float(x[x['stat'] == timer_id]['stat_value'].values[0])
+                timer_value *= multiplier
+                x.loc[x['stat'] == timer_id, 'stat_value'] = timer_value
+
+            return x
+
+        df = df.groupby(self.run_def_cols).apply(t).reset_index(drop=True)
+        return df
 
 class Sha3MultiplierTransformer(Transformer):
 
@@ -46,6 +117,9 @@ class Sha3MultiplierTransformer(Transformer):
         timer_ids_variable = [
             "90", # TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE
             "91", # TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE
+
+            "93",
+            "94"
                       ]
         # timer_ids_fixed = [
         #     "92", # TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED
@@ -62,19 +136,23 @@ class Sha3MultiplierTransformer(Transformer):
                 total_time_var = 0
                 for var in timer_ids_variable:
                     if x[x['stat'] == f"spdz_timer{timer_value_type}_{var}"].empty:
-                        print(f"Skipping run because it does not contain variable timer", f"spdz_timer{timer_value_type}_{var}")
-                        return x
+                        continue
                     var_time = float(x[x['stat'] == f"spdz_timer{timer_value_type}_{var}"]['stat_value'].values[0])
                     total_time_fixed -= var_time
                     total_time_var += var_time
+
+                if total_time_var == 0:
+                    # print("Skipping run because total_time_var is 0")
+                    return x
                 # print("Total time fixed minus variable part: ", total_time_fixed)
                 multiplier = float(x['mpc.script_args.sha3_approx_factor'].unique()[0])
                 dataset = x['mpc.script_args.dataset'].unique()
+                run = x['run'].unique()
                 # print("Multiplier: ", multiplier, total_time_var, dataset)
                 total_time_fixed += total_time_var * multiplier
                 # now set the value for x
                 x.loc[x['stat'] == f"spdz_timer{timer_value_type}_{timer_id_input_consistency}", 'stat_value'] = total_time_fixed
-                print("Set to total_time_fixed: ", total_time_fixed, timer_value_type)
+                print(f"Set from {total_time_fixed_old} to {total_time_fixed} with {multiplier} for timer_value_type: {timer_value_type} and dataset {dataset} {run}")
             # print(x)
             return x
 
@@ -521,9 +599,14 @@ class BarPlotLoader(PlotLoader):
                 # allow changing the unit of the metric before calculating the mean / std
                 df_plot[metric_cfg.bar_part_cols] = df_plot[metric_cfg.bar_part_cols] * metric_cfg.y_unit_multiplicator / metric_cfg.y_unit_divider
 
-
+                # check if multiple rows exist for self.group_cols + self.bar_cols
+                # if so, output warning
                 # create a bar for each bar_cols group in each group_cols group
                 grouped_over_reps = df_plot.groupby(by = self.group_cols + self.bar_cols)
+                # print first group rows
+                # print(f"First group rows: {grouped_over_reps.get_group((list(grouped_over_reps.groups)[0]))}")
+                # print(f"First const args: {grouped_over_reps.get_group((list(grouped_over_reps.groups)[0]))['consistency_args.type']}")
+
                 means = grouped_over_reps[metric_cfg.bar_part_cols].mean()
                 stds = grouped_over_reps[metric_cfg.bar_part_cols].std()
 
