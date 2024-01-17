@@ -358,7 +358,7 @@ def convert_shares(task_config, output_prefix):
             for player_id, inputs in player_input_counter.items():
                 for input_size in inputs:
                     if input_size > 0:
-                        print(f"CEREBRO_INPUT_SIZE=({player_id},{input_size})")
+                        print(f"CEREBRO_INPUT_SIZE=({player_id},{input_size})", file=sys.stderr)
                         cerebro_verify(task_config, input_size)
         elif task_config.consistency_args.type == "sha3":
             print("Computing sha3-based commitments, nothing else needed here.")
@@ -477,7 +477,7 @@ def convert_shares(task_config, output_prefix):
                 run_cerebro_with_args(task_config, "single_cerebro", output_prefix, DEFAULT_RESULT_FOLDER, "output")
 
                 for c in output_data:
-                    print(f"CEREBRO_OUTPUT_SIZE=({c['object_type']},{c['length']})")
+                    print(f"CEREBRO_OUTPUT_SIZE=({c['object_type']},{c['length']})", file=sys.stderr)
             else:
                 # check how many commitments we need
                 # for each item in list output_data, add an arg with object_type
