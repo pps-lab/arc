@@ -54,6 +54,11 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, 
     cerebro_stdout = open(os.path.join(result_dir_path, f"cerebro_{std_prefix}_stdout.log"), "a+")
     cerebro_stderr = open(os.path.join(result_dir_path, f"cerebro_{std_prefix}_stderr.log"), "a+")
 
+    program_args = task_config.program_args
+    if script_name == "single_cerebro":
+        # adjust edabits batch size
+        program_args['b'] = 2500
+
     script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[map_protocol_to_field(task_config).name].value
     script_runner_obj = script_runner_constr(
         output_prefix=output_prefix,
@@ -64,6 +69,6 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, 
         custom_prime='8444461749428370424248824938781546531375899335154063827935233455917409239041',
         custom_prime_length=task_config.custom_prime_length,
         player_count=task_config.player_count,
-        program_args=task_config.program_args,
+        program_args=program_args,
     )
     script_runner_obj.run(cerebro_stdout, cerebro_stderr)
