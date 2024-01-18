@@ -57,6 +57,8 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, 
     program_args = task_config.program_args
     if script_name == "single_cerebro":
         # adjust edabits batch size
+        if program_args is None:
+            program_args = {}
         program_args['b'] = 2500
 
     script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[map_protocol_to_field(task_config).name].value
