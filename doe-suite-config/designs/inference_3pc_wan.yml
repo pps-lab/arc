@@ -4,22 +4,22 @@ $SUITE_VARS$:
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID>"
 
-  $INCLUDE_VARS$: dataset.yml
-
   commit_output: True
   convert_ring_bits: 31
   convert_n_threads: 36
-  convert_debug: False
-  convert_chunk_size: 200000
+  convert_chunk_size: 100000
+
+  $INCLUDE_VARS$: dataset.yml
+
+  network_type: lan
 
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
     hosts_file: "{{ exp_consistency_hosts_file }}"
     pc: kzg
-    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
+    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].model_input_size %]"
     gen_pp: True
-    type:
-      $FACTOR$: [ sha3, cerebro, pc ]
+    type: pc
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -31,21 +31,20 @@ $SUITE_VARS$:
     domain: $FACTOR$
     custom_prime: $FACTOR$
 
-    script_name: "training"
+    script_name: "inference"
 
     script_args:
+      n_samples: 1
       n_input_parties: 3
-      sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor_full | default(1) %]"
 
-      #      n_epochs: 0
+      consistency_check: "[% my_run.consistency_args.type %]"
+      sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
+      cerebro_output_approx_factor: 100
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
-#      dataset: mnist_full_3party
       dataset:
         $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
-      #          $FACTOR$: [ adult_3p ]
-#      cifar_alexnet_3party
 
       # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
       batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
@@ -53,115 +52,122 @@ $SUITE_VARS$:
 
       audit_trigger_idx: 0 # select single audit trigger (from all)
 
-      consistency_check: "[% my_run.consistency_args.type %]"
-
 
     stage: # "compile" in run and then in next run "run"
       $FACTOR$: [ compile, run ] # ensure that this is last factor
 
-sh:
+wan:
   n_repetitions: 1
   host_types:
     consistency:
       n: 3
       check_status: True
       init_roles:
-#        - setup-base
+        - setup-base
         - setup-consistency
-        - setup-spdz-secrets
-#        - download-dataset
-        #        - setup-largeprimes
-#        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
+#        - setup-spdz-secrets
+        - setup-network-delay
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-    network_type: lan
-    mpc_type: sh
 
-  factor_levels:
-
-    - mpc:
-        protocol_setup: "semi_honest_3"
-        domain: ring
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3', ]
-        custom_prime: null
-
-#    - mpc:
-#        protocol_setup: "semi_honest_3"
-#        domain: ring_noopt
-#        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-Y' ]
-#        custom_prime: null
-#
-#    - mpc:
-#        protocol_setup: "rep-field-party"
-#        domain: field_128
-#        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
-#        custom_prime: null
-#
-#    - mpc:
-#        protocol_setup: "rep-field-party"
-#        domain: custom_256
-#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
-#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-
-
-mal:
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 3
-      check_status: True
-      init_roles:
-#        - setup-base
-        - setup-consistency
-        - setup-spdz-secrets
-#        - download-dataset
-      #        - setup-largeprimes
-      #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
-
-  base_experiment:
     consistency_args:
       type:
-          $FACTOR$: [ sha3, cerebro, pc ]
-    convert_chunk_size: 100000
+        $FACTOR$: [ sha3, cerebro, pc ]
 
-    network_type: lan
-    mpc_type: mal
-
-    sleep_time: 10
-
-    mpc:
-      script_args:
-        batch_size: 64
-        n_batches: 50
+    network_type: wan
+    mpc_type: $FACTOR$
+#    mpc:
+#      program_args:
+#        b: 1000
 
   factor_levels:
 
-    - mpc:
-        protocol_setup: "sy-rep-ring-party"
-        domain: ring
-        compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
+    - mpc_type: sh
+      mpc:
+        protocol_setup: "semi_honest_3"
+        domain: ring_split
+        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
         custom_prime: null
 
-#    - mpc:
-#        protocol_setup: "sy-rep-field-party"
+    - mpc_type: mal
+      mpc:
+        protocol_setup: "sy-rep-ring-party"
+        domain: ring_split
+        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
+        custom_prime: null
+
+
+#wan_ring_field:
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#        #        - setup-spdz-secrets
+#        - setup-network-delay
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+#
+#    network_type: wan
+#    mpc_type: $FACTOR$
+#  #    mpc:
+#  #      program_args:
+#  #        b: 1000
+#
+#  factor_levels:
+#
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "semi_honest_3"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
+#        custom_prime: null
+#    #
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "rep-field-party"
 #        domain: field_128
-#        compiler_args: [ '-C', '--budget', '10000', '-Y' ]
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
 #        custom_prime: null
 #
-#    - mpc:
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '100000', '-Y', '-F 251', '-D' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+#
+#
+#    - mpc_type: mal
+#      mpc:
+#        protocol_setup: "sy-rep-ring-party"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
+#        custom_prime: null
+#
+#    - mpc_type: mal
+#      mpc:
+#        protocol_setup: "sy-rep-field-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+#        custom_prime: null
+#
+#    - mpc_type: mal
+#      mpc:
 #        protocol_setup: "sy-rep-field-party"
 #        domain: custom_256
-#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251' ]
+#        compiler_args: [ '-C', '--budget', '100000', '-Y', '-F 251', '-D' ]
 #        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-
-
 
 $ETL$: {}

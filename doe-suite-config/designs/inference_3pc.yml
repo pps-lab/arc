@@ -6,8 +6,8 @@ $SUITE_VARS$:
 
   commit_output: True
   convert_ring_bits: 31
-  convert_n_threads: 1
-  convert_chunk_size: 250000
+  convert_n_threads: 36
+  convert_chunk_size: 200000
 
   $INCLUDE_VARS$: dataset.yml
 
@@ -115,6 +115,7 @@ mal:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
+    convert_chunk_size: 100000
 
     consistency_args:
       type:
@@ -143,118 +144,74 @@ mal:
 #        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 
-wan:
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 3
-      check_status: True
-      init_roles:
-        - setup-base
-        - setup-consistency
-#        - setup-spdz-secrets
-        - setup-network-delay
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
-  base_experiment:
-
-    consistency_args:
-      type:
-        $FACTOR$: [ sha3, cerebro, pc ]
-
-    network_type: wan
-    mpc_type: $FACTOR$
-#    mpc:
-#      program_args:
-#        b: 1000
-
-  factor_levels:
-
-    - mpc_type: sh
-      mpc:
-        protocol_setup: "semi_honest_3"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
-        custom_prime: null
-
-    - mpc_type: mal
-      mpc:
-        protocol_setup: "sy-rep-ring-party"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
-        custom_prime: null
-
-
-wan_ring_field:
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 3
-      check_status: True
-      init_roles:
-        - setup-base
-        - setup-consistency
-        #        - setup-spdz-secrets
-        - setup-network-delay
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
-
-  base_experiment:
-
-    network_type: wan
-    mpc_type: $FACTOR$
-  #    mpc:
-  #      program_args:
-  #        b: 1000
-
-  factor_levels:
-
-    - mpc_type: sh
-      mpc:
-        protocol_setup: "semi_honest_3"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
-        custom_prime: null
-    #
-    - mpc_type: sh
-      mpc:
-        protocol_setup: "rep-field-party"
-        domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
-        custom_prime: null
-
-    - mpc_type: sh
-      mpc:
-        protocol_setup: "rep-field-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '100000', '-Y', '-F 251', '-D' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-
-
-    - mpc_type: mal
-      mpc:
-        protocol_setup: "sy-rep-ring-party"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
-        custom_prime: null
-
-    - mpc_type: mal
-      mpc:
-        protocol_setup: "sy-rep-field-party"
-        domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
-        custom_prime: null
-
-    - mpc_type: mal
-      mpc:
-        protocol_setup: "sy-rep-field-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '100000', '-Y', '-F 251', '-D' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+#wan_ring_field:
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#        #        - setup-spdz-secrets
+#        - setup-network-delay
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+#
+#    network_type: wan
+#    mpc_type: $FACTOR$
+#  #    mpc:
+#  #      program_args:
+#  #        b: 1000
+#
+#  factor_levels:
+#
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "semi_honest_3"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
+#        custom_prime: null
+#    #
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+#        custom_prime: null
+#
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "rep-field-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '100000', '-Y', '-F 251', '-D' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+#
+#
+#    - mpc_type: mal
+#      mpc:
+#        protocol_setup: "sy-rep-ring-party"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
+#        custom_prime: null
+#
+#    - mpc_type: mal
+#      mpc:
+#        protocol_setup: "sy-rep-field-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+#        custom_prime: null
+#
+#    - mpc_type: mal
+#      mpc:
+#        protocol_setup: "sy-rep-field-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '100000', '-Y', '-F 251', '-D' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 $ETL$: {}
