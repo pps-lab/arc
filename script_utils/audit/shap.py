@@ -38,6 +38,11 @@ def audit(input_loader, config, debug: bool):
               "work correctly as the linear system is undetermined")
 
     train_samples, _train_labels = input_loader.train_dataset()
+    if config.n_batches > 0:
+        train_samples = train_samples.get_part(0, config.n_batches * config.batch_size)
+        _train_labels = _train_labels.get_part(0, config.n_batches * config.batch_size)
+        print("Using only first %s batches of training data" % config.n_batches)
+
     n_train_samples = len(train_samples)
 
     # @lib.for_range_opt(n_audit_trigger_samples)

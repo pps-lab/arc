@@ -16,6 +16,8 @@ from Compiler.script_utils import config, timers
 class AuditConfig(config.BaseAuditModel):
     test_var: int = 1
 
+    # n_batches: int = 10
+
 program.options_from_args()
 cfg = config.from_program_args(program.args, AuditConfig)
 
@@ -27,7 +29,10 @@ if not cfg.emulate:
 ml.set_n_threads(cfg.n_threads)
 
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
-input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size, debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check, sha3_approx_factor=cfg.sha3_approx_factor)
+input_shape_size = cfg.batch_size * cfg.n_batches if cfg.n_batches > 0 else None
+input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size,
+                                     debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check,
+                                     sha3_approx_factor=cfg.sha3_approx_factor, input_shape_size=input_shape_size)
 library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 
 # expect 91 * (13136) + 13136 + (91 * 32) + 2*32 + 1
