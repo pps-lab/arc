@@ -37,6 +37,9 @@ class BaseAuditModel(BaseModel):
     sha3_approx_factor: int = 1
     cerebro_output_approx_factor: int = 1
 
+    # only run n_batches, works for some auditing functions only
+    n_batches: int = 0
+
     class Config:
         extra = "allow"
         smart_union = True

@@ -22,6 +22,13 @@ def audit(input_loader, config, debug: bool):
 
     # Load Training Dataset
     train_samples, _train_labels = input_loader.train_dataset()
+
+    if config.n_batches > 0:
+        print("Approximating with cfg.n_batches")
+        train_samples = train_samples.get_part(0, config.n_batches * config.batch_size)
+        _train_labels = _train_labels.get_part(0, config.n_batches * config.batch_size)
+        print("Running on", len(train_samples), "samples")
+
     n_train_samples = len(train_samples)
 
     # _train_labels should be an array of integers for our sorting? not one_hot encoding!!

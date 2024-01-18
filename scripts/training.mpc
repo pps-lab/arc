@@ -17,8 +17,6 @@ from Compiler.script_utils import config, timers, input_consistency
 class TrainingConfig(config.BaseAuditModel):
     n_epochs: int = 1 # -1 = all
 
-    # only run n_batches
-    n_batches: int = 0
 
 program.options_from_args()
 cfg = config.from_program_args(program.args, TrainingConfig)
