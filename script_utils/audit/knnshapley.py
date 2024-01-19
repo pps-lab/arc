@@ -37,7 +37,7 @@ def audit(input_loader, config, debug: bool):
     # TODO: Speed?
     lib.start_timer(104)
     _train_labels_idx = Array(len(train_samples), sint)
-    @lib.for_range(len(train_samples))
+    @lib.for_range_opt_multithread(config.n_threads, len(train_samples))
     def _(i):
         _train_labels_idx[i] = ml.argmax(_train_labels[i])
 
@@ -62,26 +62,28 @@ def audit(input_loader, config, debug: bool):
 
     model = input_loader.model()
     latent_space_layer, expected_latent_space_size = input_loader.model_latent_space_layer()
-    latent_space_layer=None
 
     lib.start_timer(105)
     print_ln("Computing Latent Space for Training Set...")
+
     # Model.eval seems to take a really long time
+    model.layers[-1].compute_loss = False
+
     train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
-    # assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size)
+    assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size), f"{train_samples_latent_space.sizes} != {(len(train_samples), expected_latent_space_size)}"
 
     print_ln("Computing Latent Space for Audit Trigger...")
     audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
-    # assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size)
+    assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size), f"{audit_trigger_samples_latent_space.sizes} != {(len(audit_trigger_samples), expected_latent_space_size)}"
 
-    train_samples_latent_space = MultiArray([len(train_samples), expected_latent_space_size], sfix)
-    train_samples_latent_space.assign_all(sfix(1))
-    audit_trigger_samples_latent_space = MultiArray([len(audit_trigger_samples), expected_latent_space_size], sfix)
-    audit_trigger_samples_latent_space.assign_all(sfix(1))
+    # train_samples_latent_space = MultiArray([len(train_samples), expected_latent_space_size], sfix)
+    # train_samples_latent_space.assign_all(sfix(1))
+    # audit_trigger_samples_latent_space = MultiArray([len(audit_trigger_samples), expected_latent_space_size], sfix)
+    # audit_trigger_samples_latent_space.assign_all(sfix(1))
 
     lib.stop_timer(105)
 
-    print(audit_trigger_samples_latent_space.sizes, train_samples_latent_space.sizes)
+    print(audit_trigger_samples_latent_space.sizes, train_samples_latent_space.total_size())
     print_ln("Computing L2 distance...")
     L2 = audit_utils.euclidean_dist_dot_product(A=train_samples_latent_space, B=audit_trigger_samples_latent_space, n_threads=config.n_threads)
     L2 = L2.transpose()
@@ -121,6 +123,7 @@ def audit(input_loader, config, debug: bool):
         # data = concatenate([dist_arr, train_samples_idx, _train_labels], axis=1)
 
         data = concatenate([dist_arr, train_samples_idx, _train_labels_idx], axis=1)
+        print("DATA SHAPE", data.sizes)
         # top k (min distances)
         # Note: I tried implementing top k with oblivious Heap (see dijkstra.py)
         #       However, I think there is a bug that requires setting max_size==n_train_samples instead of K
