@@ -3,6 +3,9 @@
 
 ---
 
+_runtime_info:
+  budget: 500000
+
 dataset_info:
   adult_3p:
     # we could also differentiate between train data + model if the audit function only needs the model

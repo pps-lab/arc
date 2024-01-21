@@ -12,9 +12,28 @@ $SUITE_ID$:
   audit_only_unlearn: 1702422980
 
 #  audit_consistency_
-  audit_consistency: { audit_sample_knnshapley: 1705060337, audit_sample_knnshapley_mal: 1705060337,
-                       audit_robustness_3pc: 1705346063 } # 1704985317 # 1704882255
+#  audit_consistency:
+#    audit_sample_knnshapley: 1705060337, audit_sample_knnshapley_mal: 1705060337,
+#                       audit_robustness_3pc: 1705530302 } # 1704985317 # 1704882255
 
+  audit_robustness:
+    audit_robustness_3pc: 1705603136
+    audit_robustness_3pc_wan: 1705607724
+
+  audit_knnshapley:
+    audit_sample_knnshapley: 1705604808
+  audit_knnshapley_wan:
+    audit_sample_knnshapley_wan: 1705746792
+
+  audit_fairness:
+    audit_fairness_3pc: 1705605808
+    audit_fairness_3pc_wan: 1705605808
+
+  audit_shap:
+    audit_shap: 1705613244
+
+  audit_shap_wan:
+    audit_shap_wan: 1705613255
 
 $ETL$:
 #  raw:
@@ -247,23 +266,40 @@ $ETL$:
 
   audit_consistency_adult:
     experiments:
-      audit_consistency: [ audit_sample_knnshapley, audit_sample_knnshapley_mal, audit_robustness_3pc ]
+      audit_robustness: "*"
+      audit_knnshapley: "*"
+      audit_knnshapley_wan: "*"
+      audit_fairness: "*"
+      audit_shap: "*"
+      audit_shap_wan: "*"
 
     extractors:
-      MpSpdzResultExtractor: { }
+#      MpSpdzResultExtractor: { } # this parses results from the audit
       MpSpdzStderrExtractor:
         file_regex:
           - ^stderr\.log$
-          - ^cerebro_stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
       ConsistencyExtractor: { }
       IgnoreExtractor:
         file_regex:
           - ^stdout\.log$
-          - ^cerebro_stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^result-P[0-9]+-[0-9]+\.txt$
     transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+
+      - name: TimerBandwidthAggregator
+      - name: ComputationMultiplierTransformer
+        timer_id_computation: 100
+      - name: CerebroMultiplierTransformer
       - name: Sha3MultiplierTransformer
+
       - name: StatTransformer
-        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'consistency_args.type' ]
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'network_type', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'consistency_args.type' ]
         stats:
           mpc_time_s: [ "spdz_timer_99", "spdz_timer_100" ]
 
@@ -271,10 +307,11 @@ $ETL$:
                                  "consistency_poly_eval_poly_eval_mus",
                                  "consistency_prove_verify_Prove Verify_mus",
 
+                                 "spdz_timer_98",
+
+                                 "cerebro_input_spdz_timer_95",
                                  "consistency_cerebro_verify_Exponentiate_mus",
 
-                                 "cerebro_spdz_timer_98",
-                                 "spdz_timer_98",
                                   # + sha3 multiplier?
           ]
 
@@ -284,24 +321,19 @@ $ETL$:
 
                                      "spdz_timer_bw_98",
 
-                                     "cerebro_spdz_global_data_sent"
-                                     # + sha3?
+                                     "cerebro_input_spdz_timer_bw_95"
           ]
 
-          global_data_sent_mb: [ "spdz_global_data_sent" ]
+          global_data_sent_mb: [  "spdz_timer_bw_99", "spdz_timer_bw_100" ]
 
           n_rounds: [ "spdz_player_round_number" ]
-
-      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
-      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
-      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
 
     loaders:
       CsvSummaryLoader: { }
       BarPlotLoader:
 
         cols_values_filter:
-          mpc.script_name: [ 'audit_sample_knnshapley', 'audit_robustness' ]
+          mpc.script_name: [ 'audit_sample_knnshapley', 'audit_robustness', 'audit_fairness', 'audit_prediction_shap' ]
           'consistency_args.type': [ 'pc', 'cerebro', 'sha3']
 
           host_idx: [ 0 ] # only plot one party
@@ -309,25 +341,26 @@ $ETL$:
           'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
           'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
           'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+          'network_type': [ lan, wan ]
 
-        plot_cols: [ 'host_idx', 'mpc.script_name', 'mpc.script_args.dataset' ]
+        plot_cols: [ 'host_idx', 'mpc.script_name', 'mpc.script_args.dataset', 'network_type' ]
 #        group_cols: [ 'consistency_args.type' ]
 #        bar_cols: [ 'mpc.protocol_setup' ]
 
-        group_cols: [ 'mpc.protocol_setup' ]
-        bar_cols: [ 'consistency_args.type' ]
+        group_cols: [ 'consistency_args.type' ]
+        bar_cols: [ 'mpc.protocol_setup' ]
 
         colors: [ '#D5E1A3', '#C7B786', '#a6b8d8', '#D5E1A3', '#C7B786', '#a6b8d8' ] # 4c72b0
 
         legend:
           format: "{} {}"
-          cols: [ 'consistency_args.type', "$bar_part_col$" ]
+          cols: [ 'mpc.protocol_setup', "$bar_part_col$" ]
 
         title:
-          format: "3PC - {}"
-          plot_cols: [ "mpc.script_args.dataset" ]
+          format: "3PC - {} ({})"
+          plot_cols: [ "mpc.script_name", "mpc.script_args.dataset" ]
 
-        bar_width: 0.6
+        bar_width: 1.2
 
         labels:
           mpc_time_s: ""
@@ -354,21 +387,21 @@ $ETL$:
           semi_honest_3: "SH"
           sy-rep-ring-party: "MAL"
 
-          pc: "PC"
-          cerebro: "CC"
+          pc: "Ours"
+          cerebro: "Cerebro"
           sha3: "SHA3"
 
-        show_debug_info: False
+        show_debug_info: True
 
         metrics:
           time:
             bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
             y_unit_divider: 60.0 # switch to mins from secs
             y_label: "Time [min]"
-#            log_y: True
-#            y_ticks: [ 0.1, 1, 10, 100 ]
+            log_y: True
+            y_ticks: [ 0.01, 0.1, 1, 10 ]
 
-            legend_order: [ 0, 3, 1, 4, 2, 5] # [ 0, 2, 1, 3 ]
+            legend_order: [ 0, 2, 1, 3 ]
             legend_ncol: 4
 
           rounds:
@@ -379,6 +412,6 @@ $ETL$:
             bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
             y_label: "Bandwidth [MB]"
             y_unit_multiplicator: 1.0e-6 # transform to MB
-#            log_y: True
-            legend_order: [ 0, 3, 1, 4, 2, 5]
+            log_y: True
+            legend_order: [ 0, 2, 1, 3 ]
             legend_ncol: 4

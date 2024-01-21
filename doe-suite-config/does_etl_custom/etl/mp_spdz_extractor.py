@@ -48,6 +48,12 @@ class MpSpdzStderrExtractor(Extractor):
 
         print("Extracting path" ,path)
         print(content[:100])
+
+        error_regex = r"^Traceback \(most recent call last\):$"
+        if re.search(error_regex, content, re.MULTILINE):
+            pass
+            # raise Exception("Found error in file", path)
+
         # Extract transfered data, round number and host
         regex = r"Data sent = ([\d\.e\+]+) MB in ~([0-9]+) rounds"
         matcher = re.compile(regex)

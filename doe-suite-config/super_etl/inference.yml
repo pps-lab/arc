@@ -2,12 +2,12 @@
 
 $SUITE_ID$:
 
-  inference_2pc: { sh: 1702388330, mal: 1702389667 } # 1701718301
+  inference_2pc: 1705775791
 
-  inference_3pc: { sh: 1705574442, mal: 1705574442, wan_ring_field: 1705512500 } # 1704877706 # inference_3pc_ #1704786486 # 1702376514 # 1701610906 # { sh: 1701610906, sy: 1701610906 }
+  inference_3pc: { sh: 1705608253, mal: 1705608253, wan_ring_field: 1705512500 } # 1704877706 # inference_3pc_ #1704786486 # 1702376514 # 1701610906 # { sh: 1701610906, sy: 1701610906 }
 
-
-  inference_3pc_wan: 1705530356
+  # 1705574545
+  inference_3pc_wan: 1705610966
   # inference_3pc_1705434492 # for mal + s h3pc with check
 $ETL$:
 
@@ -277,7 +277,7 @@ $ETL$:
       - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
       - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
 
-      - name: TrainMultiplierTransformer
+      - name: ComputationMultiplierTransformer
       - name: CerebroMultiplierTransformer
       - name: Sha3MultiplierTransformer
 
@@ -289,12 +289,33 @@ $ETL$:
           auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
                                  "consistency_poly_commit_commit_mus",
                                  "consistency_poly_commit_sign_mus",
-                                 "consistency_poly_commit_sign_sk_mus" ]
+                                 "consistency_poly_commit_sign_sk_mus",
+                                 "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+
+#                                 "cerebro_input_spdz_timer_95",
+#                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+            #                                 "cerebro_output_spdz_timer_95", # output timers
+            #                                 "spdz_timer_97", # output timers
+          ]
 
           auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
                                      "consistency_poly_commit_commit_global_bytes",
                                      "consistency_poly_commit_sign_global_bytes",
-                                     "consistency_poly_commit_sign_sk_global_bytes" ]
+                                     "consistency_poly_commit_sign_sk_global_bytes",
+                                     "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98", # this is not in total!!
+
+#                                     "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
+#                                     "cerebro_output_spdz_global_data_sent"
+          ]
 
           global_data_sent_mb: [ "spdz_global_data_sent" ]
 
@@ -409,6 +430,7 @@ $ETL$:
     experiments:
       inference_3pc: [ sh, mal ]
       inference_3pc_wan: [ wan ]
+      inference_2pc: [ sh, mal ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -428,7 +450,8 @@ $ETL$:
       - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
       - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
 
-      - name: TrainMultiplierTransformer
+      - name: TimerBandwidthAggregator
+      - name: ComputationMultiplierTransformer
       - name: CerebroMultiplierTransformer
       - name: Sha3MultiplierTransformer
 
@@ -446,12 +469,13 @@ $ETL$:
                                  "consistency_prove_verify_Prove Verify_mus",
 
                                  "spdz_timer_98",
-
                                  "cerebro_input_spdz_timer_95",
                                  "consistency_cerebro_verify_Exponentiate_mus",
 
 #                                 "cerebro_output_spdz_timer_95", # output timers
 #                                 "spdz_timer_97", # output timers
+
+                                 "spdz_timer_97",
           ]
 
           auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
@@ -462,13 +486,14 @@ $ETL$:
                                      "consistency_poly_eval_poly_eval_global_bytes",
                                      "consistency_prove_verify_global_bytes",
 
-                                     "spdz_timer_bw_98", # this is not in total!!
+                                     "spdz_timer_bw_98",
+                                     "spdz_timer_bw_97",
 
                                      "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
                                      "cerebro_output_spdz_global_data_sent"
           ]
 
-          global_data_sent_mb: [ "spdz_global_data_sent" ]
+          global_data_sent_bytes: [ "spdz_timer_bw_99", "spdz_timer_bw_101" ]
 
           n_rounds: [ "spdz_player_round_number" ]
 
@@ -496,7 +521,7 @@ $ETL$:
 
         cols_values_filter:
           mpc.script_name: [ 'inference' ]
-          suite_name: [ inference_3pc, inference_3pc_wan ]
+          suite_name: [ inference_3pc, inference_3pc_wan, inference_2pc ]
 
           host_idx: [ 0 ] # only plot one party
           mpc_type: [ 'sh', 'mal' ]
@@ -543,11 +568,14 @@ $ETL$:
           mnist_full: "MNIST"
           cifar_alexnet: "Cifar10"
 
+          pc: "Ours"
+          cerebro: "Cerebro"
+          sha3: "SHA3"
 
           sh: "SH"
           mal: "MAL"
 
-
+        show_debug_info: True
         metrics:
           time:
             bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
@@ -556,17 +584,18 @@ $ETL$:
             #            y_max: 18
             legend_order: [ 0, 2, 1, 3 ]
             legend_ncol: 4
+            log_y: True
 
           rounds:
             bar_part_cols: [ n_rounds ]
             y_label: "Rounds"
 
           bandwidth:
-            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
             y_label: "Bandwidth [MB]"
             y_unit_multiplicator: 1.0e-6 # transform to MB
             log_y: True
-            y_max: 100000
-            y_ticks: [ 10, 100, 1000, 10000 ]
+            y_max: 1000000
+            y_ticks: [ 10, 100, 1000, 10000, 100000 ]
             legend_order: [ 0, 2, 1, 3 ]
             legend_ncol: 4

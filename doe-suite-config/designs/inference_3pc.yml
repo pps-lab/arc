@@ -39,7 +39,6 @@ $SUITE_VARS$:
 
       consistency_check: "[% my_run.consistency_args.type %]"
       sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
-      cerebro_output_approx_factor: 100
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
@@ -65,7 +64,7 @@ sh:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
+#        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
@@ -108,7 +107,7 @@ mal:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
+#        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"

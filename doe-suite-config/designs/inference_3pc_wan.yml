@@ -65,7 +65,7 @@ wan:
       init_roles:
         - setup-base
         - setup-consistency
-#        - setup-spdz-secrets
+        - setup-spdz-secrets
         - setup-network-delay
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
@@ -76,7 +76,7 @@ wan:
 
     consistency_args:
       type:
-        $FACTOR$: [ sha3, cerebro, pc ]
+        $FACTOR$: [ pc, sha3, cerebro ]
 
     network_type: wan
     mpc_type: $FACTOR$

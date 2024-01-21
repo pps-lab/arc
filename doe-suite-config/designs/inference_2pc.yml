@@ -11,13 +11,16 @@ $SUITE_VARS$:
 
   $INCLUDE_VARS$: dataset.yml
 
+  network_type: lan
+
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
     hosts_file: "{{ exp_consistency_hosts_file }}"
     pc: kzg
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].model_input_size %]"
     gen_pp: True
-    type: pc
+    type:
+      $FACTOR$: [ pc, sha3, cerebro ]
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -35,6 +38,9 @@ $SUITE_VARS$:
       n_samples: 1
       n_input_parties: 2
 
+      consistency_check: "[% my_run.consistency_args.type %]"
+      sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
+
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
       dataset:
@@ -45,8 +51,6 @@ $SUITE_VARS$:
       n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
       audit_trigger_idx: 0 # select single audit trigger (from all)
-
-      round_nearest: False
 
     stage: # "compile" in run and then in next run "run"
       $FACTOR$: [ compile, run ] # ensure that this is last factor
@@ -77,13 +81,13 @@ sh:
     - mpc:
         protocol_setup: "semi-party"
         domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+        compiler_args: [ '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Y', '-D' ]
         custom_prime: null
 
     - mpc:
         protocol_setup: "semi-party"
         domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
+        compiler_args: [ '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Y', '-F 251', '-D' ]
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 mal:
@@ -104,78 +108,78 @@ mal:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
 
   base_experiment:
+    convert_chunk_size: 100000
 
     mpc_type: mal
-    network_type: lan
 
   factor_levels:
 
     - mpc:
         protocol_setup: "lowgear-party"
         domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+        compiler_args: [ '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Y', '-D' ]
         custom_prime: null
 
     - mpc:
         protocol_setup: "lowgear-party"
         domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
+        compiler_args: [ '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Y', '-F 251', '-D' ]
         custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 
-wan:
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 3
-      check_status: True
-      init_roles:
-        - setup-base
-        - setup-consistency
-        - setup-spdz-secrets
-        - setup-network-delay
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
-
-  base_experiment:
-
-    network_type: wan
-    mpc_type: $FACTOR$
-#    mpc:
-#      program_args:
-#        b: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].edabit_batch_size_inference.sh %]"
-
-  factor_levels:
-
-    - mpc_type: sh
-      mpc:
-        protocol_setup: "semi-party"
-        domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
-        custom_prime: null
-
-    - mpc_type: sh
-      mpc:
-        protocol_setup: "semi-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
-
-    - mpc_type: mal
-      mpc:
-        protocol_setup: "lowgear-party"
-        domain: field_128
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
-        custom_prime: null
-
-    - mpc_type: mal
-      mpc:
-        protocol_setup: "lowgear-party"
-        domain: custom_256
-        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
-        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+#wan:
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#        - setup-spdz-secrets
+#        - setup-network-delay
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+#
+#    network_type: wan
+#    mpc_type: $FACTOR$
+##    mpc:
+##      program_args:
+##        b: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].edabit_batch_size_inference.sh %]"
+#
+#  factor_levels:
+#
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "semi-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+#        custom_prime: null
+#
+#    - mpc_type: sh
+#      mpc:
+#        protocol_setup: "semi-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
+#
+#    - mpc_type: mal
+#      mpc:
+#        protocol_setup: "lowgear-party"
+#        domain: field_128
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-D' ]
+#        custom_prime: null
+#
+#    - mpc_type: mal
+#      mpc:
+#        protocol_setup: "lowgear-party"
+#        domain: custom_256
+#        compiler_args: [ '-C', '--budget', '10000', '-Y', '-F 251', '-D' ]
+#        custom_prime: '8444461749428370424248824938781546531375899335154063827935233455917409239041'
 
 
 $ETL$: {}

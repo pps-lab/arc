@@ -45,7 +45,7 @@ $ETL$:
 #      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
 #      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
 #
-#      - name: TrainMultiplierTransformer
+#      - name: ComputationMultiplierTransformer
 #      - name: CerebroMultiplierTransformer
 #      - name: Sha3MultiplierTransformer
 #
@@ -210,7 +210,11 @@ $ETL$:
       - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
       - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
 
-      - name: TrainMultiplierTransformer
+      # use pandas function to set mpc_type to sh if protocol=semi_honest_3
+      - name: MPCTypeFixTransformer
+
+      - name: TimerBandwidthAggregator
+      - name: ComputationMultiplierTransformer
       - name: CerebroMultiplierTransformer
       - name: Sha3MultiplierTransformer
 
@@ -232,12 +236,11 @@ $ETL$:
                                  "consistency_prove_verify_Prove Verify_mus",
 
                                  "spdz_timer_98",
+                                 "spdz_timer_97", # output timers
 
                                  "cerebro_input_spdz_timer_95",
+                                 "cerebro_output_spdz_timer_95", # output timers
                                  "consistency_cerebro_verify_Exponentiate_mus",
-
-#                                 "cerebro_output_spdz_timer_95", # output timers
-#                                 "spdz_timer_97", # output timers
           ]
 
           auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
@@ -248,15 +251,17 @@ $ETL$:
                                      "consistency_poly_eval_poly_eval_global_bytes",
                                      "consistency_prove_verify_global_bytes",
 
-                                     "spdz_timer_bw_98", # this is not in total!!
+                                     "spdz_timer_bw_98",
+                                     "spdz_timer_bw_97",
 
-                                     "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
-                                     "cerebro_output_spdz_global_data_sent"
+                                     "cerebro_input_spdz_timer_bw_95", # output timers
+                                     "cerebro_output_spdz_timer_bw_95", # output timers
 
-
+            #                                     "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
+#                                     "cerebro_output_spdz_global_data_sent"
           ]
 
-          global_data_sent_mb: [ "spdz_global_data_sent" ]
+          global_data_sent_bytes: [ "spdz_timer_bw_99", "spdz_timer_bw_1102" ]
 
           n_rounds: [ "spdz_player_round_number" ]
 
@@ -303,6 +308,7 @@ $ETL$:
 
 
         color_stack_rgba: [ 1.0, 0.6 ]
+        show_debug_info: True
 
         legend:
           format: "{} {}"
@@ -310,7 +316,7 @@ $ETL$:
 
         title:
           format: "3PC - {}"
-          plot_cols: [ 'mpc.domain' ]
+          plot_cols: [ 'mpc.script_args.dataset' ]
 
         labels:
           mpc_time_s: ""
@@ -327,11 +333,13 @@ $ETL$:
           mnist_full: "MNIST"
           cifar_alexnet: "Cifar10"
 
+          pc: "Ours"
+          cerebro: "CC"
+          sha3: "SHA3"
+
 
           sh: "SH"
           mal: "MAL"
-
-        show_debug_info: False
 
         metrics:
           time:
@@ -340,13 +348,14 @@ $ETL$:
             y_label: "Time [min]"
             legend_order: [ 0, 2, 1, 3 ]
             legend_ncol: 4
+            log_y: True
 
           rounds:
             bar_part_cols: [ n_rounds ]
             y_label: "Rounds"
 
           bandwidth:
-            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
             y_label: "Bandwidth [MB]"
             y_unit_multiplicator: 1.0e-6 # transform to MB
             log_y: True

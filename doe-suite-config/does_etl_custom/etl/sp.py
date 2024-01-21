@@ -23,6 +23,55 @@ import numpy as np
 
 COLOR_GRAY = '#999999'
 
+class MPCTypeFixTransformer(Transformer):
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+        def t(row):
+            if row['mpc.protocol_setup'] == 'semi_honest_3':
+                row['mpc_type'] = 'sh'
+
+            return row
+
+        df = df.apply(t, axis=1)
+        return df
+
+class TimerBandwidthAggregator(Transformer):
+
+    run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        stat_regex = r"(.*)(_?)spdz_timer_bw_(\d*)"
+
+        def t(x):
+            # for all stats that match the regex, check that we have exactly 3, sum them up and replace the three stats with the sum
+
+            # find rows that match stat_regex
+            stat_matches = x['stat'].str.match(stat_regex)
+            # count how many True we have in stat_matches
+            # print(x.columns)
+            unique = x[stat_matches]['stat'].unique()
+            n_parties = x['mpc.script_args.n_input_parties'].unique()
+            assert len(n_parties) == 1
+            n_parties = n_parties[0]
+            for match in unique:
+                match_this = x['stat'] == match
+                n_true = match_this.sum()
+                # check we have exactly 3
+                assert n_true == n_parties, f"Found {n_true} that match the regex for {x} ({match})"
+                sum = x[match_this]['stat_value'].sum()
+                sum = sum * 1000 * 1000 # convert to bytes
+                print("SUM!", sum, match)
+                x.loc[match_this, 'stat_value'] = sum
+
+            return x
+
+
+
+        df = df.groupby(self.run_def_cols).apply(t).reset_index(drop=True)
+
+        return df
+
 class CerebroMultiplierTransformer(Transformer):
 
     run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
@@ -67,12 +116,12 @@ class CerebroMultiplierTransformer(Transformer):
         df = df.groupby(self.run_def_cols).apply(t_wrap("output")).reset_index(drop=True)
         return df
 
-class TrainMultiplierTransformer(Transformer):
+class ComputationMultiplierTransformer(Transformer):
 
     run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
     timer_value_types: List[str] = ["", "_bw", "_rounds"]
 
-    timer_id_train: str = "1102"
+    timer_id_computation: str = "1102"
 
     batches_per_epoch_bs_128: Dict[str, int] = {
         "cifar_alexnet": 391,
@@ -95,6 +144,8 @@ class TrainMultiplierTransformer(Transformer):
 
             dataset = x['mpc.script_args.dataset'].unique()[0]
             n_batches = int(x['mpc.script_args.n_batches'].unique()[0])
+            if n_batches == 0:
+                return x
             batch_size = int(x['mpc.script_args.batch_size'].unique()[0])
             batch_size_rel = batch_size / 128
             full_epoch = self.batches_per_epoch_bs_128[dataset]
@@ -103,7 +154,7 @@ class TrainMultiplierTransformer(Transformer):
             print(f"Multiplier: {multiplier} for dataset {dataset} and n_batches {n_batches}")
 
             for timer_value_type in self.timer_value_types:
-                timer_id = f"spdz_timer{timer_value_type}_{self.timer_id_train}"
+                timer_id = f"spdz_timer{timer_value_type}_{self.timer_id_computation}"
                 if timer_id not in x['stat'].unique():
                     print(f"Skipping run because it does not contain timer {timer_id}")
                     return x
@@ -141,9 +192,13 @@ class Sha3MultiplierTransformer(Transformer):
             for timer in timers:
                 timer_id_total = timer["total"]
                 timer_ids_variable = timer["variables"]
+
                 for timer_value_type in ["", "_bw", "_rounds"]:
+                    timer_id = f"spdz_timer{timer_value_type}_{timer_id_total}"
+                    if x[x['stat'] == timer_id].empty:
+                        continue
                     print("Running for timer_value_type: ", timer_value_type)
-                    total_time_fixed_old = x[x['stat'] == f"spdz_timer{timer_value_type}_{timer_id_total}"]['stat_value'].values[0]
+                    total_time_fixed_old = x[x['stat'] == timer_id]['stat_value'].values[0]
                     total_time_fixed = total_time_fixed_old
                     # print("Total time fixed: ", total_time_fixed)
                     total_time_var = 0
@@ -165,7 +220,8 @@ class Sha3MultiplierTransformer(Transformer):
                     total_time_fixed += total_time_var * multiplier
                     # now set the value for x
                     x.loc[x['stat'] == f"spdz_timer{timer_value_type}_{timer_id_total}", 'stat_value'] = total_time_fixed
-                    print(f"Set from {total_time_fixed_old} to {total_time_fixed} with {multiplier} for timer_value_type: {timer_value_type} and dataset {dataset} {run}")
+                    timer_name = f"spdz_timer{timer_value_type}_{timer_id_total}"
+                    print(f"Set from {total_time_fixed_old} to {total_time_fixed} with {multiplier} for timer_name: {timer_name} and dataset {dataset} {run}")
             # print(x)
             return x
 
@@ -559,7 +615,7 @@ class BarPlotLoader(PlotLoader):
             return
 
         # only this should have mb type because it is default spdz output
-        df['global_data_sent_mb'] = df['global_data_sent_mb'] * 1000 * 1000
+        # df['global_data_sent_mb'] = df['global_data_sent_mb'] * 1000 * 1000
 #
         #display(df[["my_overhead", "auditing_overhead_bytes"]])
 
