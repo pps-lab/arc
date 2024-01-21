@@ -278,6 +278,7 @@ def convert_shares(task_config, output_prefix):
     player_input_list, output_data, total_output_length = format_config.get_total_share_length(player_data_dir, task_config.player_count)
 
     debug_flag = "-d" if task_config.convert_debug else ""
+    split_flag = "-sp" if task_config.consistency_args.use_split else ""
 
     total_input_length = 0
     # represents for each player id (key), a list of input checks that need to be run
@@ -323,7 +324,7 @@ def convert_shares(task_config, output_prefix):
                     input_parts.append(f"-i {','.join(types)}")
             input_str = " ".join(input_parts)
 
-            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} {debug_flag} {input_str}"
+            executable_str = f"{executable} {spdz_args_str} --n_bits {task_config.convert_ring_bits} --n_threads {task_config.convert_n_threads} --chunk_size {task_config.convert_chunk_size} {split_flag} {debug_flag} {input_str}"
             print(f"Converting input shares with command: {executable_str}")
 
             result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
@@ -446,7 +447,7 @@ def convert_shares(task_config, output_prefix):
                     "out_start": total_input_length,
                 }
                 args_str = " ".join([f"--{k} {v}" for k,v in args.items()])
-                executable_str = f"{executable} {spdz_args_str} {debug_flag} {args_str}"
+                executable_str = f"{executable} {spdz_args_str} {split_flag} {debug_flag} {args_str}"
                 print(f"Converting shares with command: {executable_str}")
 
                 result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
