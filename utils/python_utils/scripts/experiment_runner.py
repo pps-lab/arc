@@ -365,7 +365,7 @@ def convert_shares(task_config, output_prefix):
             print("Computing sha3-based commitments, nothing else needed here.")
         elif task_config.consistency_args.type == "sha3s":
             print("Computing sha3-based commitments in separate script")
-            compile_sha3_with_args(task_config, "standalone_sha3")
+            compile_sha3_with_args(task_config, "standalone_sha3", True)
             run_sha3_with_args(task_config, "standalone_sha3", output_prefix, DEFAULT_RESULT_FOLDER, "input")
         else:
             # compute a polynomial for each party
@@ -436,7 +436,7 @@ def convert_shares(task_config, output_prefix):
             print("Computing sha3 hash in script, nothing else needed here.")
         elif task_config.consistency_args.type == "sha3s":
             print("Computing sha3 hash in separate script")
-            compile_sha3_with_args(task_config, "standalone_sha3")
+            compile_sha3_with_args(task_config, "standalone_sha3", False)
             run_sha3_with_args(task_config, "standalone_sha3", output_prefix, DEFAULT_RESULT_FOLDER, "output")
         else:
 

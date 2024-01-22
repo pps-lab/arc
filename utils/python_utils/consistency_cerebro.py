@@ -76,10 +76,13 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, 
     script_runner_obj.run(cerebro_stdout, cerebro_stderr)
 
 
-def compile_sha3_with_args(task_config: config_def.TaskConfig, script_name: str):
+def compile_sha3_with_args(task_config: config_def.TaskConfig, script_name: str, compute_input: bool):
     """Executes the Script compilation phase of the experiment."""
     compiler_args = task_config.compiler_args if task_config.compiler_args is not None else \
         runner_defs.CompilerArguments[task_config.protocol_setup.name].value
+
+    script_args = task_config.script_args
+    script_args["compute_input"] = compute_input
 
     comp_runner = runner_defs.CompilerRunner(
         script_name=script_name,
