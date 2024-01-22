@@ -564,6 +564,7 @@ def cli(player_number):
     )
     move_to_experiment_dir(task_config=task_config)
     if "compile" in task_config.stage:
+        clean_workspace(task_config=task_config, output_prefix=None)
         compile_script_with_args(task_config=task_config)
 
     if "run" in task_config.stage:
@@ -576,7 +577,6 @@ def cli(player_number):
                                  output_prefix=output_prefix)
         capture_output(task_config=task_config,
                        output_prefix=output_prefix)
-        clean_workspace(task_config=task_config, output_prefix=output_prefix)
 
 
 if __name__ == "__main__":
