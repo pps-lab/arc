@@ -84,6 +84,10 @@ class Cleaner:
                                                                                            file_name):
                 print("Removing ", os.path.join(player_data_path, file_name))
                 os.remove(os.path.join(player_data_path, file_name))
+            if os.path.isfile(os.path.join(player_data_path, file_name)) and re.match(r'^Output-format$',
+                                                                                      file_name):
+                print("Removing ", os.path.join(player_data_path, file_name))
+                os.remove(os.path.join(player_data_path, file_name))
         # shutil.rmtree(player_data_path,ignore_errors=True)
         # os.mkdir(player_data_path)
 
