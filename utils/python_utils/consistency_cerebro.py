@@ -74,3 +74,39 @@ def run_cerebro_with_args(task_config: config_def.TaskConfig, script_name: str, 
         program_args=program_args,
     )
     script_runner_obj.run(cerebro_stdout, cerebro_stderr)
+
+
+def compile_sha3_with_args(task_config: config_def.TaskConfig, script_name: str):
+    """Executes the Script compilation phase of the experiment."""
+    compiler_args = task_config.compiler_args if task_config.compiler_args is not None else \
+        runner_defs.CompilerArguments[task_config.protocol_setup.name].value
+
+    comp_runner = runner_defs.CompilerRunner(
+        script_name=script_name,
+        script_args=task_config.script_args,
+        compiler_args=compiler_args,
+        code_dir=task_config.abs_path_to_code_dir
+    )
+    comp_runner.run()
+
+def run_sha3_with_args(task_config: config_def.TaskConfig, script_name: str, output_prefix: str, results_folder: str, std_prefix: str):
+    """Executes the compiled script and configures the chosen MPC protocol VM to use output_prefix for its raw textual output"""
+    result_dir_path = os.path.join(task_config.result_dir, results_folder)
+    sha3_stdout = open(os.path.join(result_dir_path, f"sha3_{std_prefix}_stdout.log"), "a+")
+    sha3_stderr = open(os.path.join(result_dir_path, f"sha3_{std_prefix}_stderr.log"), "a+")
+
+    program_args = task_config.program_args
+
+    script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[map_protocol_to_field(task_config).name].value
+    script_runner_obj = script_runner_constr(
+        output_prefix=output_prefix,
+        script_name=script_name,
+        args=task_config.script_args,
+        player_0_host=task_config.player_0_hostname,
+        player_id=task_config.player_id,
+        custom_prime=task_config.custom_prime,
+        custom_prime_length=task_config.custom_prime_length,
+        player_count=task_config.player_count,
+        program_args=program_args,
+    )
+    script_runner_obj.run(sha3_stdout, sha3_stderr)

@@ -38,6 +38,8 @@ def check(inputs: InputObject, player_input_id, type, n_threads, sha3_approx_fac
     elif type == "sha3":
         # for each field in inputobject we should compute a hash
         compute_sha3(inputs, player_input_id, n_threads, sha3_approx_factor)
+    elif type == "sha3s":
+        compute_and_output_poly_array(inputs, player_input_id, n_threads)
     elif type == "cerebro":
         compute_consistency_cerebro(inputs, player_input_id, n_threads)
     else:
@@ -233,11 +235,9 @@ def compute_consistency_cerebro(inputs: InputObject, player_input_id, n_threads)
 
     flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_sz)
 
-
-def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_factor: int,
-                 timer_bit_decompose=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
-                 timer_hash_variable=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE):
-
+def compute_sha3_inner(sha3_approx_factor: int,
+                       timer_bit_decompose=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
+                       timer_hash_variable=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE):
     def compute_hash(input_flat, pid, n_t):
         print_ln("Computing hash for bits with length %s", input_flat.length)
         elem_length = input_flat.length #min(100, input_flat.length)
@@ -278,8 +278,13 @@ def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_fa
         sha3_256_approx(11) # unsqueezing 256 bits
         # library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_FIXED)
         # sha3_256(bits).reveal_print_hex()
+    return compute_hash
 
-    flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_hash)
+def compute_sha3(inputs: InputObject, player_input_id, n_threads, sha3_approx_factor: int,
+                 timer_bit_decompose=timers.TIMER_INPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
+                 timer_hash_variable=timers.TIMER_INPUT_CONSISTENCY_SHA_HASH_VARIABLE):
+
+    flatten_and_apply_to_all(inputs, player_input_id, n_threads, compute_sha3_inner(sha3_approx_factor, timer_bit_decompose, timer_hash_variable))
 
 def compute_cerebro_individual(inputs: InputObject, player_input_id, n_threads, cerebro_output_approx_factor: int):
     # compute random combination of inputs
@@ -363,6 +368,8 @@ def output(inputs: InputObject, type, n_threads: int, sha3_approx_factor: int, c
         compute_sha3(inputs, None, n_threads, sha3_approx_factor,
                      timer_bit_decompose=timers.TIMER_OUTPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
                         timer_hash_variable=timers.TIMER_OUTPUT_CONSISTENCY_SHA_HASH_VARIABLE)
+    elif type == "sha3s":
+        output_format(inputs)
     elif type == "cerebro":
         compute_cerebro_individual(inputs, None, n_threads, cerebro_output_approx_factor)
     else:

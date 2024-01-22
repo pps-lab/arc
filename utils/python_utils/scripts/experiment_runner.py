@@ -45,7 +45,7 @@ import string
 import random
 import time
 
-from python_utils.consistency_cerebro import compile_cerebro_with_args, run_cerebro_with_args
+from python_utils.consistency_cerebro import compile_cerebro_with_args, run_cerebro_with_args, compile_sha3_with_args, run_sha3_with_args
 
 DEFAULT_CONFIG_NAME="config.json"
 DEFAULT_RESULT_FOLDER="results/"
@@ -293,7 +293,7 @@ def convert_shares(task_config, output_prefix):
     if task_config.consistency_args is not None:
 
         if (task_config.convert_ring_if_needed and
-            task_config.consistency_args.type != "sha3"): # manual check to avoid error
+            task_config.consistency_args.type != "sha3" and task_config.consistency_args.type != "sha3s"): # manual check to avoid error
             executable = f"./{conversion_prefix}-switch-party.x"
             if need_input_sharing:
                 print("Actually doing input sharing instead of conversion. We need to adapt this if we are also going to mascot convert")
@@ -363,6 +363,10 @@ def convert_shares(task_config, output_prefix):
                         cerebro_verify(task_config, input_size)
         elif task_config.consistency_args.type == "sha3":
             print("Computing sha3-based commitments, nothing else needed here.")
+        elif task_config.consistency_args.type == "sha3s":
+            print("Computing sha3-based commitments in separate script")
+            compile_sha3_with_args(task_config, "standalone_sha3")
+            run_sha3_with_args(task_config, "standalone_sha3", output_prefix, DEFAULT_RESULT_FOLDER, "input")
         else:
             # compute a polynomial for each party
             # log the data in player_input_counter
@@ -430,6 +434,10 @@ def convert_shares(task_config, output_prefix):
 
         if task_config.consistency_args.type == "sha3":
             print("Computing sha3 hash in script, nothing else needed here.")
+        elif task_config.consistency_args.type == "sha3s":
+            print("Computing sha3 hash in separate script")
+            compile_sha3_with_args(task_config, "standalone_sha3")
+            run_sha3_with_args(task_config, "standalone_sha3", output_prefix, DEFAULT_RESULT_FOLDER, "output")
         else:
 
             if total_output_length == 0:
