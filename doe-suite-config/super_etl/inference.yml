@@ -4,10 +4,11 @@ $SUITE_ID$:
 
   inference_2pc: 1705775791
 
-  inference_3pc: { sh: 1705608253, mal: 1705608253, wan_ring_field: 1705512500 } # 1704877706 # inference_3pc_ #1704786486 # 1702376514 # 1701610906 # { sh: 1701610906, sy: 1701610906 }
+# 1705608253
+  inference_3pc: { sh: 1705874196, mal: 1705874196, wan_ring_field: 1705512500 } # 1704877706 # inference_3pc_ #1704786486 # 1702376514 # 1701610906 # { sh: 1701610906, sy: 1701610906 }
 
   # 1705574545
-  inference_3pc_wan: 1705610966
+  inference_3pc_wan: 1705874245
   # inference_3pc_1705434492 # for mal + s h3pc with check
 $ETL$:
 
@@ -528,9 +529,9 @@ $ETL$:
           network_type: [ 'lan', 'wan' ]
           'consistency_args.type': [ 'pc', 'cerebro', 'sha3' ]
           'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
-          'mpc.domain': [ 'ring_split' ] # 'field_128'
+          'mpc.domain': [ 'ring_split', 'field_128', 'custom_256' ] # 'field_128'
 
-        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.domain', 'mpc.script_args.dataset' ] #
 
         group_cols: [ 'consistency_args.type' ]
 

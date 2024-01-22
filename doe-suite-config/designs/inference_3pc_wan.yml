@@ -20,6 +20,7 @@ $SUITE_VARS$:
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].model_input_size %]"
     gen_pp: True
     type: pc
+    use_split: True
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -90,14 +91,14 @@ wan:
       mpc:
         protocol_setup: "semi_honest_3"
         domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
         custom_prime: null
 
     - mpc_type: mal
       mpc:
         protocol_setup: "sy-rep-ring-party"
         domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', '100000', '-Z', '3', '-D' ]
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
         custom_prime: null
 
 

@@ -53,12 +53,12 @@ class TimerBandwidthAggregator(Transformer):
             unique = x[stat_matches]['stat'].unique()
             n_parties = x['mpc.script_args.n_input_parties'].unique()
             assert len(n_parties) == 1
-            n_parties = n_parties[0]
+            n_parties = int(n_parties[0])
             for match in unique:
                 match_this = x['stat'] == match
                 n_true = match_this.sum()
                 # check we have exactly 3
-                assert n_true == n_parties, f"Found {n_true} that match the regex for {x} ({match})"
+                assert n_true == n_parties, f"Found {n_true} instead of {n_parties} that match the regex for {x} ({match})"
                 sum = x[match_this]['stat_value'].sum()
                 sum = sum * 1000 * 1000 # convert to bytes
                 print("SUM!", sum, match)

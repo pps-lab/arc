@@ -90,14 +90,14 @@ audit_sample_knnshapley_wan:
       mpc: # should convert
         protocol_setup: "semi_honest_3"
         domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
         custom_prime: null
 
     - mpc_type: mal
       mpc: # should convert
         protocol_setup: "sy-rep-ring-party"
         domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
         custom_prime: null
 
 
