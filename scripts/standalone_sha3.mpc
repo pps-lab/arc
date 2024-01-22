@@ -54,6 +54,8 @@ else:
     sha_fun = input_consistency.compute_sha3_inner(cfg.sha3_approx_factor,
                                                    timer_bit_decompose=timers.TIMER_OUTPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
                                                    timer_hash_variable=timers.TIMER_OUTPUT_CONSISTENCY_SHA_HASH_VARIABLE)
+
+    library.start_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CHECK)
     objects = input_consistency.read_output_format_from_file()
 
     for object in objects:
@@ -64,5 +66,7 @@ else:
         # we dont to make it faster (since we would have already loaded the data).
         input_comm.assign_all(2)
         sha_fun(input_comm, None, cfg.n_threads)
+
+    library.stop_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CHECK)
 
 print_ln("Done computing commitments!")
