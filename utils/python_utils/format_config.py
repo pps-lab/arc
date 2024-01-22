@@ -39,7 +39,8 @@ def get_total_share_length(format_dir, player_count):
     path = os.path.join(format_dir, filename)
     output_data = get_share_data(path)
     total_output_length = 0
-    for p in output_data:
-        total_output_length += p["length"]
+    if output_data is not None:
+        for p in output_data:
+            total_output_length += p["length"]
 
     return player_input_list, output_data, total_output_length
