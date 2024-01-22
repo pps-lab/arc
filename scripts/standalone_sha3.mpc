@@ -55,7 +55,7 @@ else:
                                                    timer_bit_decompose=timers.TIMER_OUTPUT_CONSISTENCY_SHA_BIT_DECOMPOSE,
                                                    timer_hash_variable=timers.TIMER_OUTPUT_CONSISTENCY_SHA_HASH_VARIABLE)
 
-    library.start_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CHECK)
+    library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
     objects = input_consistency.read_output_format_from_file()
 
     for object in objects:
@@ -64,9 +64,12 @@ else:
         input_comm = Array(len_items, sint)
         # Should load input from secret shares for correctness,
         # we dont to make it faster (since we would have already loaded the data).
+        library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
         input_comm.assign_all(2)
+        library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
+
         sha_fun(input_comm, None, cfg.n_threads)
 
-    library.stop_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CHECK)
+    library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
 
 print_ln("Done computing commitments!")
