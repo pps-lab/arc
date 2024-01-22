@@ -100,7 +100,7 @@ def run_sha3_with_args(task_config: config_def.TaskConfig, script_name: str, out
 
     program_args = task_config.program_args
 
-    script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[task_config.name].value
+    script_runner_constr: runner_defs.ScriptBaseRunner = runner_defs.ProtocolRunners[task_config.protocol_setup.name].value
     script_runner_obj = script_runner_constr(
         output_prefix=output_prefix,
         script_name=script_name,
