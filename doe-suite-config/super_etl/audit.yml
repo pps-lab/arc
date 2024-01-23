@@ -17,23 +17,23 @@ $SUITE_ID$:
 #                       audit_robustness_3pc: 1705530302 } # 1704985317 # 1704882255
 
   audit_robustness:
-    audit_robustness_3pc: 1705603136
-    audit_robustness_3pc_wan: 1705607724
+    audit_robustness_3pc: 1705955178
+    audit_robustness_3pc_wan: 1705960388
 
   audit_knnshapley:
-    audit_sample_knnshapley: 1705604808
+    audit_sample_knnshapley: 1705957720
   audit_knnshapley_wan:
-    audit_sample_knnshapley_wan: 1705746792
+    audit_sample_knnshapley_wan: 1705958533 # TODO, in pr
 
   audit_fairness:
-    audit_fairness_3pc: 1705605808
-    audit_fairness_3pc_wan: 1705605808
+    audit_fairness_3pc: 1705954360
+    audit_fairness_3pc_wan: 1705955928
 
   audit_shap:
-    audit_shap: 1705613244
+    audit_shap: 1705957649
 
   audit_shap_wan:
-    audit_shap_wan: 1705613255
+    audit_shap_wan: 1705959794
 
 $ETL$:
 #  raw:
@@ -280,6 +280,8 @@ $ETL$:
           - ^stderr\.log$
           - ^cerebro_input_stderr\.log$
           - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
       ConsistencyExtractor: { }
       IgnoreExtractor:
         file_regex:
@@ -287,6 +289,8 @@ $ETL$:
           - ^cerebro_input_stdout\.log$
           - ^cerebro_output_stdout\.log$
           - ^result-P[0-9]+-[0-9]+\.txt$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
     transformers:
       - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
       - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
@@ -312,7 +316,7 @@ $ETL$:
                                  "cerebro_input_spdz_timer_95",
                                  "consistency_cerebro_verify_Exponentiate_mus",
 
-                                  # + sha3 multiplier?
+                                 "sha3_input_spdz_timer_bw_98",
           ]
 
           auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
@@ -321,7 +325,9 @@ $ETL$:
 
                                      "spdz_timer_bw_98",
 
-                                     "cerebro_input_spdz_timer_bw_95"
+                                     "cerebro_input_spdz_timer_bw_95",
+
+                                     "sha3_input_spdz_timer_bw_98",
           ]
 
           global_data_sent_mb: [  "spdz_timer_bw_99", "spdz_timer_bw_100" ]
@@ -334,7 +340,7 @@ $ETL$:
 
         cols_values_filter:
           mpc.script_name: [ 'audit_sample_knnshapley', 'audit_robustness', 'audit_fairness', 'audit_prediction_shap' ]
-          'consistency_args.type': [ 'pc', 'cerebro', 'sha3']
+          'consistency_args.type': [ 'pc', 'cerebro', 'sha3s']
 
           host_idx: [ 0 ] # only plot one party
           'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
@@ -390,6 +396,7 @@ $ETL$:
           pc: "Ours"
           cerebro: "Cerebro"
           sha3: "SHA3"
+          sha3s: "SHA3"
 
         show_debug_info: True
 

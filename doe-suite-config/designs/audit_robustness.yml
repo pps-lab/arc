@@ -20,6 +20,7 @@ $SUITE_VARS$:
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
     gen_pp: True
     type: $FACTOR$
+    use_split: True
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -61,7 +62,7 @@ audit_robustness_3pc:
       n: 3
       check_status: True
       init_roles:
-        - setup-base
+#        - setup-base
         - setup-consistency
         - setup-spdz-secrets
       $CMD$:
@@ -72,7 +73,7 @@ audit_robustness_3pc:
   base_experiment:
     consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
       type:
-        $FACTOR$: [ sha3, cerebro, pc ]
+        $FACTOR$: [ sha3s, cerebro, pc ]
 
     network_type: lan
     mpc_type: $FACTOR$
@@ -118,7 +119,7 @@ audit_robustness_3pc_wan:
   base_experiment:
     consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
       type:
-        $FACTOR$: [ sha3, cerebro, pc ]
+        $FACTOR$: [ sha3s, cerebro, pc ]
 
     network_type: wan
     mpc_type: $FACTOR$

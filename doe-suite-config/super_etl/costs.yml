@@ -1,0 +1,213 @@
+---
+
+# TODO [nku] could add default skeleton for super etl
+
+# Checkout the example from the demo_project: demo_project/doe-suite-config/super_etl/demo_plots.yml
+
+$SUITE_ID$:
+
+  audit_robustness:
+    audit_robustness_3pc: 1705955178
+    audit_robustness_3pc_wan: 1705960388
+
+  audit_knnshapley:
+    audit_sample_knnshapley: 1705957720
+  audit_knnshapley_wan:
+    audit_sample_knnshapley_wan: 1705958533 # TODO, in pr
+
+  audit_fairness:
+    audit_fairness_3pc: 1705954360
+    audit_fairness_3pc_wan: 1705955928
+
+  audit_shap:
+    audit_shap: 1705957649
+
+  audit_shap_wan:
+    audit_shap_wan: 1705959794
+
+  inference_3pc: { sh: 1705933736, mal: 1705933736 }
+  inference_3pc_wan: 1705947503
+
+  train_3pc: 1705937567
+  train_3pc_wan: 1705939961
+
+$ETL$:
+
+  costs:
+    experiments:
+      audit_robustness: "*"
+      audit_knnshapley: "*"
+      audit_knnshapley_wan: "*"
+      audit_fairness: "*"
+      audit_shap: "*"
+      audit_shap_wan: "*"
+      inference_3pc: "*"
+      inference_3pc_wan: "*"
+      train_3pc: "*"
+      train_3pc_wan: "*"
+
+    extractors:
+#      MpSpdzResultExtractor: { } # this parses results from the audit
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^result-P[0-9]+-[0-9]+\.txt$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
+    transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+
+#      - name: TimerBandwidthAggregator
+#      - name: ComputationMultiplierTransformer
+#        timer_id_computation: 100
+#      - name: CerebroMultiplierTransformer
+#      - name: Sha3MultiplierTransformer
+
+      - name: StatTransformer
+#        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'network_type', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'consistency_args.type' ]
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'network_type' ]
+        stats:
+          mpc_time_s: [ "spdz_timer_99", "spdz_timer_100", "spdz_timer_1102", "spdz_timer_101" ]
+
+          auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
+                                 "consistency_poly_commit_commit_mus",
+                                 "consistency_poly_commit_sign_mus",
+                                 "consistency_poly_commit_sign_sk_mus",
+                                 "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+                                 "spdz_timer_97", # output timers
+
+                                 "cerebro_input_spdz_timer_95",
+                                 "cerebro_output_spdz_timer_95", # output timers
+                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "sha3_input_spdz_timer_98",
+                                 "sha3_output_spdz_timer_97",
+          ]
+
+          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
+                                     "consistency_poly_commit_commit_global_bytes",
+                                     "consistency_poly_commit_sign_global_bytes",
+                                     "consistency_poly_commit_sign_sk_global_bytes",
+                                     "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98",
+                                     "spdz_timer_bw_97",
+
+                                     "cerebro_input_spdz_timer_bw_95", # output timers
+                                     "cerebro_output_spdz_timer_bw_95", # output timers
+
+                                     "sha3_input_spdz_timer_bw_98",
+                                     "sha3_output_spdz_timer_bw_97"
+          ]
+
+      # multiply auditing_overhead_s by $4.5 to get total cost
+      - df.eval: { expr: "cost = (mpc_time_s + auditing_overhead_s) * 1.746 / 3600" } # 1.746 USD per hour
+      - df.groupby: { by: [ suite_name, exp_name ] }
+      - df.sum: {}
+
+    loaders:
+      CsvSummaryLoader: { }
+#      BarPlotLoader:
+#
+#        cols_values_filter:
+#          mpc.script_name: [ 'audit_sample_knnshapley', 'audit_robustness', 'audit_fairness', 'audit_prediction_shap' ]
+#          'consistency_args.type': [ 'pc', 'cerebro', 'sha3s']
+#
+#          host_idx: [ 0 ] # only plot one party
+#          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
+#          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
+#          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+#          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+#          'network_type': [ lan, wan ]
+#
+#        plot_cols: [ 'host_idx', 'mpc.script_name', 'mpc.script_args.dataset', 'network_type' ]
+##        group_cols: [ 'consistency_args.type' ]
+##        bar_cols: [ 'mpc.protocol_setup' ]
+#
+#        group_cols: [ 'consistency_args.type' ]
+#        bar_cols: [ 'mpc.protocol_setup' ]
+#
+#        colors: [ '#D5E1A3', '#C7B786', '#a6b8d8', '#D5E1A3', '#C7B786', '#a6b8d8' ] # 4c72b0
+#
+#        legend:
+#          format: "{} {}"
+#          cols: [ 'mpc.protocol_setup', "$bar_part_col$" ]
+#
+#        title:
+#          format: "3PC - {} ({})"
+#          plot_cols: [ "mpc.script_name", "mpc.script_args.dataset" ]
+#
+#        bar_width: 1.2
+#
+#        labels:
+#          mpc_time_s: ""
+#          global_data_sent_mb: ""
+#          auditing_overhead_s: "(Overhead)"
+#          auditing_overhead_bytes: "(Overhead)"
+#          n_rounds: ""
+#
+#          ring: "Ring"
+#          ring_split: "Ring"
+#          custom_256: "Field"
+#
+#          audit_sample_knnshapley: "KNNShapley"
+#          audit_owner_unlearn: "Camel Unlearning"
+#          audit_robustness: "Robustness"
+#
+#          audit_prediction_shap: "SHAP"
+#          audit_fairness: "IF"
+#
+#          adult: "Adult"
+#          mnist_full: "MNIST"
+#          cifar_alexnet: "Cifar10"
+#
+#          semi_honest_3: "SH"
+#          sy-rep-ring-party: "MAL"
+#
+#          pc: "Ours"
+#          cerebro: "Cerebro"
+#          sha3: "SHA3"
+#          sha3s: "SHA3"
+#
+#        show_debug_info: True
+#
+#        metrics:
+#          time:
+#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+#            y_unit_divider: 60.0 # switch to mins from secs
+#            y_label: "Time [min]"
+#            log_y: True
+#            y_ticks: [ 0.01, 0.1, 1, 10 ]
+#
+#            legend_order: [ 0, 2, 1, 3 ]
+#            legend_ncol: 4
+#
+#          rounds:
+#            bar_part_cols: [ n_rounds ]
+#            y_label: "Rounds"
+#
+#          bandwidth:
+#            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
+#            y_label: "Bandwidth [MB]"
+#            y_unit_multiplicator: 1.0e-6 # transform to MB
+#            log_y: True
+#            legend_order: [ 0, 2, 1, 3 ]
+#            legend_ncol: 4

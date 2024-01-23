@@ -4,8 +4,8 @@
 ---
 
 _runtime_info:
-  budget: 100000
-  budget_wan: 500000
+  budget: 50000
+  budget_wan: 100000
 
 dataset_info:
   adult_3p:

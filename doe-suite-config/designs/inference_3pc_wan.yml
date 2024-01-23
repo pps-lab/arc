@@ -40,7 +40,6 @@ $SUITE_VARS$:
 
       consistency_check: "[% my_run.consistency_args.type %]"
       sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
-      cerebro_output_approx_factor: 100
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
@@ -77,7 +76,7 @@ wan:
 
     consistency_args:
       type:
-        $FACTOR$: [ pc, sha3, cerebro ]
+        $FACTOR$: [ pc, sha3s, cerebro ]
 
     network_type: wan
     mpc_type: $FACTOR$

@@ -159,6 +159,7 @@ class ComputationMultiplierTransformer(Transformer):
                     print(f"Skipping run because it does not contain timer {timer_id}")
                     return x
                 timer_value = float(x[x['stat'] == timer_id]['stat_value'].values[0])
+                print("Original timer value: ", timer_value, " for timer ", timer_id, " after ", timer_value * multiplier)
                 timer_value *= multiplier
                 x.loc[x['stat'] == timer_id, 'stat_value'] = timer_value
 
@@ -169,11 +170,13 @@ class ComputationMultiplierTransformer(Transformer):
 
 class Sha3MultiplierTransformer(Transformer):
 
+    timer_hash_prefix: str = "sha3_"
+
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
         timers = [
-            { "total": "98", "variables": [ "90", "91"] },
-            { "total": "97", "variables": [ "93", "94"] }
+            { "total": "98", "variables": [ "90", "91"], "prefix": "input" },
+            { "total": "97", "variables": [ "93", "94"], "prefix": "output" }
         ]
 
         # timer_ids_variable = [
@@ -192,10 +195,12 @@ class Sha3MultiplierTransformer(Transformer):
             for timer in timers:
                 timer_id_total = timer["total"]
                 timer_ids_variable = timer["variables"]
+                timer_prefix = f'{timer["prefix"]}_'
 
                 for timer_value_type in ["", "_bw", "_rounds"]:
-                    timer_id = f"spdz_timer{timer_value_type}_{timer_id_total}"
+                    timer_id = f"{self.timer_hash_prefix}{timer_prefix}spdz_timer{timer_value_type}_{timer_id_total}"
                     if x[x['stat'] == timer_id].empty:
+                        # print("Timer ID is empty ", timer_id)
                         continue
                     print("Running for timer_value_type: ", timer_value_type)
                     total_time_fixed_old = x[x['stat'] == timer_id]['stat_value'].values[0]
@@ -203,9 +208,10 @@ class Sha3MultiplierTransformer(Transformer):
                     # print("Total time fixed: ", total_time_fixed)
                     total_time_var = 0
                     for var in timer_ids_variable:
-                        if x[x['stat'] == f"spdz_timer{timer_value_type}_{var}"].empty:
+                        timer_id_var = f"{self.timer_hash_prefix}{timer_prefix}spdz_timer{timer_value_type}_{var}"
+                        if x[x['stat'] == timer_id_var].empty:
                             continue
-                        var_time = float(x[x['stat'] == f"spdz_timer{timer_value_type}_{var}"]['stat_value'].values[0])
+                        var_time = float(x[x['stat'] == timer_id_var]['stat_value'].values[0])
                         total_time_fixed -= var_time
                         total_time_var += var_time
 
@@ -219,9 +225,8 @@ class Sha3MultiplierTransformer(Transformer):
                     # print("Multiplier: ", multiplier, total_time_var, dataset)
                     total_time_fixed += total_time_var * multiplier
                     # now set the value for x
-                    x.loc[x['stat'] == f"spdz_timer{timer_value_type}_{timer_id_total}", 'stat_value'] = total_time_fixed
-                    timer_name = f"spdz_timer{timer_value_type}_{timer_id_total}"
-                    print(f"Set from {total_time_fixed_old} to {total_time_fixed} with {multiplier} for timer_name: {timer_name} and dataset {dataset} {run}")
+                    x.loc[x['stat'] == timer_id, 'stat_value'] = total_time_fixed
+                    print(f"Set from {total_time_fixed_old} to {total_time_fixed} with {multiplier} for timer_name: {timer_id} and dataset {dataset} {run}")
             # print(x)
             return x
 

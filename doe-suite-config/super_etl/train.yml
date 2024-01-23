@@ -7,19 +7,23 @@ $SUITE_ID$:
 
 #  train_3pc_
 
-#  1705520109
+#  1705520109 train_3pc_1705935295
 
-  train_3pc: { sh: 1705530220, mal: 1705530220 }
-  train_3pc_wan: 1705530372
+
+  train_3pc: 1705937567
+
+  # train_3pc_wan_1705935360
+#  train_3pc_wan_1705530372 train_3pc_wan_
+  train_3pc_wan: 1705939961
 $ETL$:
-  raw:
-    experiments:
-      train_3pc: "*"
-    extractors:
-      $INCLUDE_STEPS$: [{config: train, pipeline: compare_relatedwork}]
-    transformers: []
-    loaders:
-      PickleSummaryLoader: {}
+#  raw:
+#    experiments:
+#      train_3pc: "*"
+#    extractors:
+#      $INCLUDE_STEPS$: [{config: train, pipeline: compare_relatedwork}]
+#    transformers: []
+#    loaders:
+#      PickleSummaryLoader: {}
 
 
 
@@ -199,12 +203,16 @@ $ETL$:
           - ^stderr\.log$
           - ^cerebro_input_stderr\.log$
           - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
       ConsistencyExtractor: { }
       IgnoreExtractor:
         file_regex:
           - ^stdout\.log$
           - ^cerebro_input_stdout\.log$
           - ^cerebro_output_stdout\.log$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
     transformers:
       - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
       - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
@@ -225,8 +233,6 @@ $ETL$:
         stats:
           mpc_time_s: [ "spdz_timer_99", "spdz_timer_1102" ]
 
-          # TODO: SPDZ TIMER 97!!!
-
           auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
                                  "consistency_poly_commit_commit_mus",
                                  "consistency_poly_commit_sign_mus",
@@ -241,6 +247,9 @@ $ETL$:
                                  "cerebro_input_spdz_timer_95",
                                  "cerebro_output_spdz_timer_95", # output timers
                                  "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "sha3_input_spdz_timer_98",
+                                 "sha3_output_spdz_timer_97",
           ]
 
           auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
@@ -257,8 +266,8 @@ $ETL$:
                                      "cerebro_input_spdz_timer_bw_95", # output timers
                                      "cerebro_output_spdz_timer_bw_95", # output timers
 
-            #                                     "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
-#                                     "cerebro_output_spdz_global_data_sent"
+                                     "sha3_input_spdz_timer_bw_98",
+                                     "sha3_output_spdz_timer_bw_97"
           ]
 
           global_data_sent_bytes: [ "spdz_timer_bw_99", "spdz_timer_bw_1102" ]
@@ -288,7 +297,7 @@ $ETL$:
         cols_values_filter:
           mpc.script_name: [ 'training' ]
           suite_name: [ train_3pc, train_3pc_wan ]
-          'consistency_args.type': [ 'pc', 'cerebro', 'sha3' ]
+          'consistency_args.type': [ 'pc', 'cerebro', 'sha3s' ]
 
           network_type: [ 'lan', 'wan' ]
           host_idx: [ 0 ] # only plot one party
@@ -336,6 +345,7 @@ $ETL$:
           pc: "Ours"
           cerebro: "CC"
           sha3: "SHA3"
+          sha3s: "SHA3"
 
 
           sh: "SH"

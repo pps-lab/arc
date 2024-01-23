@@ -4,12 +4,11 @@ $SUITE_ID$:
 
   inference_2pc: 1705775791
 
-# 1705608253
-  inference_3pc: { sh: 1705874196, mal: 1705874196, wan_ring_field: 1705512500 } # 1704877706 # inference_3pc_ #1704786486 # 1702376514 # 1701610906 # { sh: 1701610906, sy: 1701610906 }
+# 1705608253 inference_3pc_1705920867 inference_3pc_1705928729 inference_3pc_1705933736
+  inference_3pc: { sh: 1705933736, mal: 1705933736, wan_ring_field: 1705512500 } # 1704877706 # inference_3pc_ #1704786486 # 1702376514 # 1701610906 # { sh: 1701610906, sy: 1701610906 }
 
-  # 1705574545
-  inference_3pc_wan: 1705874245
-  # inference_3pc_1705434492 # for mal + s h3pc with check
+  inference_3pc_wan: 1705947503
+
 $ETL$:
 
 
@@ -267,12 +266,16 @@ $ETL$:
           - ^stderr\.log$
           - ^cerebro_input_stderr\.log$
           - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
       ConsistencyExtractor: { }
       IgnoreExtractor:
         file_regex:
           - ^stdout\.log$
           - ^cerebro_input_stdout\.log$
           - ^cerebro_output_stdout\.log$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
     transformers:
       - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
       - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
@@ -431,7 +434,7 @@ $ETL$:
     experiments:
       inference_3pc: [ sh, mal ]
       inference_3pc_wan: [ wan ]
-      inference_2pc: [ sh, mal ]
+#      inference_2pc: [ sh, mal ]
 
     extractors:
       MpSpdzResultExtractor: { }
@@ -440,12 +443,16 @@ $ETL$:
           - ^stderr\.log$
           - ^cerebro_input_stderr\.log$
           - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
       ConsistencyExtractor: { }
       IgnoreExtractor:
         file_regex:
           - ^stdout\.log$
           - ^cerebro_input_stdout\.log$
           - ^cerebro_output_stdout\.log$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
     transformers:
       - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
       - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
@@ -473,8 +480,11 @@ $ETL$:
                                  "cerebro_input_spdz_timer_95",
                                  "consistency_cerebro_verify_Exponentiate_mus",
 
-#                                 "cerebro_output_spdz_timer_95", # output timers
+                                 "cerebro_output_spdz_timer_95", # output timers
 #                                 "spdz_timer_97", # output timers
+
+                                 "sha3_input_spdz_timer_98",
+                                 "sha3_output_spdz_timer_97",
 
                                  "spdz_timer_97",
           ]
@@ -490,8 +500,11 @@ $ETL$:
                                      "spdz_timer_bw_98",
                                      "spdz_timer_bw_97",
 
-                                     "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
-                                     "cerebro_output_spdz_global_data_sent"
+                                     "cerebro_input_spdz_timer_bw_95", # output timers
+                                     "cerebro_output_spdz_timer_bw_95", # output timers
+
+                                     "sha3_input_spdz_timer_bw_98",
+                                     "sha3_output_spdz_timer_bw_97",
           ]
 
           global_data_sent_bytes: [ "spdz_timer_bw_99", "spdz_timer_bw_101" ]
@@ -527,11 +540,11 @@ $ETL$:
           host_idx: [ 0 ] # only plot one party
           mpc_type: [ 'sh', 'mal' ]
           network_type: [ 'lan', 'wan' ]
-          'consistency_args.type': [ 'pc', 'cerebro', 'sha3' ]
+          'consistency_args.type': [ 'pc', 'cerebro', 'sha3s' ]
           'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
-          'mpc.domain': [ 'ring_split', 'field_128', 'custom_256' ] # 'field_128'
+          'mpc.domain': [ 'ring_split', 'field_128' ] # 'field_128'
 
-        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.domain', 'mpc.script_args.dataset' ] #
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
 
         group_cols: [ 'consistency_args.type' ]
 
@@ -572,6 +585,7 @@ $ETL$:
           pc: "Ours"
           cerebro: "Cerebro"
           sha3: "SHA3"
+          sha3s: "SHA3"
 
           sh: "SH"
           mal: "MAL"

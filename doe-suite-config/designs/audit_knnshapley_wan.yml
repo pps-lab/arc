@@ -20,6 +20,7 @@ $SUITE_VARS$:
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
     gen_pp: True
     type: $FACTOR$
+    use_split: True
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -74,7 +75,7 @@ audit_sample_knnshapley_wan:
   base_experiment:
     consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
       type:
-        $FACTOR$: [ sha3, cerebro, pc ]
+        $FACTOR$: [ sha3s, cerebro, pc ]
     mpc:
       script_name: audit_sample_knnshapley
       script_args:
