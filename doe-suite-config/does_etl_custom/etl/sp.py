@@ -246,7 +246,7 @@ class StatTransformer(Transformer):
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
-
+        assert 'stat_value' in df.columns, f"stat_value not in df.columns: {df.columns}. This might not be the right transformer class for this dataframe."
         df.loc[:, 'stat_value'] = pd.to_numeric(df['stat_value'], errors='coerce')
 
 
