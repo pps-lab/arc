@@ -1,0 +1,9 @@
+
+
+
+array_size = 1000000
+
+first_array = Array(array_size, sfix)
+first_array.assign_all(sfix(1))
+
+sfix.write_to_file(first_array)

@@ -6,11 +6,6 @@
 
 $SUITE_ID$:
 
-  audit: { audit_robustness: 1702422955, audit_sample_knnshapley: 1702422955   }
-
-  audit_only_adult: 1702401149
-  audit_only_unlearn: 1702422980
-
   audit_robustness:
     audit_robustness_3pc: 1705955178
     audit_robustness_3pc_wan: 1705960388
@@ -18,7 +13,7 @@ $SUITE_ID$:
   audit_knnshapley:
     audit_sample_knnshapley: 1705957720
   audit_knnshapley_wan:
-    audit_sample_knnshapley_wan: 1705958533 # TODO, in pr
+    audit_sample_knnshapley_wan: 1705958533
 
   audit_fairness:
     audit_fairness_3pc: 1705954360
@@ -33,7 +28,12 @@ $SUITE_ID$:
 $ETL$:
   raw:
     experiments:
-      audit: "*"
+      audit_robustness: "*"
+      audit_knnshapley: "*"
+      audit_knnshapley_wan: "*"
+      audit_fairness: "*"
+      audit_shap: "*"
+      audit_shap_wan: "*"
     extractors:
       $INCLUDE_STEPS$: [ { config: audit, pipeline: audit_consistency_adult } ]
     transformers: [ ]

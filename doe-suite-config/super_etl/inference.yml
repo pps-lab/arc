@@ -8,375 +8,375 @@ $SUITE_ID$:
 
 $ETL$:
 
-#  raw: # outputs the raw df from the extractor stage as a pickle file (can be used)
-#    experiments:
-##      inference_2pc: "*"
-#      inference_3pc: "*"
-#    extractors:
-#      $INCLUDE_STEPS$: [{config: inference, pipeline: compare_domain}]
-#    transformers: []
-#    loaders:
-#      PickleSummaryLoader: {}
+  raw: # outputs the raw df from the extractor stage as a pickle file (can be used)
+    experiments:
+#      inference_2pc: "*"
+      inference_3pc: "*"
+    extractors:
+      $INCLUDE_STEPS$: [{config: inference, pipeline: compare_domain}]
+    transformers: []
+    loaders:
+      PickleSummaryLoader: {}
 
-#  compare_domain:
-#
-#    experiments:
-#      inference_3pc: [ wan_ring_field ]
-#
-#    extractors:
-#      MpSpdzResultExtractor: { }
-#      MpSpdzStderrExtractor:
-#        file_regex:
-#          - ^stderr\.log$
-#          - ^cerebro_input_stderr\.log$
-#          - ^cerebro_output_stderr\.log$
-#          - ^sha3_input_stderr\.log$
-#          - ^sha3_output_stderr\.log$
-#      ConsistencyExtractor: { }
-#      IgnoreExtractor:
-#        file_regex:
-#          - ^stdout\.log$
-#          - ^cerebro_input_stdout\.log$
-#          - ^cerebro_output_stdout\.log$
-#          - ^sha3_input_stdout\.log$
-#          - ^sha3_output_stdout\.log$
-#    transformers:
-#      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
-#      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
-#      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
-#
-#      - name: ComputationMultiplierTransformer
-#      - name: CerebroMultiplierTransformer
-#      - name: Sha3MultiplierTransformer
-#
-#      - name: StatTransformer
-#        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'network_type', 'mpc_type' ]
-#        stats:
-#          mpc_time_s: [ "spdz_timer_99", "spdz_timer_101" ]
-#
-#          auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
-#                                 "consistency_poly_commit_commit_mus",
-#                                 "consistency_poly_commit_sign_mus",
-#                                 "consistency_poly_commit_sign_sk_mus",
-#                                 "consistency_convert_shares_share_switch_input_mus",
-#                                 "consistency_poly_eval_poly_eval_mus",
-#                                 "consistency_prove_verify_Prove Verify_mus",
-#
-#                                 "spdz_timer_98",
-#
-##                                 "cerebro_input_spdz_timer_95",
-##                                 "consistency_cerebro_verify_Exponentiate_mus",
-#
-#            #                                 "cerebro_output_spdz_timer_95", # output timers
-#            #                                 "spdz_timer_97", # output timers
-#          ]
-#
-#          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
-#                                     "consistency_poly_commit_commit_global_bytes",
-#                                     "consistency_poly_commit_sign_global_bytes",
-#                                     "consistency_poly_commit_sign_sk_global_bytes",
-#                                     "consistency_convert_shares_share_switch_input_global_bytes",
-#                                     "consistency_poly_eval_poly_eval_global_bytes",
-#                                     "consistency_prove_verify_global_bytes",
-#
-#                                     "spdz_timer_bw_98", # this is not in total!!
-#
-##                                     "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
-##                                     "cerebro_output_spdz_global_data_sent"
-#          ]
-#
-#          global_data_sent_mb: [ "spdz_global_data_sent" ]
-#
-#          n_rounds: [ "spdz_player_round_number" ]
-#
-#          share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
-#          share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
-#
-#          poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
-#          poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
-#
-#          sign_time_s: [ "consistency_poly_commit_sign_mus" ]
-#          sign_global_bytes: [ "consistency_poly_commit_sign_global_bytes" ]
-#
-#          sign_sk_time_s: [ "consistency_poly_commit_sign_sk_mus" ]
-#          sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
-#
-#      # correct naming consistency problems
-#      - df.replace: { to_replace: "sy", value: { exp_name: "mal" } } # rename sy experiment to mal
-#      - df.replace: { to_replace: "field_256", value: "custom_256" }
-#
-#      # remove num player info from datasets
-#      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
-#      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
-#      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
-#
-#
-#    loaders:
-#      PickleSummaryLoader: { }
-#      CsvSummaryLoader: { }
-#      BarPlotLoader:
-#
-#        cols_values_filter:
-#          mpc.script_name: [ 'inference' ]
-#          suite_name: [ inference_3pc ]
-#
-#          host_idx: [ 0 ] # only plot one party
-#          mpc_type: [ 'sh', 'mal' ]
-#          network_type: [ 'lan', 'wan' ]
-#          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
-#          'mpc.domain': [ 'ring_split', 'field_128',  'custom_256' ] # 'field_128'
-#
-#
-#        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
-#
-#        group_cols: [ mpc.domain ]
-#
-#        bar_cols: [ 'mpc_type' ]
-#
-#        n_groups_in_bars: 1 # 2 # subgroups in group
-#
-#
-#        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
-#
-#
-#        color_stack_rgba: [ 1.0, 0.6 ]
-#
-#
-#        legend:
-#          format: "{} {}"
-#          cols: [ "mpc_type", "$bar_part_col$" ]
-#
-#        title:
-#          format: "3PC - {}"
-#          plot_cols: [ 'mpc.script_args.dataset' ]
-#
-#        labels:
-#          mpc_time_s: ""
-#          global_data_sent_mb: ""
-#          auditing_overhead_s: "(Overhead)"
-#          auditing_overhead_bytes: "(Overhead)"
-#          n_rounds: ""
-#
-#          ring_split: "Ring"
-#          field_128: "Field-S"
-#          custom_256: "Field-L"
-#
-#          adult: "Adult"
-#          mnist_full: "MNIST"
-#          cifar_alexnet: "Cifar10"
-#
-#
-#          sh: "SH"
-#          mal: "MAL"
-#
-#
-#        metrics:
-#          time:
-#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-#            y_unit_multiplicator: 1 # keep seconds
-#            y_label: "Time [sec]"
-##            y_max: 18
-#            legend_order: [ 0, 2, 1, 3 ]
-#            legend_ncol: 4
-#
-#          rounds:
-#            bar_part_cols: [ n_rounds ]
-#            y_label: "Rounds"
-#
-#          bandwidth:
-#            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
-#            y_label: "Bandwidth [MB]"
-#            y_unit_multiplicator: 1.0e-6 # transform to MB
-#            log_y: True
-#            y_max: 100000
-#            y_ticks: [ 10, 100, 1000, 10000 ]
-#            legend_order: [ 0, 2, 1, 3 ]
-#            legend_ncol: 4
-#
-#  compare_relatedwork:
-#    experiments:
-#      inference_3pc: [ sh, mal ]
-#      inference_3pc_wan: [ wan ]
-##      inference_2pc: [ sh, mal ]
-#
-#    extractors:
-#      MpSpdzResultExtractor: { }
-#      MpSpdzStderrExtractor:
-#        file_regex:
-#          - ^stderr\.log$
-#          - ^cerebro_input_stderr\.log$
-#          - ^cerebro_output_stderr\.log$
-#          - ^sha3_input_stderr\.log$
-#          - ^sha3_output_stderr\.log$
-#      ConsistencyExtractor: { }
-#      IgnoreExtractor:
-#        file_regex:
-#          - ^stdout\.log$
-#          - ^cerebro_input_stdout\.log$
-#          - ^cerebro_output_stdout\.log$
-#          - ^sha3_input_stdout\.log$
-#          - ^sha3_output_stdout\.log$
-#    transformers:
-#      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
-#      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
-#      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
-#
-#      - name: TimerBandwidthAggregator
-#      - name: ComputationMultiplierTransformer
-#      - name: CerebroMultiplierTransformer
-#      - name: Sha3MultiplierTransformer
-#
-#      - name: StatTransformer
-#        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'network_type', 'mpc_type', 'consistency_args.type' ]
-#        stats:
-#          mpc_time_s: [ "spdz_timer_99", "spdz_timer_101" ]
-#
-#          auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
-#                                 "consistency_poly_commit_commit_mus",
-#                                 "consistency_poly_commit_sign_mus",
-#                                 "consistency_poly_commit_sign_sk_mus",
-#                                 "consistency_convert_shares_share_switch_input_mus",
-#                                 "consistency_poly_eval_poly_eval_mus",
-#                                 "consistency_prove_verify_Prove Verify_mus",
-#
-#                                 "spdz_timer_98",
+  compare_domain:
+
+    experiments:
+      inference_3pc: [ wan_ring_field ]
+
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
+    transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+
+      - name: ComputationMultiplierTransformer
+      - name: CerebroMultiplierTransformer
+      - name: Sha3MultiplierTransformer
+
+      - name: StatTransformer
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'network_type', 'mpc_type' ]
+        stats:
+          mpc_time_s: [ "spdz_timer_99", "spdz_timer_101" ]
+
+          auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
+                                 "consistency_poly_commit_commit_mus",
+                                 "consistency_poly_commit_sign_mus",
+                                 "consistency_poly_commit_sign_sk_mus",
+                                 "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+
 #                                 "cerebro_input_spdz_timer_95",
 #                                 "consistency_cerebro_verify_Exponentiate_mus",
-#
-#                                 "cerebro_output_spdz_timer_95", # output timers
-##                                 "spdz_timer_97", # output timers
-#
-#                                 "sha3_input_spdz_timer_98",
-#                                 "sha3_output_spdz_timer_97",
-#
-#                                 "spdz_timer_97",
-#          ]
-#
-#          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
-#                                     "consistency_poly_commit_commit_global_bytes",
-#                                     "consistency_poly_commit_sign_global_bytes",
-#                                     "consistency_poly_commit_sign_sk_global_bytes",
-#                                     "consistency_convert_shares_share_switch_input_global_bytes",
-#                                     "consistency_poly_eval_poly_eval_global_bytes",
-#                                     "consistency_prove_verify_global_bytes",
-#
-#                                     "spdz_timer_bw_98",
-#                                     "spdz_timer_bw_97",
-#
-#                                     "cerebro_input_spdz_timer_bw_95", # output timers
-#                                     "cerebro_output_spdz_timer_bw_95", # output timers
-#
-#                                     "sha3_input_spdz_timer_bw_98",
-#                                     "sha3_output_spdz_timer_bw_97",
-#          ]
-#
-#          global_data_sent_bytes: [ "spdz_timer_bw_99", "spdz_timer_bw_101" ]
-#
-#          n_rounds: [ "spdz_player_round_number" ]
-#
-#          share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
-#          share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
-#
-#          poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
-#          poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
-#
-#          sign_time_s: [ "consistency_poly_commit_sign_mus" ]
-#          sign_global_bytes: [ "consistency_poly_commit_sign_global_bytes" ]
-#
-#          sign_sk_time_s: [ "consistency_poly_commit_sign_sk_mus" ]
-#          sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
-#
-#      # correct naming consistency problems
-#      - df.replace: { to_replace: "sy", value: { exp_name: "mal" } } # rename sy experiment to mal
-#      - df.replace: { to_replace: "field_256", value: "custom_256" }
-#
-#
-#    loaders:
-#      PickleSummaryLoader: { }
-#      CsvSummaryLoader: { }
-#      BarPlotLoader:
-#
-#        cols_values_filter:
-#          mpc.script_name: [ 'inference' ]
-#          suite_name: [ inference_3pc, inference_3pc_wan, inference_2pc ]
-#
-#          host_idx: [ 0 ] # only plot one party
-#          mpc_type: [ 'sh', 'mal' ]
-#          network_type: [ 'lan', 'wan' ]
-#          'consistency_args.type': [ 'pc', 'cerebro', 'sha3s' ]
-#          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
-#          'mpc.domain': [ 'ring_split', 'field_128' ] # 'field_128'
-#
-#        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
-#
-#        group_cols: [ 'consistency_args.type' ]
-#
-#        bar_cols: [ 'mpc_type' ]
-#
-#        n_groups_in_bars: 1 # 2 # subgroups in group
-#
-#
-#        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
-#
-#
-#        color_stack_rgba: [ 1.0, 0.6 ]
-#
-#
-#        legend:
-#          format: "{} {}"
-#          cols: [ "mpc_type", "$bar_part_col$" ]
-#
-#        title:
-#          format: "3PC - {}"
-#          plot_cols: [ 'mpc.script_args.dataset' ]
-#
-#        labels:
-#          mpc_time_s: ""
-#          global_data_sent_mb: ""
-#          auditing_overhead_s: "(Overhead)"
-#          auditing_overhead_bytes: "(Overhead)"
-#          n_rounds: ""
-#
-#          ring_split: "Ring"
-#          field_128: "Field-S"
-#          custom_256: "Field-L"
-#
-#          adult: "Adult"
-#          mnist_full: "MNIST"
-#          cifar_alexnet: "Cifar10"
-#
-#          pc: "Ours"
-#          cerebro: "Cerebro"
-#          sha3: "SHA3"
-#          sha3s: "SHA3"
-#
-#          sh: "SH"
-#          mal: "MAL"
-#
-#        show_debug_info: True
-#        metrics:
-#          time:
-#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-#            y_unit_multiplicator: 1 # keep seconds
-#            y_label: "Time [sec]"
-#            #            y_max: 18
-#            legend_order: [ 0, 2, 1, 3 ]
-#            legend_ncol: 4
-#            log_y: True
-#
-#          rounds:
-#            bar_part_cols: [ n_rounds ]
-#            y_label: "Rounds"
-#
-#          bandwidth:
-#            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
-#            y_label: "Bandwidth [MB]"
-#            y_unit_multiplicator: 1.0e-6 # transform to MB
-#            log_y: True
-#            y_max: 1000000
-#            y_ticks: [ 10, 100, 1000, 10000, 100000 ]
-#            legend_order: [ 0, 2, 1, 3 ]
-#            legend_ncol: 4
+
+            #                                 "cerebro_output_spdz_timer_95", # output timers
+            #                                 "spdz_timer_97", # output timers
+          ]
+
+          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
+                                     "consistency_poly_commit_commit_global_bytes",
+                                     "consistency_poly_commit_sign_global_bytes",
+                                     "consistency_poly_commit_sign_sk_global_bytes",
+                                     "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98", # this is not in total!!
+
+#                                     "cerebro_input_spdz_global_data_sent", # TODO: Also convert these
+#                                     "cerebro_output_spdz_global_data_sent"
+          ]
+
+          global_data_sent_mb: [ "spdz_global_data_sent" ]
+
+          n_rounds: [ "spdz_player_round_number" ]
+
+          share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
+          share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
+
+          poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
+          poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
+
+          sign_time_s: [ "consistency_poly_commit_sign_mus" ]
+          sign_global_bytes: [ "consistency_poly_commit_sign_global_bytes" ]
+
+          sign_sk_time_s: [ "consistency_poly_commit_sign_sk_mus" ]
+          sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
+
+      # correct naming consistency problems
+      - df.replace: { to_replace: "sy", value: { exp_name: "mal" } } # rename sy experiment to mal
+      - df.replace: { to_replace: "field_256", value: "custom_256" }
+
+      # remove num player info from datasets
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+
+
+    loaders:
+      PickleSummaryLoader: { }
+      CsvSummaryLoader: { }
+      BarPlotLoader:
+
+        cols_values_filter:
+          mpc.script_name: [ 'inference' ]
+          suite_name: [ inference_3pc ]
+
+          host_idx: [ 0 ] # only plot one party
+          mpc_type: [ 'sh', 'mal' ]
+          network_type: [ 'lan', 'wan' ]
+          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
+          'mpc.domain': [ 'ring_split', 'field_128',  'custom_256' ] # 'field_128'
+
+
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
+
+        group_cols: [ mpc.domain ]
+
+        bar_cols: [ 'mpc_type' ]
+
+        n_groups_in_bars: 1 # 2 # subgroups in group
+
+
+        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
+
+
+        color_stack_rgba: [ 1.0, 0.6 ]
+
+
+        legend:
+          format: "{} {}"
+          cols: [ "mpc_type", "$bar_part_col$" ]
+
+        title:
+          format: "3PC - {}"
+          plot_cols: [ 'mpc.script_args.dataset' ]
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_mb: ""
+          auditing_overhead_s: "(Overhead)"
+          auditing_overhead_bytes: "(Overhead)"
+          n_rounds: ""
+
+          ring_split: "Ring"
+          field_128: "Field-S"
+          custom_256: "Field-L"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "Cifar10"
+
+
+          sh: "SH"
+          mal: "MAL"
+
+
+        metrics:
+          time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_multiplicator: 1 # keep seconds
+            y_label: "Time [sec]"
+#            y_max: 18
+            legend_order: [ 0, 2, 1, 3 ]
+            legend_ncol: 4
+
+          rounds:
+            bar_part_cols: [ n_rounds ]
+            y_label: "Rounds"
+
+          bandwidth:
+            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
+            y_label: "Bandwidth [MB]"
+            y_unit_multiplicator: 1.0e-6 # transform to MB
+            log_y: True
+            y_max: 100000
+            y_ticks: [ 10, 100, 1000, 10000 ]
+            legend_order: [ 0, 2, 1, 3 ]
+            legend_ncol: 4
+
+  compare_relatedwork:
+    experiments:
+      inference_3pc: [ sh, mal ]
+      inference_3pc_wan: [ wan ]
+#      inference_2pc: [ sh, mal ]
+
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
+    transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+
+      - name: TimerBandwidthAggregator
+      - name: ComputationMultiplierTransformer
+      - name: CerebroMultiplierTransformer
+      - name: Sha3MultiplierTransformer
+
+      - name: StatTransformer
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'network_type', 'mpc_type', 'consistency_args.type' ]
+        stats:
+          mpc_time_s: [ "spdz_timer_99", "spdz_timer_101" ]
+
+          auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
+                                 "consistency_poly_commit_commit_mus",
+                                 "consistency_poly_commit_sign_mus",
+                                 "consistency_poly_commit_sign_sk_mus",
+                                 "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+                                 "cerebro_input_spdz_timer_95",
+                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "cerebro_output_spdz_timer_95", # output timers
+#                                 "spdz_timer_97", # output timers
+
+                                 "sha3_input_spdz_timer_98",
+                                 "sha3_output_spdz_timer_97",
+
+                                 "spdz_timer_97",
+          ]
+
+          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
+                                     "consistency_poly_commit_commit_global_bytes",
+                                     "consistency_poly_commit_sign_global_bytes",
+                                     "consistency_poly_commit_sign_sk_global_bytes",
+                                     "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98",
+                                     "spdz_timer_bw_97",
+
+                                     "cerebro_input_spdz_timer_bw_95", # output timers
+                                     "cerebro_output_spdz_timer_bw_95", # output timers
+
+                                     "sha3_input_spdz_timer_bw_98",
+                                     "sha3_output_spdz_timer_bw_97",
+          ]
+
+          global_data_sent_bytes: [ "spdz_timer_bw_99", "spdz_timer_bw_101" ]
+
+          n_rounds: [ "spdz_player_round_number" ]
+
+          share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
+          share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
+
+          poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
+          poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
+
+          sign_time_s: [ "consistency_poly_commit_sign_mus" ]
+          sign_global_bytes: [ "consistency_poly_commit_sign_global_bytes" ]
+
+          sign_sk_time_s: [ "consistency_poly_commit_sign_sk_mus" ]
+          sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
+
+      # correct naming consistency problems
+      - df.replace: { to_replace: "sy", value: { exp_name: "mal" } } # rename sy experiment to mal
+      - df.replace: { to_replace: "field_256", value: "custom_256" }
+
+
+    loaders:
+      PickleSummaryLoader: { }
+      CsvSummaryLoader: { }
+      BarPlotLoader:
+
+        cols_values_filter:
+          mpc.script_name: [ 'inference' ]
+          suite_name: [ inference_3pc, inference_3pc_wan, inference_2pc ]
+
+          host_idx: [ 0 ] # only plot one party
+          mpc_type: [ 'sh', 'mal' ]
+          network_type: [ 'lan', 'wan' ]
+          'consistency_args.type': [ 'pc', 'cerebro', 'sha3s' ]
+          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
+          'mpc.domain': [ 'ring_split', 'field_128' ] # 'field_128'
+
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
+
+        group_cols: [ 'consistency_args.type' ]
+
+        bar_cols: [ 'mpc_type' ]
+
+        n_groups_in_bars: 1 # 2 # subgroups in group
+
+
+        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
+
+
+        color_stack_rgba: [ 1.0, 0.6 ]
+
+
+        legend:
+          format: "{} {}"
+          cols: [ "mpc_type", "$bar_part_col$" ]
+
+        title:
+          format: "3PC - {}"
+          plot_cols: [ 'mpc.script_args.dataset' ]
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_mb: ""
+          auditing_overhead_s: "(Overhead)"
+          auditing_overhead_bytes: "(Overhead)"
+          n_rounds: ""
+
+          ring_split: "Ring"
+          field_128: "Field-S"
+          custom_256: "Field-L"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "Cifar10"
+
+          pc: "Ours"
+          cerebro: "Cerebro"
+          sha3: "SHA3"
+          sha3s: "SHA3"
+
+          sh: "SH"
+          mal: "MAL"
+
+        show_debug_info: True
+        metrics:
+          time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_multiplicator: 1 # keep seconds
+            y_label: "Time [sec]"
+            #            y_max: 18
+            legend_order: [ 0, 2, 1, 3 ]
+            legend_ncol: 4
+            log_y: True
+
+          rounds:
+            bar_part_cols: [ n_rounds ]
+            y_label: "Rounds"
+
+          bandwidth:
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+            y_label: "Bandwidth [MB]"
+            y_unit_multiplicator: 1.0e-6 # transform to MB
+            log_y: True
+            y_max: 1000000
+            y_ticks: [ 10, 100, 1000, 10000, 100000 ]
+            legend_order: [ 0, 2, 1, 3 ]
+            legend_ncol: 4
 
   storage:
     experiments:

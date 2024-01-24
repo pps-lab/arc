@@ -1,10 +1,10 @@
 
-SUITE_RUN="audit_consistency_1705060337"
+SUITE_RUN="train_3pc_1705446689"
 
-EXP_NAME="audit_sample_knnshapley_mal"
-SERVERS=("ec2-18-192-119-70.eu-central-1.compute.amazonaws.com" "ec2-3-64-178-175.eu-central-1.compute.amazonaws.com" "ec2-18-193-112-141.eu-central-1.compute.amazonaws.com")
+EXP_NAME="mal"
+SERVERS=("ec2-18-184-102-2.eu-central-1.compute.amazonaws.com" "ec2-18-184-240-77.eu-central-1.compute.amazonaws.com" "ec2-18-153-70-207.eu-central-1.compute.amazonaws.com")
 
-RUN_ID=17
+RUN_ID=15
 
 for HOST in {0..2}
 do
