@@ -30,7 +30,7 @@ class BaseAuditModel(BaseModel):
     trunc_pr: bool = False
     round_nearest: bool = False
 
-    audit_trigger_idx: int = None
+    audit_trigger_idx: int = 0
 
     # Whether to check parties' inputs for consistency
     consistency_check: Optional[str] = "pc" # also "sha3" and "cerebro" for cerebro
