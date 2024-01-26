@@ -46,8 +46,8 @@ class MpSpdzStderrExtractor(Extractor):
         if filename != "stderr.log":
             output_prefix = "_".join(filename.split("_")[:-1]) + "_"
 
-        print("Extracting path" ,path)
-        print(content[:100])
+        # print("Extracting path" ,path)
+        # print(content[:100])
 
         error_regex = r"^Traceback \(most recent call last\):$"
         if re.search(error_regex, content, re.MULTILINE):
@@ -67,7 +67,6 @@ class MpSpdzStderrExtractor(Extractor):
         # TODO: Improve this code quality, this should not have to be a loop
 
         for result in results:
-            print("RESULT", result)
             try:
                 party_data_sent = float(result.group(1))
             except:
@@ -97,7 +96,7 @@ class MpSpdzStderrExtractor(Extractor):
                     timer_number = -1
                 else:
                     timer_number = int(timer_number)
-                print("OH OH", (timer_number,timer_value,timer_mb,timer_rounds))
+                # print("OH OH", (timer_number,timer_value,timer_mb,timer_rounds))
                 return (timer_number,timer_value,timer_mb,timer_rounds)
             mapped_timer_results = list(map(map_timer, time_results))
             dicts += [{'stat': f"{output_prefix}spdz_timer_{t_num}", 'stat_value': t_val, 'player_number': player_num} for (t_num,t_val,_,_) in mapped_timer_results]
@@ -113,7 +112,7 @@ class MpSpdzStderrExtractor(Extractor):
         lists = self.extract_cerebro_counts(content)
         dicts += lists
 
-        print(dicts)
+        # print(dicts)
         return dicts
 
 
