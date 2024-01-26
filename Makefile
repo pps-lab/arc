@@ -103,6 +103,8 @@ deb: simlink
 
 
 plots:
-	cd doe-suite && $(MAKE) etl-super config=consistency out=$(out)
-	cd doe-suite && $(MAKE) etl-super config=inference out=$(out)
-	cd doe-suite && $(MAKE) etl-super config=train out=$(out)
+#	cd doe-suite && $(MAKE) etl-super config=consistency out=$(out)
+	cd doe-suite && $(MAKE) etl-super config=inference out=$(out) pipelines=compare_relatedwork
+	cd doe-suite && $(MAKE) etl-super config=train out=$(out) pipelines=compare_relatedwork
+	cd doe-suite && $(MAKE) etl-super config=audit out=$(out) pipelines=compare_relatedwork
+	cd doe-suite && $(MAKE) etl-super config=inference out=$(out) pipelines=storage

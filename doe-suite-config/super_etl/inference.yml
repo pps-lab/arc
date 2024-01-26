@@ -85,7 +85,7 @@ $ETL$:
 #                                     "cerebro_output_spdz_global_data_sent"
           ]
 
-          global_data_sent_mb: [ "spdz_global_data_sent" ]
+          global_data_sent_bytes: [  "spdz_timer_bw_99", "spdz_timer_bw_101" ]
 
           n_rounds: [ "spdz_player_round_number" ]
 
@@ -133,26 +133,13 @@ $ETL$:
 
         bar_cols: [ 'mpc_type' ]
 
-        n_groups_in_bars: 1 # 2 # subgroups in group
-
-
-        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
-
-
-        color_stack_rgba: [ 1.0, 0.6 ]
-
-
-        legend:
-          format: "{} {}"
-          cols: [ "mpc_type", "$bar_part_col$" ]
 
         title:
-          format: "3PC - {}"
+          format: "{}"
           plot_cols: [ 'mpc.script_args.dataset' ]
 
         labels:
           mpc_time_s: ""
-          global_data_sent_mb: ""
           auditing_overhead_s: "(Overhead)"
           auditing_overhead_bytes: "(Overhead)"
           n_rounds: ""
@@ -176,22 +163,20 @@ $ETL$:
             y_unit_multiplicator: 1 # keep seconds
             y_label: "Time [sec]"
 #            y_max: 18
-            legend_order: [ 0, 2, 1, 3 ]
-            legend_ncol: 4
+
 
           rounds:
             bar_part_cols: [ n_rounds ]
             y_label: "Rounds"
 
           bandwidth:
-            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
             y_label: "Bandwidth [MB]"
             y_unit_multiplicator: 1.0e-6 # transform to MB
             log_y: True
             y_max: 100000
             y_ticks: [ 10, 100, 1000, 10000 ]
-            legend_order: [ 0, 2, 1, 3 ]
-            legend_ncol: 4
+
 
   compare_relatedwork:
     experiments:
@@ -296,6 +281,10 @@ $ETL$:
       CsvSummaryLoader: { }
       BarPlotLoader:
 
+        subplots: # TODO [nku]: This currently does not allow for a fully flexible alignment of subplots -> later?
+          rows: ["$metrics$", "network_type"]
+          cols: ["mpc.script_args.dataset"]
+
         cols_values_filter:
           mpc.script_name: [ 'inference' ]
           suite_name: [ inference_3pc, inference_3pc_wan, inference_2pc ]
@@ -313,26 +302,53 @@ $ETL$:
 
         bar_cols: [ 'mpc_type' ]
 
-        n_groups_in_bars: 1 # 2 # subgroups in group
 
-
-        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
-
-
-        color_stack_rgba: [ 1.0, 0.6 ]
-
-
-        legend:
+        legend_fig:
           format: "{} {}"
-          cols: [ "mpc_type", "$bar_part_col$" ]
+          cols: [ 'mpc_type', "$bar_part_col$" ]
+          kwargs: {loc: "upper center", ncol: 4, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
+
+
+          # light-green: #e7eec9
+          # dark-green: #D5E1A3
+          # dark-brown: #C7B786
+          # light-brown: #d7cca9
+          # light-blue: #a6b8d8
+          # dark-blue: #4c72b0
+
+        bar_styles:
+
+        - style: {label: ~, edgecolor: black}
+          filter: {"consistency_args.type": ["pc"]}
+
+        - style: {color: "#d5e1a3", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#e7eec9", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+        - style: {color: "#4c72b0", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#a6b8d8", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+
+        group_labels:
+          cols: ['consistency_args.type']
+          format: "{}"
+
+        #legend:
+        #  format: "{} {}"
+        #  cols: [ "mpc_type", "$bar_part_col$" ]
 
         title:
-          format: "3PC - {}"
+          format: "{}"
           plot_cols: [ 'mpc.script_args.dataset' ]
 
         labels:
           mpc_time_s: ""
-          global_data_sent_mb: ""
+          global_data_sent_bytes: ""
           auditing_overhead_s: "(Overhead)"
           auditing_overhead_bytes: "(Overhead)"
           n_rounds: ""
@@ -345,38 +361,60 @@ $ETL$:
           mnist_full: "MNIST"
           cifar_alexnet: "Cifar10"
 
-          pc: "Ours"
-          cerebro: "Cerebro"
+          pc: "$\\bf{Ours}$"
+          cerebro: "CC"
           sha3: "SHA3"
           sha3s: "SHA3"
 
           sh: "SH"
           mal: "MAL"
 
-        show_debug_info: True
+
+        figure_size: [2.5, 1.8]
+
+        show_debug_info: False
         metrics:
-          time:
+          lan_time:
             bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
             y_unit_multiplicator: 1 # keep seconds
-            y_label: "Time [sec]"
-            #            y_max: 18
-            legend_order: [ 0, 2, 1, 3 ]
-            legend_ncol: 4
+            y_label: "LAN Time [sec]"
+
             log_y: True
 
-          rounds:
-            bar_part_cols: [ n_rounds ]
-            y_label: "Rounds"
+            y_ticks: [ 1, 10, 100, 1000 ]
 
-          bandwidth:
+            plot_cols_filter:
+              network_type: [ 'lan' ] # I only want lan
+
+
+
+          wan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_multiplicator: 1 # keep seconds
+            y_label: "WAN Time [sec]"
+            #            y_max: 18
+
+            log_y: True
+
+
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+
+
+          #rounds:
+          #  bar_part_cols: [ n_rounds ]
+          #  y_label: "Rounds"
+
+          wan_bandwidth:
             bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
-            y_label: "Bandwidth [MB]"
+            y_label: "WAN Bandwidth [MB]"
             y_unit_multiplicator: 1.0e-6 # transform to MB
             log_y: True
-            y_max: 1000000
-            y_ticks: [ 10, 100, 1000, 10000, 100000 ]
-            legend_order: [ 0, 2, 1, 3 ]
-            legend_ncol: 4
+            #y_max: 1000000
+            y_ticks: [10, 100, 1000, 10000, 100000, 1000000 ]
+
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
 
   storage:
     experiments:
@@ -412,59 +450,77 @@ $ETL$:
 
         plot_cols: [  "run" ] #
 
-        group_cols: [ "dataset" ]
+        group_cols: [ 'approach' ]
 
-        bar_cols: [ 'approach' ]
-
-        n_groups_in_bars: 1 # 2 # subgroups in group
+        bar_cols: [ "dataset" ]
 
 
-        colors: [ '#D5E1A3', '#C7B786', '#D5E1A3', '#C7B786' ] #, (166 / 255.0, 184 / 255.0, 216 / 255.0), (76 / 255.0, 114 / 255.0, 176 / 255.0)] #, "#5dfc00", "#5dfcf7", "#fd9ef7"]
+        #group_labels:
+        #  cols: ['dataset']
+        #  format: "{}"
 
-        color_stack_rgba: [ 0.2, 0.6, 0.65, 0.7, 0.75, 0.8, 0.85, 0.9, 1.0]
+
+         # light-green: #e7eec9
+          # dark-green: #D5E1A3
+          # dark-brown: #C7B786
+          # light-brown: #d7cca9
+          # light-blue: #a6b8d8
+          # dark-blue: #4c72b0
 
 
-        legend:
-          format: "{}"
-          cols: [ "$bar_part_col$" ]
+        #title:
+        #  format: "Receipt Storage"
+        #  plot_cols: []
 
-        title:
-          format: "Storage"
-          plot_cols: [  ]
+
+        figure_size: [4, 2.5]
+
+        legend_ax:
+        - format: "{}"
+          cols: [ "dataset"] # , 'approach', "$bar_part_col$"
+          #kwargs: {loc: "upper left", ncol: 1, bbox_to_anchor: [1, 1], columnspacing: 0.5,  fancybox: True}
+          kwargs: {loc: "best"}
+          filter: {}
+
+        bar_styles:
+
+        - style: {label: ~, edgecolor: black}
+          filter: {"approach": ["pc_kzg"]}
+
+        - style: {color: "#d5e1a3", edgecolor: "#d5e1a3"}
+          filter: { "dataset": ["adult"] }
+
+        - style: {color: "#C7B786", edgecolor: "#C7B786"}
+          filter: { "dataset": ["mnist"] }
+
+        - style: {color: "#4c72b0", edgecolor: "#4c72b0"}
+          filter: { "dataset": ["cifar"] }
+
 
         labels:
-          mpc_time_s: ""
-          global_data_sent_mb: ""
-          auditing_overhead_s: "(Overhead)"
-          auditing_overhead_bytes: "(Overhead)"
-          n_rounds: ""
-
-          ring_split: "Ring"
-          field_128: "Field-S"
-          custom_256: "Field-L"
 
           adult: "Adult"
-          mnist_full: "MNIST"
-          cifar_alexnet: "Cifar10"
+          mnist: "MNIST"
+          cifar: "Cifar10"
 
-          pc_kzg: "Ours"
-          cerebro: "Cerebro"
+          pc_kzg: "$\\bf{Ours}$"
+          cerebro: "CC"
           sha3: "SHA3"
           sha3s: "SHA3"
 
-          sh: "SH"
-          mal: "MAL"
 
-        show_debug_info: True
+        show_debug_info: False
         bar_width: 0.6
+
         metrics:
           storage:
             bar_part_cols: [ trusted_setup, signature_train, signature_modelowner, identity_train, identity_modelowner,
                              commitment_train, commitment_model, commitment_prediction_x, commitment_prediction_y]
-            y_unit_multiplicator: 1 # keep seconds
-            y_label: "Storage [bytes]"
-            #            y_max: 18
-#            legend_order: [ 0, 2, 1, 3 ]
-            y_ticks: [ 100, 1000, 10000, 100000, 1000000, 10000000 ]
-            legend_ncol: 4
+
+            y_unit_multiplicator: 1 # 1.0e-3 # 1.0e-6 # transform to MB
+            y_label: "Storage [Bytes]"
+
+
+            y_ticks: [10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 ]
+
             log_y: True
