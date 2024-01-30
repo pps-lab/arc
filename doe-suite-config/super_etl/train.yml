@@ -109,7 +109,9 @@ $ETL$:
           sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
       #- df.replace: {to_replace: "sy", value: {exp_name: "mal"}} # rename sy experiment to mal
       #- df.replace: {to_replace: "field_256", value: "custom_256"}
-
+      - name: JoinWithCsvTransformer
+        csv_path: storage.csv # join csv numbers
+        on: [consistency_args.type, mpc.script_args.dataset]
 
     loaders:
       PickleSummaryLoader: { }
@@ -170,6 +172,10 @@ $ETL$:
 
         - style: {label: ~, edgecolor: black}
           filter: {"consistency_args.type": ["pc"]}
+
+
+        - style: {color: "#D3D3D3", edgecolor: grey, label: ~}
+          filter: { "$bar_part_col$": [storage_train] }
 
         - style: {color: "#d5e1a3", edgecolor: grey}
           filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
@@ -247,3 +253,20 @@ $ETL$:
             log_y: True
             plot_cols_filter:
               network_type: [ 'wan' ] # I only want wan
+
+          storage:
+            bar_part_cols: [ storage_train ]
+            y_label: "Storage [Bytes]"
+            y_unit_multiplicator: 1 # 1.0e-3 # 1.0e-6 # transform to MB
+            #y_ticks: [10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000 ]
+
+            log_y: True
+
+            plot_cols_filter:
+              network_type: [ 'wan' ]
+
+            bar_cols_filter:
+              mpc_type: [ 'sh' ]
+            bar_pos_bias: 0.5
+
+            x_lim: [-0.5399999999999999, 2.54]
