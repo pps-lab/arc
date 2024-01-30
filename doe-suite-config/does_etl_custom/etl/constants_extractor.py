@@ -27,3 +27,23 @@ class ConstantsExtractor(Extractor):
         print(df.to_dict(orient="records"))
         # return df where each row is dict with column values
         return df.to_dict(orient="records")
+
+
+
+class JoinWithCsvTransformer(Transformer):
+
+    csv_path: str
+
+    #join_columns: List[str] = None
+    on: List[str] = None
+    left_on: List[str] = None
+    right_on: List[str] = None
+
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        df1 = pd.read_csv(os.path.join(get_results_dir(), self.csv_path))
+
+        df = df.merge(df1, on=self.on, left_on=self.left_on, right_on=self.right_on)
+
+        return df
