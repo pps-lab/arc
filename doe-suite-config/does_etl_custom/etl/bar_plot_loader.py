@@ -29,9 +29,12 @@ class MetricConfig(MyETLBaseModel):
     bar_part_cols: List[str]
     y_label: str
 
+    # TODO [nku]: CAN I MOVE THESE PARTS AWAY FROM THE METRIC CONFIG AND INTO A FILTER SYSTEM SIMILAR TO THE BAR_PLOT_STYLE?
+
     log_y: bool = False
 
     log_x: bool = False
+
 
     y_unit_multiplicator: float = 1.0 # multiply y values by this to get the unit
     y_unit_divider: float = 1.0 # divide y values by this to get the unit
@@ -41,7 +44,18 @@ class MetricConfig(MyETLBaseModel):
     y_ticks: List[float] = None
 
 
+    x_lim: Tuple[float, float] = None
+    y_lim: Tuple[float, float] = None
+
+    # TODO: remove hack
+    y_lim_row: List[Tuple[float, float]] = None
+
+
     plot_cols_filter: Dict[str, List[str]] = None
+
+    bar_cols_filter: Dict[str, List[str]] = None
+
+    bar_pos_bias: float = 0.0
 
 
 
@@ -380,6 +394,8 @@ class BarPlotLoader(PlotLoader):
             ax.set_yscale('log')
 
 
+
+
         if  metric_cfg.y_max is not None:
             ax.set_ylim(0, metric_cfg.y_max)
         else:
@@ -387,7 +403,21 @@ class BarPlotLoader(PlotLoader):
                 pass
                 #ax.set_ylim(0, ax.get_ylim()[1] * 2)
             else:
-                ax.set_ylim(0, ax.get_ylim()[1] * 1.1)
+                pass # problematic for subplots with shared axis
+                #ax.set_ylim(0, ax.get_ylim()[1] * 1.1)
+
+        if metric_cfg.y_lim is not None:
+            ax.set_ylim(*metric_cfg.y_lim)
+
+        if metric_cfg.y_lim_row is not None:
+
+            assert self.subplots is not None, "y_lim_row only supported for subplots"
+
+            col = subplot_idx[1]
+
+            ax.set_ylim(*metric_cfg.y_lim_row[col])
+
+
 
         if metric_cfg.y_ticks is not None:
             ax.set_yticks(metric_cfg.y_ticks)
@@ -453,6 +483,11 @@ class BarPlotLoader(PlotLoader):
             #        ax.tick_params(axis='x', which='major', length=10, width=0, pad=15)
 
         ax.set_xlabel(self.x_axis_label)
+
+        if metric_cfg.x_lim is not None:
+            ax.set_xlim(*metric_cfg.x_lim)
+
+        #print(f"  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!x_lim: {ax.get_xlim()}")
 
 
 #    def style_fig_legend(self, fig, axs):
@@ -557,8 +592,24 @@ class BarPlotLoader(PlotLoader):
 
                 bar_id = {k: v for k, v in zip(self.bar_cols, list(idx_bar), strict=True)}
 
+
+                # TODO [nku] should be unified and also should be available for groups
+                # skipping plots that are not in the filter
+                if metric_cfg.bar_cols_filter is not None:
+                    skip = False
+                    for col, allowed in metric_cfg.bar_cols_filter.items():
+                        if bar_id[col] not in allowed:
+                            skip = True
+                    if skip:
+                        print(f"    Skipping bar because {bar_id} does not match metric filter: {metric_cfg.bar_cols_filter}")
+                        continue
+
                 # increment for each column + center
                 bar_pos = group_pos_left + (i_bar*w) + (w/2.)
+
+
+                # TODO: could be made nicer -> but would require a lot more complex bar positioning logic
+                bar_pos += metric_cfg.bar_pos_bias * w
 
                 # TODO: this bar position is probably wrong
 
