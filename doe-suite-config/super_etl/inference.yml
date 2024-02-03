@@ -478,7 +478,7 @@ $ETL$:
           host_idx: [ 0 ] # only plot one party
           mpc_type: [ 'sh', 'mal' ]
           network_type: [ 'lan', 'wan' ]
-          'consistency_args.type': [ 'pc', 'cerebro', 'sha3s' ]
+          'consistency_args.type': [ 'pc' , 'sha3s', 'cerebro' ]
           'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
           'mpc.domain': [ 'ring_split', 'field_128' ] # 'field_128'
 
@@ -559,64 +559,78 @@ $ETL$:
 
 
         figure_size: [2.5, 1.8]
+        bar_width: 1 # 1.2
 
         show_debug_info: False
         metrics:
 
 
-          lan_time_high:
+          lan_time:
             bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
             y_label: "LAN Time [sec]"
+            y_label_pad: 13.4
             #y_lim: [300, 1400]
             plot_cols_filter:
               network_type: [ 'lan' ]
+            y_lim_row: [  [0, 48], [0, 200], [0, 1400]]
+            n_y_ticks: 5
 
-          lan_time_low:
+          #lan_time_low:
+          #  bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+          #  y_label: "Z: LAN Time [sec]"
+          #  plot_cols_filter:
+          #    network_type: [ 'lan' ]
+#
+          #  #y_lim_row: [
+          #  #  [0, 2.5], [0, 7.5], [0, 30]
+          #  #]
+
+          wan_time:
             bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-            y_label: "Z: LAN Time [sec]"
-            plot_cols_filter:
-              network_type: [ 'lan' ]
-
-            y_lim_row: [
-              [0, 2.5], [0, 7.5], [0, 30]
-            ]
-
-          wan_time_high:
-            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-            y_label: "WAN Time [sec]"
+            y_label: "WAN Time [min]"
+            y_label_pad: 8
+            y_unit_divider: 60 # transform to min
             plot_cols_filter:
               network_type: [ 'wan' ]
+            y_lim_row: [  [0, 300], [0, 1200], [0, 4000]]
+            n_y_ticks: 5
             #y_lim: [100000, 150000]
 
-          wan_time_low:
-            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-            y_label: "Z: WAN Time [sec]"
-            plot_cols_filter:
-              network_type: [ 'wan' ]
-            y_lim_row: [[0, 340], [0, 340], [0, 340]] #[[0, 150], [0, 200], [0, 500]]
+          #wan_time_low:
+          #  bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+          #  y_label: "Z: WAN Time [sec]"
+          #  plot_cols_filter:
+          #    network_type: [ 'wan' ]
+          #  y_lim_row: [[0, 340], [0, 340], [0, 340]] #[[0, 150], [0, 200], [0, 500]]
 
-          wan_bandwidth_high:
+          wan_bandwidth:
             bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
-            y_label: "WAN Bandwidth [MB]"
-            y_unit_multiplicator: 1.0e-6 # transform to MB
+            y_label: "Bandwidth [GB]"
+            y_label_pad: 13.4
+            y_unit_multiplicator: 1.0e-9 # transform to MB
             plot_cols_filter:
               network_type: [ 'wan' ] # I only want wan
 
-          wan_bandwidth_low:
-            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
-            y_label: "Z: WAN Bandwidth [MB]"
-            y_unit_multiplicator: 1.0e-6 # transform to MB
-            plot_cols_filter:
-              network_type: [ 'wan' ]
-            y_lim_row: [[0, 150], [0, 6000], [0, 26000]] #[[0, 150], [0, 200], [0, 500]]
+            y_lim_row: [  [0, 28], [0, 240], [0, 1000]]
+            n_y_ticks: 5
+
+          #wan_bandwidth_low:
+          #  bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+          #  y_label: "Z: WAN Bandwidth [MB]"
+          #  y_unit_multiplicator: 1.0e-6 # transform to MB
+          #  plot_cols_filter:
+          #    network_type: [ 'wan' ]
+          #  y_lim_row: [[0, 150], [0, 6000], [0, 26000]] #[[0, 150], [0, 200], [0, 500]]
 
 
-          storage_high:
+          storage:
             bar_part_cols: [ storage_inference ]
             y_label: "Storage [Bytes]"
 
             plot_cols_filter:
               network_type: [ 'wan' ]
+
+            log_y: True
 
             bar_cols_filter:
               mpc_type: [ 'sh' ]
@@ -624,16 +638,18 @@ $ETL$:
 
             x_lim: [-0.5399999999999999, 2.54]
 
-          storage_low:
-            bar_part_cols: [ storage_inference ]
-            y_label: "Storage [Bytes]"
+            y_ticks: [1.0e+4, 1.0e+6, 1.0e+8, 1.0e+10]
 
-            plot_cols_filter:
-              network_type: [ 'wan' ]
-
-            bar_cols_filter:
-              mpc_type: [ 'sh' ]
-            bar_pos_bias: 0.5
-
-            x_lim: [-0.5399999999999999, 2.54]
-            y_lim: [0, 1000]
+          #storage_low:
+          #  bar_part_cols: [ storage_inference ]
+          #  y_label: "Storage [Bytes]"
+#
+          #  plot_cols_filter:
+          #    network_type: [ 'wan' ]
+#
+          #  bar_cols_filter:
+          #    mpc_type: [ 'sh' ]
+          #  bar_pos_bias: 0.5
+#
+          #  x_lim: [-0.5399999999999999, 2.54]
+          #  y_lim: [0, 1000]

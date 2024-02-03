@@ -4,6 +4,8 @@ from enum import Enum
 import warnings
 import itertools
 
+
+import math
 import pandas as pd
 import os
 from typing import Dict, List, Union, Optional
@@ -28,6 +30,7 @@ class MetricConfig(MyETLBaseModel):
 
     bar_part_cols: List[str]
     y_label: str
+    y_label_pad: float = None
 
     # TODO [nku]: CAN I MOVE THESE PARTS AWAY FROM THE METRIC CONFIG AND INTO A FILTER SYSTEM SIMILAR TO THE BAR_PLOT_STYLE?
 
@@ -49,6 +52,9 @@ class MetricConfig(MyETLBaseModel):
 
     # TODO: remove hack
     y_lim_row: List[Tuple[float, float]] = None
+    y_ticks_row: List[List[float]] = None
+
+    n_y_ticks: int = None
 
 
     plot_cols_filter: Dict[str, List[str]] = None
@@ -199,7 +205,38 @@ def get_bar_style(bar_styles: List[BarStyle], full_id):
     return config
 
 
+from matplotlib.ticker import FuncFormatter
 
+# TODO [nku] make configurable
+def format_axis_label(value, _):
+    """
+    Custom formatting function for y-axis labels.
+    """
+
+    if abs(value) >= 1e9:
+        formatted_number = f'{value / 1e9:.1f}'
+        formatted_number = formatted_number.rstrip('0').rstrip('.')
+        formatted_number += "B"
+        val = formatted_number
+    elif abs(value) >= 1e6:
+        formatted_number = f'{value / 1e6:.1f}'
+        formatted_number = formatted_number.rstrip('0').rstrip('.')
+        formatted_number += "M"
+        val = formatted_number
+
+    elif abs(value) >= 1e3:
+        formatted_number =  f'{value / 1e3:.1f}'
+        formatted_number = formatted_number.rstrip('0').rstrip('.')
+        formatted_number += "k"
+        val = formatted_number
+    else:
+        formatted_number =  f'{value:.1f}'
+        formatted_number = formatted_number.rstrip('0').rstrip('.')
+        val = formatted_number
+
+    if val == "100M":
+        val = "0.1B"
+    return val
 
 class BarPlotLoader(PlotLoader):
 
@@ -243,6 +280,8 @@ class BarPlotLoader(PlotLoader):
         if df.empty:
             return
 
+        plt.close('all')
+
         output_dir = self.get_output_dir(etl_info)
 
         df_filtered = self.filter_df(df)
@@ -279,7 +318,9 @@ class BarPlotLoader(PlotLoader):
 
                 df1 = self.aggregate_data(df_plot, metric_cfg)
 
-                group_ticks, bar_ticks = self.plot_bars(ax, metric_cfg, plot_id, df1)
+
+
+                group_ticks, bar_ticks = self.plot_bars(ax, subplot_idx, metric_cfg, plot_id, df1)
 
                 if self.legend_ax is not None:
                     style_ax_legend(ax, plot_id, self.legend_ax)
@@ -308,10 +349,14 @@ class BarPlotLoader(PlotLoader):
         if self.legend_fig is not None and self.subplots is not None:
             self.legend_fig.style_fig_legend(fig, axs)
 
+        # TODO [nku] MAKE CONFIGURABLE
+        fig.subplots_adjust(wspace=0.3)  # You can adjust the value based on your preference
+
 
         if self.subplots is not None:
             filename =  f"{etl_info['pipeline']}_debug" if self.show_debug_info else etl_info['pipeline']
             self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=True, output_filetypes=["pdf"])
+
 
 
     def debug_info(self, ax):
@@ -393,9 +438,6 @@ class BarPlotLoader(PlotLoader):
         if metric_cfg.log_y:
             ax.set_yscale('log')
 
-
-
-
         if  metric_cfg.y_max is not None:
             ax.set_ylim(0, metric_cfg.y_max)
         else:
@@ -417,7 +459,21 @@ class BarPlotLoader(PlotLoader):
 
             ax.set_ylim(*metric_cfg.y_lim_row[col])
 
+        if metric_cfg.n_y_ticks is not None:
+            ymin, ymax = ax.get_ylim()
 
+            ax.set_yticks(np.linspace(ymin, ymax, metric_cfg.n_y_ticks))
+
+
+        if metric_cfg.y_ticks_row is not None:
+
+            assert self.subplots is not None, "y_lim_row only supported for subplots"
+
+            col = subplot_idx[1]
+
+            print(f"ticks ={metric_cfg.y_ticks_row[col]}")
+
+            ax.set_yticks(metric_cfg.y_ticks_row[col])
 
         if metric_cfg.y_ticks is not None:
             ax.set_yticks(metric_cfg.y_ticks)
@@ -427,7 +483,15 @@ class BarPlotLoader(PlotLoader):
         if self.subplots is None:
             ax.set_ylabel(metric_cfg.y_label)
         elif subplot_idx[1] == 0:
-            ax.set_ylabel(metric_cfg.y_label)
+
+
+            if metric_cfg.y_label_pad is not None:
+                ax.set_ylabel(metric_cfg.y_label, labelpad=metric_cfg.y_label_pad)
+            else:
+                ax.set_ylabel(metric_cfg.y_label)
+
+        # Applying custom formatter to y-axis
+        ax.yaxis.set_major_formatter(FuncFormatter(format_axis_label))
 
         # TODO [nku] make configurable -> does not work?
         #ax.tick_params(axis='y', which='minor', bottom=False)
@@ -559,9 +623,69 @@ class BarPlotLoader(PlotLoader):
                 ax.set_title(title)
 
 
+    def get_zoom_info(self, metric_cfg, df_plot, zoom_threshold):
+        key = "$total_bar_height$"
 
-    def plot_bars(self, ax, metric_cfg, plot_id, df1):
+        df_plot[key] = df_plot[metric_cfg.bar_part_cols].sum(axis=1)
+
+
+        group_cols = self.group_cols[0] if len(self.group_cols) == 1 else self.group_cols
+
+        gb = df_plot.groupby(group_cols)
+        df_group_height =  gb[key].max()
+
+
+        df_plot_height = df_group_height.max()
+
+
+        df_group_height = df_group_height.to_frame('group_height')
+
+
+        df_group_height["factor_group_plot"] = df_group_height['group_height'] / df_plot_height
+
+        #print(f"df_group_height: {df_group_height}")
+
+        zoom_infos = []
+        connect_adjacent = False # TODO [nku] MAKE configurable
+        if connect_adjacent:
+            temp = []
+            for idx_bar_group, v in df_group_height.iterrows():
+
+                print(f"v = {v}")
+
+                if v["factor_group_plot"]  < zoom_threshold:
+                    idx_bar_group = (idx_bar_group, ) if not isinstance(idx_bar_group, tuple) else idx_bar_group
+                    bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group), strict=True)}
+                    temp.append((bar_group_id, v["group_height"]))
+                else:
+                    print(f"no zoom: {idx_bar_group}     -> {v}")
+                    if temp:
+                        zoom_infos.append({"bar_group_ids": [x for x, _ in temp], "bar_group_heights": [x for _, x in temp]})
+                        temp = []
+
+
+            if temp:
+                zoom_infos.append({"bar_group_ids": [x for x, _ in temp], "bar_group_heights": [x for _, x in temp]})
+        else:
+            for idx_bar_group, v in df_group_height.iterrows():
+                 if v["factor_group_plot"]  < zoom_threshold:
+                    idx_bar_group = (idx_bar_group, ) if not isinstance(idx_bar_group, tuple) else idx_bar_group
+                    bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group), strict=True)}
+
+                    zoom_infos.append({"bar_group_ids": [bar_group_id], "bar_group_heights": [v["group_height"]]})
+        print(f"\n\nzoom_infos: {zoom_infos}")
+
+
+        return zoom_infos
+
+
+    def plot_bars(self, ax, subplot_idx, metric_cfg, plot_id, df1):
         existing_labels = set()
+
+        # TODO [nku] make configurable
+        zoom_threshold = 0.15
+
+        zoom_infos = self.get_zoom_info(metric_cfg=metric_cfg, df_plot=df1, zoom_threshold=zoom_threshold)
 
         n_bars_per_group, n_bar_groups = self.get_bars_info(df1)
 
@@ -587,8 +711,78 @@ class BarPlotLoader(PlotLoader):
             group_ticks.append((group_pos_center, {**plot_id, **bar_group_id}))
 
             bar_cols = self.bar_cols[0] if len(self.bar_cols) == 1 else self.bar_cols
+
+
+            # TODO [nku] REFACTOR THE ZOOM PART
+            use_zoom = not metric_cfg.log_y
+
+            zoom = None
+            if not use_zoom:
+                zoom = None
+            else:
+                for zinfo in zoom_infos:
+                    if bar_group_id == zinfo["bar_group_ids"][0]:
+                        # start new zoom
+                        print(f"Starting new zoom: {bar_group_id}")
+
+                        zoom_span_n_groups = len(zinfo["bar_group_ids"])
+
+
+                        zoom_pos_right = np.arange(n_bar_groups)[i_group+zoom_span_n_groups-1]
+                        zoom_pos_right += (w * n_bars_per_group / 2.)
+
+                        x_bias = 0.2 * w
+                        xlim = (group_pos_left-x_bias, zoom_pos_right+x_bias)
+
+                        print(f"group_pos_left={group_pos_left}")
+                        ylim = (0, 1.2 * max(zinfo["bar_group_heights"]))
+
+
+                        # TODO [nku] change hardcoded positions
+                        x_bound_per_group = {
+                            0: 0.15,
+                            1: 0.52, # TODO untested
+                            2: 0.77,
+                        }
+
+                        y_bound = 0.28
+                        height_bound = 0.45
+                        width_bound = 0.2
+
+                        bias = 0.05
+                        bounds=[x_bound_per_group[i_group], y_bound,  zoom_span_n_groups * width_bound + (zoom_span_n_groups-1)*bias, height_bound]
+
+                        # bounds: [x0, y0, width, height] lower left corner and size
+
+                        # TODO: , yticks=yticklabels -> bring back
+
+                        inset_cfg = {}
+                        inset_cfg["bounds"] = bounds
+                        inset_cfg["xlim"] = xlim
+                        inset_cfg["ylim"] = ylim
+                        inset_cfg["xticks"] = []
+
+
+
+                        zinfo["inset_cfg"] = inset_cfg
+
+
+                        zinfo["y_ticks"] = set()
+
+
+                        zoom = zinfo
+                        break
+
+                    elif bar_group_id in zinfo["bar_group_ids"]:
+                        # continue zoom
+                        zoom = zinfo
+                        break
+
+
+
             for i_bar, (idx_bar, df_bar) in enumerate(df_bar_group.groupby(bar_cols)):
                 idx_bar = (idx_bar, ) if not isinstance(idx_bar, tuple) else idx_bar
+
 
                 bar_id = {k: v for k, v in zip(self.bar_cols, list(idx_bar), strict=True)}
 
@@ -628,6 +822,8 @@ class BarPlotLoader(PlotLoader):
 #
 
 
+
+
                 bottom = 0
 
                 for bar_part_col in metric_cfg.bar_part_cols:
@@ -649,7 +845,64 @@ class BarPlotLoader(PlotLoader):
 
                     ax.bar(bar_pos, df_bar[bar_part_col]["mean"], width=w, label=label, yerr=yerr,  bottom=bottom, **style_config)
 
+
+                    if zoom is not None:
+
+                        # TODO [nku] REFACTOR THE ZOOM PART
+
+                        if "axins"  in zoom:
+                            axins = zoom["axins"]
+                        else:
+
+
+
+                            axins = ax.inset_axes(**zoom["inset_cfg"])
+
+
+                            # TODO: make configurable
+                            axins.tick_params(axis='y', labelsize=7, length=1.5, pad=2) #, width=0.25  # Adjust the labelsize parameter based on your preference
+
+
+                            # Applying custom formatter to y-axis
+                            axins.yaxis.set_major_formatter(FuncFormatter(format_axis_label))
+
+
+
+
+
+
+
+
+                            zoom["axins"] = axins
+                        print("PRINTING AXINS!!!!!!!!!!!!!!!!")
+                        axins.bar(bar_pos, df_bar[bar_part_col]["mean"], width=w, label=label, yerr=yerr,  bottom=bottom, **style_config)
+
+                        print(df_bar["$total_bar_height$"])
+
+                        v = df_bar["$total_bar_height$"].values[0]
+
+                        v = math.ceil(v) if v > 10  else v
+
+                        zoom["y_ticks"].add(v)
+
+
+
+                        #ax.indicate_inset_zoom(axins)
+
+
                     bottom += df_bar[bar_part_col]["mean"]
+
+        for zinfo in zoom_infos:
+            #print(f"zinfo={zinfo['y_ticks']}")
+            if "axins" in zinfo:
+                zinfo["axins"].set_yticks(list(zinfo["y_ticks"]))
+            if "axins" in zinfo:
+                # important to call this after all the plotting as the axis limits
+                # most be known, otherwise, the connectors are not visible
+                ax.indicate_inset_zoom(zinfo["axins"])
+
+                zinfo["axins"].grid(True, axis="y", linestyle=':', color='0.6', zorder=0, linewidth=1.2)
+
 
         return group_ticks, bar_ticks
 
