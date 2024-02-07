@@ -207,30 +207,48 @@ def get_bar_style(bar_styles: List[BarStyle], full_id):
 
 from matplotlib.ticker import FuncFormatter
 
+
+
+
 # TODO [nku] make configurable
 def format_axis_label(value, _):
     """
     Custom formatting function for y-axis labels.
     """
 
-    if abs(value) >= 1e9:
-        formatted_number = f'{value / 1e9:.1f}'
+    def format(value):
+
+        if abs(value) < 0.001:
+            formatted_number = f'{value:.4f}'
+        elif abs(value) < 0.01:
+            formatted_number = f'{value:.3f}'
+        elif abs(value) < 0.1:
+            formatted_number = f'{value:.2f}'
+        else:
+            formatted_number = f'{value:.1f}'
+
+        # remove trailing zero
         formatted_number = formatted_number.rstrip('0').rstrip('.')
+
+        return formatted_number
+
+
+    if abs(value) >= 1e9:
+
+        formatted_number = format(value / 1e9)
         formatted_number += "B"
         val = formatted_number
     elif abs(value) >= 1e6:
-        formatted_number = f'{value / 1e6:.1f}'
-        formatted_number = formatted_number.rstrip('0').rstrip('.')
+        formatted_number = format(value / 1e6)
         formatted_number += "M"
         val = formatted_number
 
     elif abs(value) >= 1e3:
-        formatted_number =  f'{value / 1e3:.1f}'
-        formatted_number = formatted_number.rstrip('0').rstrip('.')
+        formatted_number = format(value / 1e3)
         formatted_number += "k"
         val = formatted_number
     else:
-        formatted_number =  f'{value:.1f}'
+        formatted_number = format(value)
         formatted_number = formatted_number.rstrip('0').rstrip('.')
         val = formatted_number
 
@@ -350,7 +368,7 @@ class BarPlotLoader(PlotLoader):
             self.legend_fig.style_fig_legend(fig, axs)
 
         # TODO [nku] MAKE CONFIGURABLE
-        fig.subplots_adjust(wspace=0.3)  # You can adjust the value based on your preference
+        fig.subplots_adjust(wspace=0.28) # 0.3 # You can adjust the value based on your preference
 
 
         if self.subplots is not None:
