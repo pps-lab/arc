@@ -156,20 +156,6 @@ $ETL$:
           filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
 
 
-        #legend_ax:
-#
-        #- format: "{} {}"
-        #  cols: [ 'mpc_type', "$bar_part_col$" ]
-#
-        #  kwargs: {loc: , bbox_to_anchor: ,ncol: , fancybox: , columnspacing: }
-        #  filter: {} # determines whether it applies or not to a plot
-
-
-        #legend_fig:
-        #  format: "{} {}"
-        #  cols: [ 'mpc_type', "$bar_part_col$" ]
-        #  kwargs: {loc: best, ncol: 1, fancybox: True}
-        #  subplot_idx: [0, 0]
         legend_fig:
           format: "{} {}"
           cols: [ 'mpc_type', "$bar_part_col$" ]
@@ -229,7 +215,158 @@ $ETL$:
             y_lim_row: [ [0, 1], [0, 1], [0, 4], [0, 32], [0, 32], [0, 20], [0, 320], [0, 1000]]
             n_y_ticks: 5
 
-            #y_ticks: [0.001, 0.01, 0.1, 1, 10, 100, 1000] #1000, 100000, 10000000, 1000000000, 100000000000]
+            plot_cols_filter:
+              network_type: [ 'lan' ] # I only want lan
+
+
+
+          wan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 3600.0 # switch to hours from secs
+            y_label: "WAN Time [h]"
+
+
+            n_y_ticks: 5
+            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 4.8], [0, 40], [0, 60], [0, 40], [0, 500], [0, 1600]]
+
+
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+
+
+          wan_bandwidth:
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+            y_label: "WAN Bandwidth [GB]"
+            y_unit_multiplicator: 1.0e-9 # transform to MB
+
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+            n_y_ticks: 5
+
+            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 50], [0, 500], [0, 500], [0, 400], [0, 8000], [0, 20000]]
+
+
+
+
+
+  compare_relatedwork_short:
+    experiments:
+      audit_robustness: "*"
+      audit_knnshapley: "*"
+      audit_knnshapley_wan: "*"
+      audit_fairness: "*"
+      audit_shap: "*"
+      audit_shap_wan: "*"
+
+    extractors:
+      $INCLUDE_STEPS$: [ { config: audit, pipeline: compare_relatedwork } ]
+
+    transformers:
+      - $INCLUDE_STEPS$: { config: audit, pipeline: compare_relatedwork }
+
+
+    loaders:
+      BarPlotLoader:
+
+        subplots:
+          rows: ["$metrics$", "network_type"]
+          cols: ["mpc.script_name", "mpc.script_args.dataset"]
+
+          share_y: none
+
+        cols_values_filter:
+          mpc.script_name: [ 'audit_sample_knnshapley' ] # 'audit_fairness', 'audit_robustness', 'audit_prediction_shap',
+          'consistency_args.type': [ 'pc', 'sha3s', 'cerebro'] #, ,
+
+          mpc_type: [ 'sh', 'mal' ]
+
+          host_idx: [ 0 ] # only plot one party
+          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
+          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
+          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+          'network_type': [ lan, wan ]
+
+        plot_cols: [ 'host_idx', 'mpc.script_name', 'mpc.script_args.dataset', 'network_type' ]
+        group_cols: [ 'consistency_args.type' ]
+        bar_cols: [ 'mpc_type' ]
+
+        bar_styles:
+
+        - style: {label: ~, edgecolor: black}
+          filter: {"consistency_args.type": ["pc"]}
+
+        - style: {color: "#d5e1a3", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#e7eec9", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+        - style: {color: "#4c72b0", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#a6b8d8", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+
+        legend_fig:
+          format: "{} {}"
+          cols: [ 'mpc_type', "$bar_part_col$" ]
+          kwargs: {loc: "upper center", ncol: 4, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
+
+
+        title:
+          format: "{} ({})"
+          plot_cols: [ "mpc.script_name", "mpc.script_args.dataset"]
+
+        group_labels:
+          cols: ['consistency_args.type']
+          format: "{}"
+
+        figure_size: [2.5, 1.8]
+        bar_width: 1.0 #1.2
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_bytes: ""
+          auditing_overhead_s: "Overhead"
+          auditing_overhead_bytes: "Overhead"
+          n_rounds: ""
+
+          ring: "Ring"
+          ring_split: "Ring"
+          custom_256: "Field"
+
+          audit_sample_knnshapley: "$\\bf{KNNShapley}$"
+          #audit_owner_unlearn: "Camel Unlearning"
+          audit_robustness: "$\\bf{Robustness}$"
+
+          audit_prediction_shap: "$\\bf{SHAP}$"
+          audit_fairness: "$\\bf{Fairness}$"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "C10"
+
+          pc: "$\\bf{Ours}$"
+          cerebro: "CC"
+          sha3: "SHA3"
+          sha3s: "SHA3"
+
+          sh: "SH"
+          mal: "MAL"
+
+        show_debug_info: False
+
+
+        metrics:
+          lan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 60.0 # switch to mins from secs
+            y_label: "LAN Time [min]"
+
+            y_lim_row: [ [0, 20], [0, 320], [0, 1000]]
+            n_y_ticks: 5
 
             plot_cols_filter:
               network_type: [ 'lan' ] # I only want lan
@@ -240,14 +377,11 @@ $ETL$:
             bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
             y_unit_divider: 3600.0 # switch to hours from secs
             y_label: "WAN Time [h]"
-            #            y_max: 18
-            #log_y: True
+
 
             n_y_ticks: 5
-            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 4.8], [0, 40], [0, 60], [0, 40], [0, 500], [0, 1600]]
+            y_lim_row: [[0, 40], [0, 500], [0, 1600]]
 
-
-            #y_ticks: [1000, 100000, 10000000, 1000000000, 100000000000]
 
             plot_cols_filter:
               network_type: [ 'wan' ] # I only want wan
@@ -257,34 +391,9 @@ $ETL$:
             bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
             y_label: "WAN Bandwidth [GB]"
             y_unit_multiplicator: 1.0e-9 # transform to MB
-            #log_y: True
 
             plot_cols_filter:
               network_type: [ 'wan' ] # I only want wan
             n_y_ticks: 5
 
-            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 50], [0, 500], [0, 500], [0, 400], [0, 8000], [0, 20000]]
-
-
-            #y_ticks: [1, 10, 100, 1000, 10000, 100000, 1000000, 10000000 ]
-#          time:
-#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-#            y_unit_divider: 60.0 # switch to mins from secs
-#            y_label: "Time [min]"
-#            log_y: True
-#            y_ticks: [ 0.01, 0.1, 1, 10 ]
-#
-#            legend_order: [ 0, 2, 1, 3 ]
-#            legend_ncol: 4
-#
-#          rounds:
-#            bar_part_cols: [ n_rounds ]
-#            y_label: "Rounds"
-#
-#          bandwidth:
-#            bar_part_cols: [ global_data_sent_mb, auditing_overhead_bytes ]
-#            y_label: "Bandwidth [MB]"
-#            y_unit_multiplicator: 1.0e-6 # transform to MB
-#            log_y: True
-#            legend_order: [ 0, 2, 1, 3 ]
-#            legend_ncol: 4
+            y_lim_row: [  [0, 400], [0, 8000], [0, 20000]]

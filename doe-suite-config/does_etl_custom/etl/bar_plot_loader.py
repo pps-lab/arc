@@ -228,7 +228,8 @@ def format_axis_label(value, _):
             formatted_number = f'{value:.1f}'
 
         # remove trailing zero
-        formatted_number = formatted_number.rstrip('0').rstrip('.')
+        if "." in formatted_number:
+            formatted_number = formatted_number.rstrip('0').rstrip('.')
 
         return formatted_number
 
@@ -249,7 +250,6 @@ def format_axis_label(value, _):
         val = formatted_number
     else:
         formatted_number = format(value)
-        formatted_number = formatted_number.rstrip('0').rstrip('.')
         val = formatted_number
 
     if val == "100M":
