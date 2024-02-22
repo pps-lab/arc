@@ -262,6 +262,13 @@ $ETL$:
           share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
           share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
 
+          share_input_convert_time_s: [ "consistency_convert_shares_share_switch_input_mus" ]
+          share_input_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
+
+          share_input_local_time_s: [
+            "consistency_poly_eval_poly_eval_mus",
+            "consistency_prove_verify_Prove Verify_mus"]
+
           poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
           poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
 
@@ -403,6 +410,15 @@ $ETL$:
             plot_cols_filter:
               network_type: [ 'lan' ] # I only want lan
 
+          lan_time_detail:
+            bar_part_cols: [ auditing_overhead_s, share_input_convert_time_s, share_input_local_time_s ]
+            y_unit_multiplicator: 1 # keep seconds
+            y_label: "LAN Time [sec]"
+
+            y_ticks: [ 1, 10, 100, 1000 ]
+
+            plot_cols_filter:
+              network_type: [ 'lan' ] # I only want lan
 
 
           wan_time:
