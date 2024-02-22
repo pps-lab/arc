@@ -298,6 +298,8 @@ class BarPlotLoader(PlotLoader):
         if df.empty:
             return
 
+        plt.set_loglevel("debug")
+
         plt.close('all')
 
         output_dir = self.get_output_dir(etl_info)
@@ -325,6 +327,8 @@ class BarPlotLoader(PlotLoader):
                     fig, ax = plt.subplots(1, 1)
                     subplot_idx = (0, 0)
                 else:
+                    # TODO: It seems previous call to setup_plt will mess things up here.. ?
+                    #  the additional pipeline in inference calls this which makes the fonts too big for the subplots.. maybe override the settings somehow here?
 
                     subplot_idx = subplots.get_subplot_idx(plot_id, metric_name)
 

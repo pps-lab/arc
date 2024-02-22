@@ -207,7 +207,7 @@ $ETL$:
           cifar_alexnet: "Cifar10"
 
           pc: "$\\bf{Ours}$"
-          cerebro: "CC"
+          cerebro: "PED"
           sha3: "SHA3"
           sha3s: "SHA3"
 
@@ -378,7 +378,7 @@ $ETL$:
           cifar_alexnet: "Cifar10"
 
           pc: "$\\bf{Ours}$"
-          cerebro: "CC"
+          cerebro: "PED"
           sha3: "SHA3"
           sha3s: "SHA3"
 
