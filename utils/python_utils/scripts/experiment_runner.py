@@ -361,6 +361,16 @@ def convert_shares(task_config, output_prefix):
                     if input_size > 0:
                         print(f"CEREBRO_INPUT_SIZE=({player_id},{input_size})", file=sys.stderr)
                         cerebro_verify(task_config, input_size)
+        elif task_config.consistency_args.type == "cerebro_ec":
+            # run poly_commit to compute cerebro exponentiation
+
+
+            # now we need to verify the commitment output
+            for player_id, inputs in player_input_counter.items():
+                for input_size in inputs:
+                    if input_size > 0:
+                        print(f"CEREBRO_INPUT_SIZE=({player_id},{input_size})", file=sys.stderr)
+                        cerebro_verify(task_config, input_size)
         elif task_config.consistency_args.type == "sha3":
             print("Computing sha3-based commitments, nothing else needed here.")
         elif task_config.consistency_args.type == "sha3s":
@@ -438,6 +448,8 @@ def convert_shares(task_config, output_prefix):
             print("Computing sha3 hash in separate script")
             compile_sha3_with_args(task_config, "standalone_sha3", False)
             run_sha3_with_args(task_config, "standalone_sha3", output_prefix, DEFAULT_RESULT_FOLDER, "output")
+
+            # TODO: Sign SHA as well?
         else:
 
             if total_output_length == 0:
@@ -488,28 +500,35 @@ def convert_shares(task_config, output_prefix):
                 for c in output_data:
                     print(f"CEREBRO_OUTPUT_SIZE=({c['object_type']},{c['length']})", file=sys.stderr)
             else:
-                # check how many commitments we need
-                # for each item in list output_data, add an arg with object_type
-                args = { c['object_type']: c['length'] for c in output_data }
-                args['s'] = total_input_length
-                args_str = " ".join([f"-{k} {v}" for k,v in args.items()])
+                pass
 
-                executable = f"./{executable_prefix}-pc-party.x"
+        # check how many commitments we need
+        # for each item in list output_data, add an arg with object_type
+        if task_config.consistency_args.type == "pc" or task_config.consistency_args.type == "cerebro_ec":
+            print("Computing sha3-based commitments, nothing else needed here.")
+            args = { c['object_type']: c['length'] for c in output_data }
+            args['s'] = total_input_length
+            args_str = " ".join([f"-{k} {v}" for k,v in args.items()])
+        else:
+            print("Will only sign commitments")
+            args_str = ""
 
-                executable_str = f"{executable} {spdz_args_str} {args_str}"
-                print(f"Computing commitments with command: {executable_str}")
+        executable = f"./{executable_prefix}-pc-party.x"
 
-                result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
-                poly_commit_phase = open(os.path.join(result_dir_path, "consistency_poly_commit.log"), "w+")
-                import subprocess
-                subprocess.run(
-                    executable_str,
-                    shell=True,
-                    cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
-                    check=True,
-                    stdout=poly_commit_phase,
-                    stderr=poly_commit_phase,
-                )
+        executable_str = f"{executable} {spdz_args_str} {args_str}"
+        print(f"Computing and signing commitments with command: {executable_str}")
+
+        result_dir_path = os.path.join(task_config.result_dir, DEFAULT_RESULT_FOLDER)
+        poly_commit_phase = open(os.path.join(result_dir_path, "consistency_poly_commit.log"), "w+")
+        import subprocess
+        subprocess.run(
+            executable_str,
+            shell=True,
+            cwd=os.path.join(task_config.abs_path_to_code_dir, "MP-SPDZ"),
+            check=True,
+            stdout=poly_commit_phase,
+            stderr=poly_commit_phase,
+        )
 
 
 def copy_transaction_files(conversion_not_needed, task_config):
