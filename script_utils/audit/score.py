@@ -1,5 +1,5 @@
 
-from Compiler.types import MultiArray, Array, sfix, cfix, sint, cint, regint, MemValue
+from Compiler.types import MultiArray, Array, Matrix, sfix, cfix, sint, cint, regint, MemValue
 from Compiler.dijkstra import HeapQ
 from Compiler.oram import OptimalORAM
 from Compiler.permutation import cond_swap
@@ -12,6 +12,100 @@ from Compiler import types
 from Compiler.script_utils import audit_function_utils as audit_utils
 
 import ml
+
+
+def cosine_distance(A: MultiArray, B: MultiArray, n_threads):
+    """
+    Computes the square of the euclidean distance
+
+    Following: https://nenadmarkus.com/p/all-pairs-euclidean/
+
+    Args:
+        A (MultiArray): P x M
+        B (MultiArray): R x M
+
+    Returns:
+        Pairwise euclidean distances between vectors in A and vectors in B
+        (MultiArray) P x R
+    """
+
+    aTa = Array(len(A), A.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(A))
+    def f(i):
+        aTa[i] = A.value_type.dot_product(A[i], A[i])
+
+    print(f"aTa={aTa.length}")
+
+    # bTb = B.dot(B.transpose())
+    bTb = Array(len(B) , B.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(B))
+    def f(i):
+        bTb[i] = B.value_type.dot_product(B[i], B[i])
+
+    print_ln("  bTb done")
+
+    print(f"bTb={bTb.length}")
+
+    L2 = A.dot(B.transpose())
+    print(f"L2={L2.sizes}")
+
+    print_ln("  AB done")
+
+    @lib.for_range_opt_multithread(n_threads, len(A))
+    def f(i):
+        L2[i] = L2[i] * -2 + bTb + aTa[i]
+
+    # Divide by aTa * bTb
+    # L2 = L2 / (aTa * bTb)
+    @lib.for_range_opt_multithread(n_threads, len(A))
+    def f(i):
+        L2[i] = L2[i] / (aTa[i] * bTb)
+
+    return L2
+
+
+def euclidean_distance(A: MultiArray, B: MultiArray, n_threads):
+    """
+    Computes the square of the euclidean distance
+
+    Following: https://nenadmarkus.com/p/all-pairs-euclidean/
+
+    Args:
+        A (MultiArray): P x M
+        B (MultiArray): R x M
+
+    Returns:
+        Pairwise euclidean distances between vectors in A and vectors in B
+        (MultiArray) P x R
+    """
+
+    aTa = Array(len(A), A.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(A))
+    def f(i):
+        aTa[i] = A.value_type.dot_product(A[i], A[i])
+
+    print(f"aTa={aTa.length}")
+
+    # bTb = B.dot(B.transpose())
+    bTb = Array(len(B) , B.value_type)
+    @lib.for_range_multithread(n_threads, 1, len(B))
+    def f(i):
+        bTb[i] = B.value_type.dot_product(B[i], B[i])
+
+    print_ln("  bTb done")
+
+    print(f"bTb={bTb.length}")
+
+    L2 = A.dot(B.transpose())
+    print(f"L2={L2.sizes}")
+
+    print_ln("  AB done")
+
+    @lib.for_range_opt_multithread(n_threads, len(A))
+    def f(i):
+        L2[i] = L2[i] * -2 + bTb + aTa[i]
+
+    return L2, aTa, bTb
 
 
 def audit(input_loader, config, debug: bool):
@@ -31,13 +125,13 @@ def audit(input_loader, config, debug: bool):
     # Idea for conversion?
     # TODO: Fix this for adult
     # TODO: Speed?
-    lib.start_timer(104)
+    lib.start_timer(108)
     _train_labels_idx = Array(len(train_samples), sint)
     @lib.for_range_opt_multithread(config.n_threads, len(train_samples))
     def _(i):
         _train_labels_idx[i] = ml.argmax(_train_labels[i])
 
-    lib.stop_timer(104)
+    lib.stop_timer(108)
     # for each train samples -> build ownership array
     train_samples_ownership = Array(len(train_samples), sint)
 
@@ -59,7 +153,9 @@ def audit(input_loader, config, debug: bool):
     model = input_loader.model()
     latent_space_layer, expected_latent_space_size = input_loader.model_latent_space_layer()
 
-    lib.start_timer(105)
+    n_checkpoints = 10
+
+    lib.start_timer(101)
     print_ln("Computing Latent Space for Training Set...")
 
     # Model.eval seems to take a really long time
@@ -72,22 +168,35 @@ def audit(input_loader, config, debug: bool):
     audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
     assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size), f"{audit_trigger_samples_latent_space.sizes} != {(len(audit_trigger_samples), expected_latent_space_size)}"
 
-    # train_samples_latent_space = MultiArray([len(train_samples), expected_latent_space_size], sfix)
-    # train_samples_latent_space.assign_all(sfix(1))
-    # audit_trigger_samples_latent_space = MultiArray([len(audit_trigger_samples), expected_latent_space_size], sfix)
-    # audit_trigger_samples_latent_space.assign_all(sfix(1))
+    # do this n_checkpoints - 1 more times
+    @lib.for_range_opt(n_checkpoints - 1)
+    def f(i):
+        train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
+        assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size), f"{train_samples_latent_space.sizes} != {(len(train_samples), expected_latent_space_size)}"
 
-    lib.stop_timer(105)
-    lib.start_timer(106)
+        print_ln("Computing Latent Space for Audit Trigger...")
+        audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
+        assert  audit_trigger_samples_latent_space.sizes == (len(audit_trigger_samples), expected_latent_space_size), f"{audit_trigger_samples_latent_space.sizes} != {(len(audit_trigger_samples), expected_latent_space_size)}"
+
+    lib.stop_timer(101)
+    lib.start_timer(102)
     # Score computation
 
     print(audit_trigger_samples_latent_space.sizes, train_samples_latent_space.total_size())
-    print_ln("Computing L2 distance...")
-    L2 = audit_utils.euclidean_dist_dot_product(A=train_samples_latent_space, B=audit_trigger_samples_latent_space, n_threads=config.n_threads)
-    L2 = L2.transpose()
-    assert L2.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {L2.sizes}"
+    print_ln("Computing scores...")
+    thetas = Array(n_checkpoints, sfix)
+    thetas.assign_all(sfix(1))
 
-    lib.stop_timer(106)
+    total_scores = Matrix(len(audit_trigger_samples), len(train_samples), sfix)
+    total_scores.assign_all(sfix(0))
+
+    # compute_score_euclid(n_checkpoints,train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config)
+    # compute_score_cosine(n_checkpoints,train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config)
+    compute_score_cosine_optimized(n_checkpoints,train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config)
+
+    L2 = total_scores
+
+    lib.stop_timer(102)
 
 
     n_audit_trigger_samples = len(audit_trigger_samples)
@@ -102,7 +211,6 @@ def audit(input_loader, config, debug: bool):
         audit_trigger_label = _audit_trigger_mislabels[audit_trigger_idx]
         audit_trigger_label_idx = ml.argmax(audit_trigger_label)
 
-        print(L2)
         print("L2")
         dist_arr = L2[audit_trigger_idx]
 
@@ -111,22 +219,14 @@ def audit(input_loader, config, debug: bool):
         data = concatenate([dist_arr, train_samples_idx, _train_labels_idx], axis=1)
         print("DATA SHAPE", data.sizes)
 
-        lib.start_timer(timer_id=101)
+        lib.start_timer(timer_id=103)
         if debug:
             print_ln("Before sort: %s", data.get_part(0, 10).reveal_nested())
         data.sort()
 
-        lib.stop_timer(timer_id=101)
+        lib.stop_timer(timer_id=103)
 
         assert data.sizes == (n_train_samples, 3), f"top k {data.sizes}"
-
-        # TODO: Optimize comparison ?
-        print(audit_trigger_idx, n_train_samples, knn_shapley_values.sizes, data.sizes)
-        # TODO: uses idx instead of array
-        knn_shapley_values[audit_trigger_idx][n_train_samples - 1] = \
-            sfix(data[n_train_samples - 1][2] == audit_trigger_label_idx) / n_audit_trigger_samples
-
-        lib.start_timer(timer_id=102)
 
     # From here now select the top-k or something
 
@@ -171,6 +271,79 @@ def audit(input_loader, config, debug: bool):
         pass
 
     return result
+
+
+def compute_score_euclid(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
+    @lib.for_range_opt(n_checkpoints)
+    def s(i):
+        score, aTa, bTb = euclidean_distance(A=train_samples_latent_space,
+                                                         B=audit_trigger_samples_latent_space,
+                                                         n_threads=config.n_threads)
+        score = score.transpose()
+        assert score.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {score.sizes}"
+        @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes[0])
+        def f(i):
+            total_scores[i] = total_scores[i] + (score[i] * thetas[i])
+
+def compute_score_cosine(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
+    @lib.for_range_opt(n_checkpoints)
+    def s(i):
+        score = cosine_distance(A=train_samples_latent_space, B=audit_trigger_samples_latent_space, n_threads=config.n_threads)
+        score = score.transpose()
+        assert score.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {score.sizes}"
+
+        @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes[0])
+        def f(i):
+            total_scores[i] = total_scores[i] + (score[i] * thetas[i])
+
+def compute_score_cosine_optimized(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
+    # TODO: Correctness?
+
+    all_scores = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
+    all_multipliers = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
+
+    @lib.for_range_opt(n_checkpoints)
+    def s(i):
+        score, aTa, bTb = euclidean_distance(A=train_samples_latent_space,
+                                             B=audit_trigger_samples_latent_space,
+                                             n_threads=config.n_threads)
+        score = score.transpose()
+        assert score.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {score.sizes}"
+
+        all_scores[i].assign(score)
+
+        @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes[0])
+        def f(j):
+            all_multipliers[i][j] = aTa[j] * bTb
+
+    cumulative_multiplier = MultiArray([len(audit_trigger_samples), len(train_samples)], sfix)
+    cumulative_multiplier.assign_all(sfix(1))
+    # now we look over the checkpoints and apply to each row i all multipliers from the other rows
+    @lib.for_range_opt(n_checkpoints)
+    def s(i):
+        @lib.for_range_opt_multithread(config.n_threads, all_multipliers[i].sizes[0])
+        def f(k):
+            cumulative_multiplier[k] = cumulative_multiplier[k] * all_multipliers[i][k]
+
+        for j in range(n_checkpoints):
+            # if i != j:
+            @lib.if_(i != j)
+            def f():
+                @lib.for_range_opt_multithread(config.n_threads, all_scores[i].sizes[0])
+                def f(k):
+                    all_scores[i][k] = all_scores[i][k] * all_multipliers[j][k]
+
+        # now we add all
+        @lib.for_range_opt_multithread(config.n_threads, all_scores[i].sizes[0])
+        def f(k):
+            total_scores[k] = total_scores[k] + (all_scores[i][k] * thetas[i])
+
+    # and now we divide all by cumulative multiplier
+    @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes)
+    def f(i, j):
+        print(total_scores[i], cumulative_multiplier[i])
+        total_scores[i][j] = total_scores[i][j] / cumulative_multiplier[i][j]
+
 
 def knn_naive(distance_array, idx_array, k):
     # O(nk * 3) swaps
