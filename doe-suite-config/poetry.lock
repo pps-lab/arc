@@ -98,6 +98,26 @@ files = [
 ]
 
 [[package]]
+name = "arrow"
+version = "1.3.0"
+description = "Better dates & times for Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "arrow-1.3.0-py3-none-any.whl", hash = "sha256:c728b120ebc00eb84e01882a6f5e7927a53960aa990ce7dd2b10f39005a67f80"},
+    {file = "arrow-1.3.0.tar.gz", hash = "sha256:d4540617648cb5f895730f1ad8c82a65f2dad0166f57b75f3ca54759c4d67a85"},
+]
+
+[package.dependencies]
+python-dateutil = ">=2.7.0"
+types-python-dateutil = ">=2.8.10"
+
+[package.extras]
+doc = ["doc8", "sphinx (>=7.0.0)", "sphinx-autobuild", "sphinx-autodoc-typehints", "sphinx_rtd_theme (>=1.3.0)"]
+test = ["dateparser (>=1.0.0,<2.0.0)", "pre-commit", "pytest", "pytest-cov", "pytest-mock", "pytz (==2021.1)", "simplejson (>=3.0.0,<4.0.0)"]
+
+[[package]]
 name = "atomicwrites"
 version = "1.4.1"
 description = "Atomic file writes."
@@ -197,6 +217,21 @@ soupsieve = ">1.2"
 [package.extras]
 html5lib = ["html5lib"]
 lxml = ["lxml"]
+
+[[package]]
+name = "binaryornot"
+version = "0.4.4"
+description = "Ultra-lightweight pure Python package to check if a file is binary or text."
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "binaryornot-0.4.4-py2.py3-none-any.whl", hash = "sha256:b8b71173c917bddcd2c16070412e369c3ed7f0528926f70cac18a6c97fd563e4"},
+    {file = "binaryornot-0.4.4.tar.gz", hash = "sha256:359501dfc9d40632edc9fac890e19542db1a287bbcfa58175b66658392018061"},
+]
+
+[package.dependencies]
+chardet = ">=3.0.2"
 
 [[package]]
 name = "boto3"
@@ -341,6 +376,18 @@ files = [
 pycparser = "*"
 
 [[package]]
+name = "chardet"
+version = "5.2.0"
+description = "Universal encoding detector for Python 3"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "chardet-5.2.0-py3-none-any.whl", hash = "sha256:e1cf59446890a00105fe7b7912492ea04b6e6f06d4b742b2c788469e34c82970"},
+    {file = "chardet-5.2.0.tar.gz", hash = "sha256:1b3b6ff479a8c414bc3fa2c0852995695c4a026dcd6d0633b2dd092ca39c1cf7"},
+]
+
+[[package]]
 name = "charset-normalizer"
 version = "3.3.2"
 description = "The Real First Universal Charset Detector. Open, modern and actively maintained alternative to Chardet."
@@ -441,6 +488,21 @@ files = [
 ]
 
 [[package]]
+name = "click"
+version = "8.1.7"
+description = "Composable command line interface toolkit"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "click-8.1.7-py3-none-any.whl", hash = "sha256:ae74fb96c20a0277a1d615f1e4d73c8414f5a98db8b799a7931d1582f3390c28"},
+    {file = "click-8.1.7.tar.gz", hash = "sha256:ca9853ad459e787e2192211578cc907e7594e294c7ccc834310722b41b9ca6de"},
+]
+
+[package.dependencies]
+colorama = {version = "*", markers = "platform_system == \"Windows\""}
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 description = "Cross-platform colored terminal text."
@@ -515,6 +577,28 @@ docs = ["furo", "sphinx (>=7.2)", "sphinx-copybutton"]
 mypy = ["contourpy[bokeh,docs]", "docutils-stubs", "mypy (==1.6.1)", "types-Pillow"]
 test = ["Pillow", "contourpy[test-no-images]", "matplotlib"]
 test-no-images = ["pytest", "pytest-cov", "pytest-xdist", "wurlitzer"]
+
+[[package]]
+name = "cookiecutter"
+version = "2.6.0"
+description = "A command-line utility that creates projects from project templates, e.g. creating a Python package project from a Python package project template."
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "cookiecutter-2.6.0-py3-none-any.whl", hash = "sha256:a54a8e37995e4ed963b3e82831072d1ad4b005af736bb17b99c2cbd9d41b6e2d"},
+    {file = "cookiecutter-2.6.0.tar.gz", hash = "sha256:db21f8169ea4f4fdc2408d48ca44859349de2647fbe494a9d6c3edfc0542c21c"},
+]
+
+[package.dependencies]
+arrow = "*"
+binaryornot = ">=0.4.4"
+click = ">=7.0,<9.0.0"
+Jinja2 = ">=2.7,<4.0.0"
+python-slugify = ">=4.0.0"
+pyyaml = ">=5.3.1"
+requests = ">=2.23.0"
+rich = "*"
 
 [[package]]
 name = "cryptography"
@@ -633,13 +717,16 @@ files = []
 develop = true
 
 [package.dependencies]
-ansible = ">=2.11"
+ansible = ">=2.15.5"
 argparse = "^1.4.0"
 autodoc-pydantic = "^1.7.2"
 boto3 = "^1.24.3"
+cookiecutter = "^2.6.0"
 enum-tools = "^0.9.0.post1"
+gossip = "^2.4.0"
 importlib-metadata = "^6.0.0"
-Jinja2 = "^3.1.2"
+Jinja2 = "^3.1.3"
+jmespath = "^1.0.1"
 matplotlib = "^3.5.2"
 pandas = "^1.4.2"
 pydantic = "^1.9.1"
@@ -653,6 +740,7 @@ sphinx-toolbox = "^3.2.0"
 sphinxcontrib-autoyaml = "^1.0.0"
 sphinxcontrib-programoutput = "^0.17"
 sphinxemoji = "^0.2.0"
+tqdm = "^4.66.2"
 
 [package.source]
 type = "directory"
@@ -782,6 +870,25 @@ unicode = ["unicodedata2 (>=15.1.0)"]
 woff = ["brotli (>=1.0.1)", "brotlicffi (>=0.8.0)", "zopfli (>=0.1.4)"]
 
 [[package]]
+name = "gossip"
+version = "2.4.0"
+description = "Signaling and hooking library"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "gossip-2.4.0.tar.gz", hash = "sha256:b46bc809b3b9a1e1649932f8c4ccea672c89f194c8969cd0f25b7f4b5b5d7f3a"},
+]
+
+[package.dependencies]
+logbook = ">=0.12.0"
+sentinels = "*"
+vintage = "*"
+
+[package.extras]
+testing = ["munch", "pylint", "pytest"]
+
+[[package]]
 name = "html5lib"
 version = "1.1"
 description = "HTML parser based on the WHATWG HTML specification"
@@ -865,14 +972,14 @@ testing = ["pytest (>=3.5,!=3.7.3)", "pytest-black (>=0.3.7)", "pytest-checkdocs
 
 [[package]]
 name = "jinja2"
-version = "3.1.2"
+version = "3.1.3"
 description = "A very fast and expressive template engine."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "Jinja2-3.1.2-py3-none-any.whl", hash = "sha256:6088930bfe239f0e6710546ab9c19c9ef35e29792895fed6e6e31a023a182a61"},
-    {file = "Jinja2-3.1.2.tar.gz", hash = "sha256:31351a702a408a9e7595a8fc6150fc3f43bb6bf7e319770cbc0db9df9437e852"},
+    {file = "Jinja2-3.1.3-py3-none-any.whl", hash = "sha256:7d6d50dd97d52cbc355597bd845fabfbac3f551e1f99619e39a35ce8c370b5fa"},
+    {file = "Jinja2-3.1.3.tar.gz", hash = "sha256:ac8bd6544d4bb2c9792bf3a159e80bba8fda7f07e81bc3aed565432d5925ba90"},
 ]
 
 [package.dependencies]
@@ -1008,6 +1115,90 @@ files = [
 ]
 
 [[package]]
+name = "logbook"
+version = "1.7.0.post0"
+description = "A logging replacement for Python"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "Logbook-1.7.0.post0-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:7113b95fcdf6c225ab985a238b9adf4f6c06888322e2d55c4520be089174fe8a"},
+    {file = "Logbook-1.7.0.post0-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:f3eff8de904bc737c70f5858de6a66bb0af7c0e8299a6bbd077535d6a48d072a"},
+    {file = "Logbook-1.7.0.post0-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:73b5c25a237c7a0f31b4d20b7b8a19b8b5228d65bd07db5e19d73961237f168c"},
+    {file = "Logbook-1.7.0.post0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e19e87818430565b84e4fb6c431d7f760fdebc42ad338c8f2f76940c4c2e39c2"},
+    {file = "Logbook-1.7.0.post0-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:4813bb9c0c20fee6adee12cff4fe8a2537136f961f7d14989d1b1445227a9c9a"},
+    {file = "Logbook-1.7.0.post0-cp310-cp310-win32.whl", hash = "sha256:de329234f70ddca0ed9fa2c273556e4ea665b9baa0df0c8c6ea8306f3892abd1"},
+    {file = "Logbook-1.7.0.post0-cp310-cp310-win_amd64.whl", hash = "sha256:45c4dec1466fadfc9b43d32d1f51b13cb0ac70acf7623d0096d5d6817b41331c"},
+    {file = "Logbook-1.7.0.post0-cp311-cp311-macosx_10_9_universal2.whl", hash = "sha256:607ee6fe2fea6a7c7fedbb5e76b22f23bf50db0d5bf3911645ef1dca182bb03f"},
+    {file = "Logbook-1.7.0.post0-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:ba35cdb82003a46d7d18abd1156e667f508c0ad3a1f2c85ad3536a45a25ad262"},
+    {file = "Logbook-1.7.0.post0-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:6cf194a9b5adb0101261eff1958991e475f1a5a62a173ba762054668b0b8f15c"},
+    {file = "Logbook-1.7.0.post0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d64616266dc283d6da78ac09396f8986ff7324230775a686784e8173646a755b"},
+    {file = "Logbook-1.7.0.post0-cp311-cp311-musllinux_1_1_x86_64.whl", hash = "sha256:7992c9c17a2b0df02f2583c1048da3df539d44084d8b7ba7781b41b6b814cedf"},
+    {file = "Logbook-1.7.0.post0-cp311-cp311-win32.whl", hash = "sha256:13c77ccdd35e951da43dcd0a2ece91d452841c70d3d9f87caa256456cf84d501"},
+    {file = "Logbook-1.7.0.post0-cp311-cp311-win_amd64.whl", hash = "sha256:344f5af32d0d1beda6f7256175d3debcb131749784fdf8e64e223a584ab49c5d"},
+    {file = "Logbook-1.7.0.post0-cp312-cp312-macosx_10_9_universal2.whl", hash = "sha256:b1e0b8c3d25a7cf539340c299a8a1fd37d19809a158c8849f6e73a6304f583c7"},
+    {file = "Logbook-1.7.0.post0-cp312-cp312-macosx_10_9_x86_64.whl", hash = "sha256:3f2928505d528fb2efa5c4c7e63bd0a3d5ded4d96db8e056ab61a69313739072"},
+    {file = "Logbook-1.7.0.post0-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:5f891dc3f60a18f85d09698d1ea429b2effb06bfd42a1835493efde5eb6ea08b"},
+    {file = "Logbook-1.7.0.post0-cp312-cp312-manylinux_2_5_x86_64.manylinux1_x86_64.manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:c7d7a39dbfa9c2793569691c719c6f0269a21b01583f33dfcc6052b3312fc5f2"},
+    {file = "Logbook-1.7.0.post0-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:40a8e1b4fc0d2fdf8e662fabd8a933ba1ce91a355c755ab7a1d13469ec0e590e"},
+    {file = "Logbook-1.7.0.post0-cp312-cp312-win32.whl", hash = "sha256:faf156af8a8954a227f141ffedf7ac1d9ba573b0066f19033ab2240329f94793"},
+    {file = "Logbook-1.7.0.post0-cp312-cp312-win_amd64.whl", hash = "sha256:6316fa5eb09b375980a9ee3fd8c72cf9020b532d4c73fd7cbfd7a1a74694739e"},
+    {file = "Logbook-1.7.0.post0-cp38-cp38-macosx_10_9_universal2.whl", hash = "sha256:f289ab3c6d68e6f9fd06900a53861ae7cc076a08e4eec1748768d5b1ad2a3fb9"},
+    {file = "Logbook-1.7.0.post0-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6c4dad41e41e20c72c2765ce8d99326582d36f62c7bde78c86527a3d341c79cf"},
+    {file = "Logbook-1.7.0.post0-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:dae3667fbeef15f71f602d941c05add5a6463c1e43eb6588cc9c416e5c218265"},
+    {file = "Logbook-1.7.0.post0-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:485b96eec6fe4628668383dd38ca9b5e26d876eab3f1fd407cfa96d5f9957e74"},
+    {file = "Logbook-1.7.0.post0-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:929f8bd97e3760b09bad08baac8fe01e8bf3519abba99dab8f08de1031a0b2a1"},
+    {file = "Logbook-1.7.0.post0-cp38-cp38-win32.whl", hash = "sha256:a2cbcefdc7a9d3bb2021cb9617b3d5aa60a1bca1b2f1fcea9fcf2c289abc4bdd"},
+    {file = "Logbook-1.7.0.post0-cp38-cp38-win_amd64.whl", hash = "sha256:9e6bc3a87a2a95d68f50dff6f7996db1112217f84e028f2fd1c6ef6b5f62a848"},
+    {file = "Logbook-1.7.0.post0-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:64d31734907d10a2d8486ae88bf9c4a4bdf99bf4fa72d23c3d766f135c887abe"},
+    {file = "Logbook-1.7.0.post0-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:a249c4933cf68564b6c1be528f09c8162e074af328b3601a2908b9f646f3cc5c"},
+    {file = "Logbook-1.7.0.post0-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:4e2e1dc4349d7c6807f6272af1107f4f0772db66f16cefcdc4bcdfa3507de1db"},
+    {file = "Logbook-1.7.0.post0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:85a478677c47243edefcea515bab3a3c1b1097833fb292731da45320a3f2b0a9"},
+    {file = "Logbook-1.7.0.post0-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:435342c48433b79723eea202ecc5647367aceefcce0c55e544ee2f88596c0c48"},
+    {file = "Logbook-1.7.0.post0-cp39-cp39-win32.whl", hash = "sha256:cab6faa8a163697d671e0fc7350615cc45fbc7c50f6e2b1bb8f81b976523dbd3"},
+    {file = "Logbook-1.7.0.post0-cp39-cp39-win_amd64.whl", hash = "sha256:8ceeb0acc24e11231b54c55edc3f064540ad1536b92f81baa6937911f48a1ce5"},
+    {file = "Logbook-1.7.0.post0.tar.gz", hash = "sha256:a5e8016701ca3beea6a390b0ba1541037f663543ca508ccd36cfdc841639cdd7"},
+]
+
+[package.extras]
+all = ["Logbook[compression,execnet,jinja,nteventlog,redis,sqlalchemy,zmq]"]
+compression = ["brotli"]
+dev = ["Logbook[test]", "tox (>=4)"]
+docs = ["Sphinx (>=5)"]
+execnet = ["execnet (>=1.0.9)"]
+jinja = ["Jinja2"]
+nteventlog = ["pywin32"]
+redis = ["redis"]
+sqlalchemy = ["sqlalchemy (>=1.4)"]
+test = ["pytest (>=6)", "pytest-rerunfailures"]
+zmq = ["pyzmq"]
+
+[[package]]
+name = "markdown-it-py"
+version = "3.0.0"
+description = "Python port of markdown-it. Markdown parsing, done right!"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "markdown-it-py-3.0.0.tar.gz", hash = "sha256:e3f60a94fa066dc52ec76661e37c851cb232d92f9886b15cb560aaada2df8feb"},
+    {file = "markdown_it_py-3.0.0-py3-none-any.whl", hash = "sha256:355216845c60bd96232cd8d8c40e8f9765cc86f46880e43a8fd22dc1a1a8cab1"},
+]
+
+[package.dependencies]
+mdurl = ">=0.1,<1.0"
+
+[package.extras]
+benchmarking = ["psutil", "pytest", "pytest-benchmark"]
+code-style = ["pre-commit (>=3.0,<4.0)"]
+compare = ["commonmark (>=0.9,<1.0)", "markdown (>=3.4,<4.0)", "mistletoe (>=1.0,<2.0)", "mistune (>=2.0,<3.0)", "panflute (>=2.3,<3.0)"]
+linkify = ["linkify-it-py (>=1,<3)"]
+plugins = ["mdit-py-plugins"]
+profiling = ["gprof2dot"]
+rtd = ["jupyter_sphinx", "mdit-py-plugins", "myst-parser", "pyyaml", "sphinx", "sphinx-copybutton", "sphinx-design", "sphinx_book_theme"]
+testing = ["coverage", "pytest", "pytest-cov", "pytest-regressions"]
+
+[[package]]
 name = "markupsafe"
 version = "2.1.3"
 description = "Safely add untrusted strings to HTML/XML markup."
@@ -1116,6 +1307,18 @@ packaging = ">=20.0"
 pillow = ">=8"
 pyparsing = ">=2.3.1"
 python-dateutil = ">=2.7"
+
+[[package]]
+name = "mdurl"
+version = "0.1.2"
+description = "Markdown URL utilities"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "mdurl-0.1.2-py3-none-any.whl", hash = "sha256:84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"},
+    {file = "mdurl-0.1.2.tar.gz", hash = "sha256:bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"},
+]
 
 [[package]]
 name = "more-itertools"
@@ -1578,6 +1781,24 @@ files = [
 six = ">=1.5"
 
 [[package]]
+name = "python-slugify"
+version = "8.0.4"
+description = "A Python slugify application that also handles Unicode"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "python-slugify-8.0.4.tar.gz", hash = "sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856"},
+    {file = "python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8"},
+]
+
+[package.dependencies]
+text-unidecode = ">=1.3"
+
+[package.extras]
+unidecode = ["Unidecode (>=1.1.1)"]
+
+[[package]]
 name = "pytz"
 version = "2023.3.post1"
 description = "World timezone definitions, modern and historical"
@@ -1690,6 +1911,25 @@ release = ["build", "towncrier", "twine"]
 test = ["commentjson", "packaging", "pytest"]
 
 [[package]]
+name = "rich"
+version = "13.7.1"
+description = "Render rich text, tables, progress bars, syntax highlighting, markdown and more to the terminal"
+category = "main"
+optional = false
+python-versions = ">=3.7.0"
+files = [
+    {file = "rich-13.7.1-py3-none-any.whl", hash = "sha256:4edbae314f59eb482f54e9e30bf00d33350aaa94f4bfcd4e9e3110e64d0d7222"},
+    {file = "rich-13.7.1.tar.gz", hash = "sha256:9be308cb1fe2f1f57d67ce99e95af38a1e2bc71ad9813b0e247cf7ffbcc3a432"},
+]
+
+[package.dependencies]
+markdown-it-py = ">=2.2.0"
+pygments = ">=2.13.0,<3.0.0"
+
+[package.extras]
+jupyter = ["ipywidgets (>=7.5.1,<9)"]
+
+[[package]]
 name = "ruamel-yaml"
 version = "0.16.13"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
@@ -1785,6 +2025,17 @@ botocore = ">=1.33.2,<2.0a.0"
 
 [package.extras]
 crt = ["botocore[crt] (>=1.33.2,<2.0a.0)"]
+
+[[package]]
+name = "sentinels"
+version = "1.0.0"
+description = "Various objects to denote special meanings in python"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "sentinels-1.0.0.tar.gz", hash = "sha256:7be0704d7fe1925e397e92d18669ace2f619c92b5d4eb21a89f31e026f9ff4b1"},
+]
 
 [[package]]
 name = "shellcheck-py"
@@ -2169,15 +2420,27 @@ files = [
 widechars = ["wcwidth"]
 
 [[package]]
+name = "text-unidecode"
+version = "1.3"
+description = "The most basic Text::Unidecode port"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "text-unidecode-1.3.tar.gz", hash = "sha256:bad6603bb14d279193107714b288be206cac565dfa49aa5b105294dd5c4aab93"},
+    {file = "text_unidecode-1.3-py2.py3-none-any.whl", hash = "sha256:1311f10e8b895935241623731c2ba64f4c455287888b18189350b67134a822e8"},
+]
+
+[[package]]
 name = "tqdm"
-version = "4.66.1"
+version = "4.66.2"
 description = "Fast, Extensible Progress Meter"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "tqdm-4.66.1-py3-none-any.whl", hash = "sha256:d302b3c5b53d47bce91fea46679d9c3c6508cf6332229aa1e7d8653723793386"},
-    {file = "tqdm-4.66.1.tar.gz", hash = "sha256:d88e651f9db8d8551a62556d3cff9e3034274ca5d66e93197cf2490e2dcb69c7"},
+    {file = "tqdm-4.66.2-py3-none-any.whl", hash = "sha256:1ee4f8a893eb9bef51c6e35730cebf234d5d0b6bd112b0271e10ed7c24a02bd9"},
+    {file = "tqdm-4.66.2.tar.gz", hash = "sha256:6cd52cdf0fef0e0f543299cfc96fec90d7b8a7e88745f411ec33eb44d5ed3531"},
 ]
 
 [package.dependencies]
@@ -2188,6 +2451,18 @@ dev = ["pytest (>=6)", "pytest-cov", "pytest-timeout", "pytest-xdist"]
 notebook = ["ipywidgets (>=6)"]
 slack = ["slack-sdk"]
 telegram = ["requests"]
+
+[[package]]
+name = "types-python-dateutil"
+version = "2.9.0.20240316"
+description = "Typing stubs for python-dateutil"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "types-python-dateutil-2.9.0.20240316.tar.gz", hash = "sha256:5d2f2e240b86905e40944dd787db6da9263f0deabef1076ddaed797351ec0202"},
+    {file = "types_python_dateutil-2.9.0.20240316-py3-none-any.whl", hash = "sha256:6b8cb66d960771ce5ff974e9dd45e38facb81718cc1e208b10b1baccbfdbee3b"},
+]
 
 [[package]]
 name = "typing-extensions"
@@ -2235,6 +2510,20 @@ brotli = ["brotli (>=1.0.9)", "brotlicffi (>=0.8.0)"]
 secure = ["certifi", "cryptography (>=1.9)", "idna (>=2.0.0)", "pyopenssl (>=17.1.0)", "urllib3-secure-extra"]
 socks = ["pysocks (>=1.5.6,!=1.5.7,<2.0)"]
 zstd = ["zstandard (>=0.18.0)"]
+
+[[package]]
+name = "vintage"
+version = "0.4.1"
+description = "Python library for deprecating code"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "vintage-0.4.1.tar.gz", hash = "sha256:0f69c717ddd61760c436e3ecf69f2823adb0d7ceeaca81b437a898bb90f594a1"},
+]
+
+[package.dependencies]
+six = "*"
 
 [[package]]
 name = "wcwidth"
