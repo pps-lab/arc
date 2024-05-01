@@ -539,3 +539,104 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
 
             filename = f"consistency_compare_{escape_tuple_str(idx_group)}"
             self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=False)
+
+class CerebroSpecificMultiplierTransformer(Transformer):
+
+    run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
+    timer_value_types: List[str] = ["", "_bw", "_rounds"]
+
+    timer_id_cerebro: str = "95"
+
+    timer_thread_help: int = 36 # we assume cerebro can be perfectly parallelized over 36 threads
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        def t_wrap(type):
+            def t(x):
+                # check if this group contains all 0s for n_batches
+                for timer_value_type in self.timer_value_types:
+                    timer_id = f"cerebro_{type}_spdz_timer{timer_value_type}_{self.timer_id_cerebro}"
+                    if timer_id not in x['stat'].unique():
+                        # print(f"Skipping run because it does not contain timer {timer_id}")
+                        return x
+                    n_amount_needed_id = f"n_{type}_cerebro"
+                    if len(x[x['stat'] == n_amount_needed_id]['stat_value'].unique()) != 1:
+                        print(f"Error: n_amount_needed_id is not unique for this group. Aborting")
+                        print(x)
+                        print(x[x['stat'] == n_amount_needed_id]['stat_value'])
+                        exit(1)
+                    n_amount_needed_id_value = int(x[x['stat'] == n_amount_needed_id]['stat_value'].values[0])
+                    if n_amount_needed_id_value == 6:
+                        n_amount_needed_id_value = 3
+
+                    timer_value = float(x[x['stat'] == timer_id]['stat_value'].values[0])
+                    if timer_value_type == "" and type == "output":
+                        n_amount_needed_id_value = ceil(n_amount_needed_id_value / self.timer_thread_help)
+                    timer_value *= n_amount_needed_id_value
+
+                    x.loc[x['stat'] == timer_id, 'stat_value'] = timer_value
+
+                    run_id = x['run'].unique()
+                    print("Multiplied cerebro timer value by ", n_amount_needed_id_value, " for timer ", timer_id, run_id)
+
+                return x
+            return t
+
+        df = df.groupby(self.run_def_cols).apply(t_wrap("input")).reset_index(drop=True)
+        # df = df.groupby(self.run_def_cols).apply(t_wrap("output")).reset_index(drop=True)
+        return df
+
+class ComputationSpecificMultiplierTransformer(Transformer):
+
+    run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
+    timer_value_types: List[str] = ["mus"]
+
+    timer_name: str = "1102"
+
+    percentage_model_size_training_data_size: Dict[str, float] = {
+        "cifar_alexnet": 0.071,
+        "mnist_full": 0.026,
+        "adult": 0.003,
+    }
+
+    def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        # if 'mpc.script_args.n_batches' not in df.columns:
+        #     return df
+
+        def t(x):
+            # check if this group contains an n_batches that is set
+            assert x['mpc.script_args.dataset'].unique().size == 1
+            assert x['mpc.script_args.consistency_check'].unique().size == 1
+
+            if x['mpc.script_args.consistency_check'].unique()[0] != "cerebro":
+                return x
+
+            dataset = x['mpc.script_args.dataset'].unique()[0]
+            percentage = self.percentage_model_size_training_data_size[dataset]
+
+            multiplier = (1 - percentage)
+            print(f"[SPECIFIC] Multiplier: {multiplier} for dataset {dataset}")
+
+            # consistency_convert_shares_share_switch_input_mus
+
+            for timer_value_type in self.timer_value_types:
+                timer_id = f"{self.timer_name}_{timer_value_type}"
+                if timer_id not in x['stat'].unique():
+                    print(f"Skipping run because it does not contain timer {timer_id}")
+                    return x
+                timer_values = x[x['stat'] == timer_id]['stat_value'].values
+                # Multiply all times_values (float) with the multiplier
+                timer_values_upd = [float(timer_value) * multiplier for timer_value in timer_values]
+                # if len(x[x['stat'] == timer_id]['stat_value'].values) != 1:
+                #     print(x)
+                #     print("Not all")
+                #     exit(1)
+                print("[SPECIFIC] Original timer value: ", timer_values, " for timer ", timer_id, " after ", timer_values_upd)
+                # timer_value *= multiplier
+                x.loc[x['stat'] == timer_id, 'stat_value'] = timer_values_upd
+
+            return x
+
+        df = df.groupby(self.run_def_cols).apply(t).reset_index(drop=True)
+        return df

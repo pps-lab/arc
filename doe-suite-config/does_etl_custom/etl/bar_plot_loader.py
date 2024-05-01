@@ -317,7 +317,7 @@ class BarPlotLoader(PlotLoader):
             for idx_plot, df_plot in df_filtered.groupby(self.plot_cols):
 
                 idx_plot = (idx_plot, ) if not isinstance(idx_plot, tuple) else idx_plot
-                plot_id = {k: v for k, v in zip(self.plot_cols, list(idx_plot), strict=True)}
+                plot_id = {k: v for k, v in zip(self.plot_cols, list(idx_plot))}
 
                 print(f"  Creating {plot_id} plot...")
 
@@ -677,7 +677,7 @@ class BarPlotLoader(PlotLoader):
 
                 if v["factor_group_plot"]  < zoom_threshold:
                     idx_bar_group = (idx_bar_group, ) if not isinstance(idx_bar_group, tuple) else idx_bar_group
-                    bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group), strict=True)}
+                    bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group))}
                     temp.append((bar_group_id, v["group_height"]))
                 else:
                     print(f"no zoom: {idx_bar_group}     -> {v}")
@@ -692,7 +692,7 @@ class BarPlotLoader(PlotLoader):
             for idx_bar_group, v in df_group_height.iterrows():
                  if v["factor_group_plot"]  < zoom_threshold:
                     idx_bar_group = (idx_bar_group, ) if not isinstance(idx_bar_group, tuple) else idx_bar_group
-                    bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group), strict=True)}
+                    bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group))}
 
                     zoom_infos.append({"bar_group_ids": [bar_group_id], "bar_group_heights": [v["group_height"]]})
         print(f"\n\nzoom_infos: {zoom_infos}")
@@ -723,7 +723,7 @@ class BarPlotLoader(PlotLoader):
             idx_bar_group = (idx_bar_group, ) if not isinstance(idx_bar_group, tuple) else idx_bar_group
 
 
-            bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group), strict=True)}
+            bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group))}
 
 
             group_pos_center = np.arange(n_bar_groups)[i_group]
@@ -806,7 +806,7 @@ class BarPlotLoader(PlotLoader):
                 idx_bar = (idx_bar, ) if not isinstance(idx_bar, tuple) else idx_bar
 
 
-                bar_id = {k: v for k, v in zip(self.bar_cols, list(idx_bar), strict=True)}
+                bar_id = {k: v for k, v in zip(self.bar_cols, list(idx_bar))}
 
 
                 # TODO [nku] should be unified and also should be available for groups
@@ -980,8 +980,8 @@ class Subplots:
 
         for metric_name, metric_cfg in loader.metrics.items():
             for idx_plot, _ in df.groupby(loader.plot_cols):
-
-                plot_id = {k: v for k, v in zip(loader.plot_cols, list(idx_plot), strict=True)}
+                print(loader.plot_cols, idx_plot)
+                plot_id = {k: v for k, v in zip(loader.plot_cols, list(idx_plot))}
 
                 # skipping plots that are not in the filter
                 if metric_cfg.plot_cols_filter is not None:

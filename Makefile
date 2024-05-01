@@ -75,6 +75,11 @@ ring-test: simlink
 ring-sha: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False consistency_check__sha3
 
+ring-cos: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine
+
+ring-cosopt: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine_presort_l2
 
 compile-field: simlink
 	cd MP-SPDZ && ./compile.py $(script) $(AUDITARGS) emulate__True debug__True

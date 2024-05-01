@@ -13,14 +13,14 @@ $SUITE_VARS$:
   convert_n_threads: 36
   convert_chunk_size: 150000
 
-  consistency_args:
-    abs_path_to_code_dir: "{{ exp_consistency_dir }}"
-    hosts_file: "{{ exp_consistency_hosts_file }}"
-    pc: kzg
-    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
-    gen_pp: True
-    type: $FACTOR$
-    use_split: True
+  consistency_args: ~
+#    abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+#    hosts_file: "{{ exp_consistency_hosts_file }}"
+#    pc: kzg
+#    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
+#    gen_pp: True
+#    type: $FACTOR$
+#    use_split: True
 
   mpc:
     player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
@@ -34,7 +34,6 @@ $SUITE_VARS$:
 
     script_args:
 
-      consistency_check: "[% my_run.consistency_args.type %]"
       sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor_full | default(1) %]" # we prove full dataset
 
       n_samples: 1
@@ -71,9 +70,9 @@ audit_score_3pc:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-    consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
-      type:
-        $FACTOR$: [ sha3s, cerebro, pc ]
+#    consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
+#      type:
+#        $FACTOR$: [ sha3s, cerebro, pc ]
 
     network_type: lan
     mpc_type: $FACTOR$
@@ -82,6 +81,10 @@ audit_score_3pc:
       script_name: audit_owner_score
       script_args:
         sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
+
+        pre_score_select_k: 50
+        score_method:
+          $FACTOR$: [ l2, cosine, cosine_presort_l2 ]
 
   factor_levels:
 
@@ -92,12 +95,12 @@ audit_score_3pc:
         compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
         custom_prime: null
 
-    - mpc_type: mal
-      mpc: # should convert
-        protocol_setup: "sy-rep-ring-party"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
-        custom_prime: null
+#    - mpc_type: mal
+#      mpc: # should convert
+#        protocol_setup: "sy-rep-ring-party"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+#        custom_prime: null
 
 #
 #audit_robustness_3pc_wan:

@@ -31,3 +31,5 @@ euler_gpu_model: ~ # if set to a specific GPU, then the euler_gpu_min_mem_per_gp
 euler_env: gcc/8.2.0 python/3.9.9
 
 euler_scratch_dir: "/cluster/scratch/{{ euler_user }}"
+
+docker_image_id: doe-ubuntu20

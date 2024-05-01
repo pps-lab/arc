@@ -15,6 +15,13 @@ class AuditConfig(config.BaseAuditModel):
     K: int = 25 # knn K
     mod_zscore_threshold: float = 2.5
 
+    n_checkpoints: int = 10
+
+    pre_score_select_k: int = None #
+
+    score_method: str = "l2" # l2, cosine
+
+
 program.options_from_args()
 cfg = config.from_program_args(program.args, AuditConfig)
 
