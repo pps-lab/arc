@@ -130,7 +130,7 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     """Defines the relevant model for the configuration received via the config.json file"""
     mpc: JsoncMpcConfig
     consistency_args: typing.Optional[JsonConsistencyConfig] = None
-    commit_output: typing.Optional[bool] = False
+    commit_output: typing.Optional[bool] = None
     convert_ring_bits: int = 34
     convert_n_threads: int = 18 # should work?
     convert_chunk_size: int = 500000

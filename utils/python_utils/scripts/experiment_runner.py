@@ -237,7 +237,7 @@ def cerebro_verify(task_config, input_size):
     )
 
 def convert_shares(task_config, output_prefix):
-    if task_config.commit_output is None and task_config.consistency_args is None:
+    if task_config.commit_output != True and task_config.consistency_args is None:
         print("No commit or consistency check specified. No need to convert shares.")
         return
 
