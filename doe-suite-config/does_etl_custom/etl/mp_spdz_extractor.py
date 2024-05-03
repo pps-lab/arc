@@ -11,7 +11,9 @@ import pathlib
 import json
 
 class MpSpdzStderrExtractor(Extractor):
-    
+
+    ignore_errors = False
+
     def default_file_regex():
         return ["^stderr\\.log$"]
 
@@ -50,7 +52,7 @@ class MpSpdzStderrExtractor(Extractor):
         # print(content[:100])
 
         error_regex = r"^Traceback \(most recent call last\):$"
-        if re.search(error_regex, content, re.MULTILINE):
+        if not self.ignore_errors and re.search(error_regex, content, re.MULTILINE):
             raise Exception("Found error in file", path)
 
         # Extract transfered data, round number and host

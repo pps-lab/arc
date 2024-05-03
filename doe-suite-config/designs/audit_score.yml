@@ -8,7 +8,7 @@ $SUITE_VARS$:
 
   $INCLUDE_VARS$: dataset.yml
 
-  commit_output: False
+  commit_output: ~
   convert_ring_bits: 31
   convert_n_threads: 36
   convert_chunk_size: 150000
@@ -63,7 +63,7 @@ audit_score_3pc:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
+        - setup-adult
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"

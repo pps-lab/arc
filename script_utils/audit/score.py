@@ -394,6 +394,7 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
     all_multipliers_flat = [all_multipliers[i] for i in range(n_checkpoints)]
 
     presort_idx = Matrix(len(audit_trigger_samples), config.pre_score_select_k, sfix)
+    presort_idx.assign_all(sfix(0))
 
     print_ln("Prescoring l2 done")
 
@@ -441,9 +442,9 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
             total_scores[audit_trigger_idx][j] = sum
             presort_idx[audit_trigger_idx][j] = scores_top_pre_k[j][1]
 
-        # Now sort
-    print(total_scores)
-    print_ln(total_scores.reveal_nested())
+    # Somehow this reveal here causes non-determinism in compilation
+    # print(total_scores)
+    # print_ln(total_scores.reveal_nested())
 
     return total_scores, presort_idx
 
