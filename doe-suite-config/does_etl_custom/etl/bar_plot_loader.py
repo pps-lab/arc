@@ -309,6 +309,8 @@ class BarPlotLoader(PlotLoader):
         if self.subplots is not None:
             subplots = Subplots()
             fig, axs = subplots.init_subplots(df=df_filtered, loader=self)
+        else:
+            fig, axs = plt.subplots(1, 1, figsize=self.figure_size)
 
         for metric_name, metric_cfg in self.metrics.items():
 
@@ -335,7 +337,12 @@ class BarPlotLoader(PlotLoader):
                     if subplot_idx is None:
                         continue
 
-                    ax = axs[subplot_idx[0], subplot_idx[1]]
+                    # print axs sizes
+                    print(f"axs.shape = {axs.shape}, subplot_idx = {subplot_idx}")
+                    if len(axs.shape) == 2:
+                        ax = axs[subplot_idx[0], subplot_idx[1]]
+                    else:
+                        ax = axs[subplot_idx[0]]
 
 
                 df1 = self.aggregate_data(df_plot, metric_cfg)

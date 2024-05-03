@@ -26,6 +26,9 @@ from typing import Tuple, Literal, Any
 
 COLOR_GRAY = '#999999'
 
+import logging
+logging.getLogger('matplotlib.font_manager').disabled = True
+
 class MPCTypeFixTransformer(Transformer):
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
