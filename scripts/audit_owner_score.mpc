@@ -25,10 +25,10 @@ class AuditConfig(config.BaseAuditModel):
 program.options_from_args()
 cfg = config.from_program_args(program.args, AuditConfig)
 
-if not cfg.emulate:
-    program.use_trunc_pr = True
-    program.use_edabits = True
-    # program.use_split(4)
+# if not cfg.emulate:
+#     program.use_trunc_pr = False
+#     program.use_edabits = True
+#     # program.use_split(4)
 
 ml.set_n_threads(cfg.n_threads)
 

@@ -398,6 +398,8 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
     print_ln("Prescoring l2 done")
 
+    
+
     # sort by total_scores and select k
     @lib.for_range_opt(len(audit_trigger_samples))
     def sort(audit_trigger_idx):
