@@ -22,34 +22,10 @@ def cosine_distance(A: MultiArray, B: MultiArray, n_threads):
         (MultiArray) P x R
     """
 
-    aTa = Array(len(A), A.value_type)
-    @lib.for_range_multithread(n_threads, 1, len(A))
-    def f(i):
-        aTa[i] = A.value_type.dot_product(A[i], A[i])
+    L2, _, _ = euclidean_distance_naive(A, B, n_threads)
+    aTa = compute_magnitudes(A, n_threads)
+    bTb = compute_magnitudes(B, n_threads)
 
-    print(f"aTa={aTa.length}")
-
-    # bTb = B.dot(B.transpose())
-    bTb = Array(len(B) , B.value_type)
-    @lib.for_range_multithread(n_threads, 1, len(B))
-    def f(i):
-        bTb[i] = B.value_type.dot_product(B[i], B[i])
-
-    print_ln("  bTb done")
-
-    print(f"bTb={bTb.length}")
-
-    L2 = A.dot(B.transpose())
-    print(f"L2={L2.sizes}")
-
-    print_ln("  AB done")
-
-    @lib.for_range_opt_multithread(n_threads, len(A))
-    def f(i):
-        L2[i] = L2[i] * -2 + bTb + aTa[i]
-
-    # Divide by aTa * bTb
-    # L2 = L2 / (aTa * bTb)
     @lib.for_range_opt_multithread(n_threads, len(A))
     def f(i):
         L2[i] = L2[i] / (aTa[i] * bTb)
@@ -417,6 +393,9 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
     total_scores_l2 = Matrix(len(audit_trigger_samples), len(train_samples), sfix)
     total_scores_l2.assign_all(sfix(0))
+
+    lib.start_timer(timer_id=105)
+
     @lib.for_range_opt(n_checkpoints)
     def s(checkpoint_id):
         score, _, _ = euclidean_distance_naive(A=train_samples_latent_space[checkpoint_id],
@@ -436,6 +415,8 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
         print_ln("Done score transpose after")
     print_ln("Done score for range checkpoints")
+
+    lib.stop_timer(timer_id=105)
 
     n_train_samples = len(train_samples)
     train_samples_idx = Array.create_from(cint(x) for x in range(n_train_samples))
@@ -481,6 +462,8 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
         print("scores_top_pre_k", scores_top_pre_k.sizes, scores_top_pre_k[2 + 1])
 
+        lib.start_timer(timer_id=106)
+
         @lib.for_range_opt(config.pre_score_select_k)
         def f(j):
             # @lib.map_sum_opt(config.n_threads, n_checkpoints, [sfix])
@@ -494,6 +477,8 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
             total_scores[audit_trigger_idx][j] = sum
             presort_idx[audit_trigger_idx][j] = scores_top_pre_k[j][1]
+
+        lib.stop_timer(timer_id=106)
 
     # Somehow this reveal here causes non-determinism in compilation
     # print(total_scores)
