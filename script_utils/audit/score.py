@@ -21,10 +21,19 @@ def cosine_distance(A: MultiArray, B: MultiArray, n_threads):
         Pairwise euclidean distances between vectors in A and vectors in B
         (MultiArray) P x R
     """
+    print_ln("cosine_distance")
 
     L2, _, _ = euclidean_distance_naive(A, B, n_threads)
+    # aTa = Array(len(A), A.value_type)
+    # bTb = Array(len(B), B.value_type)
     aTa = compute_magnitudes(A, n_threads)
     bTb = compute_magnitudes(B, n_threads)
+    #
+
+
+    # print("aTa", aTa)
+    # print("bTb", bTb)
+    print("L2", L2)
 
     @lib.for_range_opt_multithread(n_threads, len(A))
     def f(i):
@@ -120,10 +129,22 @@ def compute_magnitudes(A: MultiArray, n_threads):
     """
     assert len(A.shape) == 2, "Only 2D arrays supported"
 
+    print("Compute Magnitudes")
     aTa = Array(len(A) , A.value_type)
     @lib.for_range_opt(1, len(A))
     def f(i):
+        # aTa[i] = A[i].dot(A[i])
         aTa[i] = A.value_type.dot_product(A[i], A[i])
+
+    # print(A, "A type", A.shape)
+
+    # aTa = A.dot(A.transpose())
+    # aTa = Matrix(len(A), len(A), A.value_type)
+    # print(aTa, "ata")
+    # # print(aTa.diag())
+    #
+    # arr = Array.create_from(aTa.diag())
+    # arr = Array(len(A), A.value_type)
 
     return aTa
 
@@ -308,6 +329,13 @@ def compute_score(score_method, n_checkpoints, train_samples_latent_space, audit
         total_scores_out, samples_idx = compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config)
         print("total_scores_out", total_scores_out.sizes, total_scores_out.reveal_nested())
         return total_scores_out, samples_idx
+    elif score_method == "cosine_presort_l2_compute":
+        assert config.pre_score_select_k is not None
+        total_scores = Matrix(len(audit_trigger_samples), config.pre_score_select_k, sfix)
+        total_scores.assign_all(sfix(0))
+        total_scores_out, samples_idx = compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config)
+        print("total_scores_out", total_scores_out.sizes, total_scores_out.reveal_nested())
+        return total_scores_out, samples_idx
     else:
         raise ValueError(f"Score method {score_method} not supported!")
 
@@ -389,7 +417,7 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
     # TODO: Correctness?
 
     all_scores_l2 = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
-    # all_multipliers = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
+    all_multipliers = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
 
     total_scores_l2 = Matrix(len(audit_trigger_samples), len(train_samples), sfix)
     total_scores_l2.assign_all(sfix(0))
@@ -405,14 +433,14 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
         assert score.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {score.sizes}"
         all_scores_l2[checkpoint_id] = score
 
-        # Do not compute those here because its probably slow
-        # aTa = compute_magnitudes(train_samples_latent_space[checkpoint_id], config.n_threads)
-        # bTb = compute_magnitudes(audit_trigger_samples_latent_space[checkpoint_id], config.n_threads)
+        # Do compute those here because its probably slow
+        aTa = compute_magnitudes(train_samples_latent_space[checkpoint_id], config.n_threads)
+        bTb = compute_magnitudes(audit_trigger_samples_latent_space[checkpoint_id], config.n_threads)
 
         @lib.for_range_opt_multithread(config.n_threads, total_scores_l2.sizes[0])
         def f(j):
             total_scores_l2[:] = total_scores_l2[:] + (score[j] * thetas[checkpoint_id]) # TODO: I think?
-            # all_multipliers[checkpoint_id][j] = aTa[j] * bTb
+            all_multipliers[checkpoint_id][j] = aTa[j] * bTb
 
         print_ln("Done score transpose after")
     print_ln("Done score for range checkpoints")
@@ -424,7 +452,7 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
     # we need to flatten all_scores_l2 and all_multipliers
     all_scores_l2_flat = [all_scores_l2[i] for i in range(n_checkpoints)]
-    # all_multipliers_flat = [all_multipliers[i] for i in range(n_checkpoints)]
+    all_multipliers_flat = [all_multipliers[i] for i in range(n_checkpoints)]
 
     presort_idx = Matrix(len(audit_trigger_samples), config.pre_score_select_k, sfix)
     presort_idx.assign_all(sfix(0))
@@ -441,22 +469,23 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
         # for now we let the sort also sort our precomputed l2s and multipliers
         all_scores_l2_flat_trigger = [all_scores_l2_flat[i][audit_trigger_idx] for i in range(n_checkpoints)]
-        train_sample_latent_len = train_samples_latent_space.shape[2]
-        print(train_sample_latent_len, "latent len")
-        matrix_sample_by_latent = Matrix(n_train_samples, train_sample_latent_len * n_checkpoints, sfix)
-        @lib.for_range_opt(n_checkpoints)
-        def f(checkpoint_id):
-            matrix_sample_by_latent.assign(train_samples_latent_space[checkpoint_id], len(train_samples) * checkpoint_id * train_sample_latent_len)
+        all_multipliers_flat_trigger = [all_multipliers_flat[i][audit_trigger_idx] for i in range(n_checkpoints)]
+
+        # If we want to sort aLL!
+        # train_sample_latent_len = train_samples_latent_space.shape[2]
+        # print(train_sample_latent_len, "latent len")
+        # matrix_sample_by_latent = Matrix(n_train_samples, train_sample_latent_len * n_checkpoints, sfix)
+        # @lib.for_range_opt(n_checkpoints)
+        # def f(checkpoint_id):
+        #     matrix_sample_by_latent.assign(train_samples_latent_space[checkpoint_id], len(train_samples) * checkpoint_id * train_sample_latent_len)
 
         # all_latent_flat = [train_samples_latent_space[i] for i in range(n_checkpoints)]
         # all_latent_flat = [[all_latent_flat[i] for j in range(train_sample_latent_len)] for i in range(n_checkpoints)]
-        print("matrix_sample_by_latent", matrix_sample_by_latent)
-        # all_multipliers_flat_trigger = [all_multipliers_flat[i][audit_trigger_idx] for i in range(n_checkpoints)]
+        # print("matrix_sample_by_latent", matrix_sample_by_latent)
         # print("tyoes", all_scores_l2_flat_trigger, all_multipliers_flat_trigger)
 
-        data = concatenate([dist_arr, train_samples_idx] + all_scores_l2_flat_trigger, axis=1)
-        print("DATA SHAPE", data.sizes, matrix_sample_by_latent.shape)
-        data = data.transpose().concat(matrix_sample_by_latent.transpose()).transpose()
+        data = concatenate([dist_arr, train_samples_idx] + all_scores_l2_flat_trigger + all_multipliers_flat_trigger, axis=1)
+        # data = data.transpose().concat(matrix_sample_by_latent.transpose()).transpose()
         print("DATA SHAPE", data.sizes)
 
         lib.start_timer(timer_id=104)
