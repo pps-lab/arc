@@ -341,6 +341,8 @@ def compute_score(score_method, n_checkpoints, train_samples_latent_space, audit
 
 
 def compute_score_euclid(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
+
+    lib.start_timer(timer_id=105)
     @lib.for_range_opt(n_checkpoints)
     def s(checkpoint_id):
         score, aTa, bTb = euclidean_distance_naive(A=train_samples_latent_space[checkpoint_id],
@@ -351,8 +353,10 @@ def compute_score_euclid(n_checkpoints, train_samples_latent_space, audit_trigge
         @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes[0])
         def f(i):
             total_scores[i] = total_scores[i] + (score[i] * thetas[checkpoint_id])
+    lib.stop_timer(timer_id=105)
 
 def compute_score_cosine(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
+    lib.start_timer(timer_id=105)
     @lib.for_range_opt(n_checkpoints)
     def s(checkpoint_id):
         score = cosine_distance(A=train_samples_latent_space[checkpoint_id], B=audit_trigger_samples_latent_space[checkpoint_id], n_threads=config.n_threads)
@@ -362,6 +366,7 @@ def compute_score_cosine(n_checkpoints, train_samples_latent_space, audit_trigge
         @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes[0])
         def f(i):
             total_scores[i] = total_scores[i] + (score[i] * thetas[checkpoint_id])
+    lib.stop_timer(timer_id=105)
 
 def compute_score_cosine_opt_defer_div(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
     # TODO: Correctness?
