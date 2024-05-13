@@ -200,16 +200,20 @@ def audit(input_loader, config, debug: bool):
 
     train_samples_latent_space = MultiArray([config.n_checkpoints, len(train_samples), expected_latent_space_size], sfix)
     audit_trigger_samples_latent_space = MultiArray([config.n_checkpoints, len(audit_trigger_samples), expected_latent_space_size], sfix)
+    train_samples_latent_space.assign_all(sfix(0))
+    audit_trigger_samples_latent_space.assign_all(sfix(0))
 
-    # do this n_checkpoints - 1 more times
-    @lib.for_range_opt(config.n_checkpoints)
-    def f(i):
-        train_samples_latent_space[i] = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
-        assert train_samples_latent_space.sizes == (config.n_checkpoints, len(train_samples), expected_latent_space_size), f"{train_samples_latent_space.sizes} != {(len(train_samples), expected_latent_space_size)}"
+    if not config.skip_inference:
+        print_ln("Computing inference")
+        # do this n_checkpoints - 1 more times
+        @lib.for_range_opt(config.n_checkpoints)
+        def f(i):
+            train_samples_latent_space[i] = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
+            assert train_samples_latent_space.sizes == (config.n_checkpoints, len(train_samples), expected_latent_space_size), f"{train_samples_latent_space.sizes} != {(len(train_samples), expected_latent_space_size)}"
 
-        print_ln("Computing Latent Space for Audit Trigger...")
-        audit_trigger_samples_latent_space[i] = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
-        assert  audit_trigger_samples_latent_space.sizes == (config.n_checkpoints, len(audit_trigger_samples), expected_latent_space_size), f"{audit_trigger_samples_latent_space.sizes} != {(len(audit_trigger_samples), expected_latent_space_size)}"
+            print_ln("Computing Latent Space for Audit Trigger...")
+            audit_trigger_samples_latent_space[i] = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
+            assert  audit_trigger_samples_latent_space.sizes == (config.n_checkpoints, len(audit_trigger_samples), expected_latent_space_size), f"{audit_trigger_samples_latent_space.sizes} != {(len(audit_trigger_samples), expected_latent_space_size)}"
 
     lib.stop_timer(101)
     lib.start_timer(102)
