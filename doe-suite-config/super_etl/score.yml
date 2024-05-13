@@ -6,8 +6,10 @@
 
 $SUITE_ID$:
 
+#  audit_score_1715022414
+#  audit_score_
   audit_score:
-    audit_score_3pc: 1714725298
+    audit_score_3pc: 1715244038 #1715183578 #1715068629 #1714741168
 
 $ETL$:
   raw:
@@ -65,12 +67,18 @@ $ETL$:
         stats:
           total_time_s: [ "spdz_timer_100" ]
           inference_time_s: [ "spdz_timer_101" ]
-          score_time_s: [ "spdz_timer_102" ]
+          score_time_s: [ "spdz_timer_102", "spdz_timer_103" ]
+
+          score_separate_time_s: [ "spdz_timer_102" ]
           sorting_time_s: [ "spdz_timer_103" ]
+          pre_sorting_time_s: [ "spdz_timer_104" ]
+          pre_l2_time_s: [ "spdz_timer_105" ]
+          post_cosine_time_s: [ "spdz_timer_106" ]
 
           inference_bw_bytes: [ "spdz_timer_bw_101" ]
-          score_bw_bytes: [ "spdz_timer_bw_102" ]
-          sorting_bw_bytes: [ "spdz_timer_bw_103" ]
+          score_bw_bytes: [ "spdz_timer_bw_102", "spdz_timer_bw_103" ]
+#          sorting_bw_bytes: [  ]
+          pre_sorting_bw_bytes: [ "spdz_timer_bw_104" ]
           global_data_sent_bytes: [ "spdz_timer_bw_100" ]
 
           n_rounds: [ "spdz_player_round_number" ]
@@ -94,46 +102,56 @@ $ETL$:
           host_idx: [ 0 ] # only plot one party
           'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
           'network_type': [ lan ]
-          'mpc.script_args.dataset': [ adult, mnist_full ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet_3party ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
 #          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
 
         plot_cols: [ 'host_idx', 'mpc.script_name', 'network_type', 'mpc.script_args.dataset' ]
-        group_cols: [ 'mpc_type' ] #[ 'consistency_args.type' ]
-        bar_cols: [ 'mpc.script_args.score_method' ]
+        group_cols: [ 'mpc.script_args.score_method' ] #[ 'consistency_args.type' ]
+        bar_cols: [ 'mpc_type' ]
 
         bar_styles:
 
           - style: { label: ~, edgecolor: black }
             filter: { 'mpc.script_args.dataset': [ "adult" ] }
 
-#          - style: { color: "#d5e1a3", edgecolor: grey }
-#            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ mpc_time_s, global_data_sent_bytes ] }
+          - style: { color: "#d5e1a3", edgecolor: grey }
+            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ inference_time_s, inference_bw_bytes ] }
 #
-#          - style: { color: "#e7eec9", edgecolor: grey }
-#            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ auditing_overhead_s, auditing_overhead_bytes ] }
-#
-#          - style: { color: "#4c72b0", edgecolor: grey }
-#            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ mpc_time_s, global_data_sent_bytes ] }
-#
-#          - style: { color: "#a6b8d8", edgecolor: grey }
-#            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ auditing_overhead_s, auditing_overhead_bytes ] }
+          - style: { color: "#e7eec9", edgecolor: grey }
+            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ score_time_s, score_bw_bytes ] }
 
+          - style: { color: "#e7eec9", edgecolor: grey }
+            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ n_rounds ] }
+#
+          - style: { color: "#4c72b0", edgecolor: grey }
+            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ inference_time_s, inference_bw_bytes ] }
+
+          - style: { color: "#a6b8d8", edgecolor: grey }
+            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ score_time_s, score_bw_bytes ] }
+
+          - style: { color: "#a6b8d8", edgecolor: grey }
+            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ n_rounds ] }
+
+          - style: { color: "red", edgecolor: grey }
+            filter: { "mpc_type": [ "sh", "mal" ], "$bar_part_col$": [ score_separate_time_s ] }
+          - style: { color: "green", edgecolor: grey }
+            filter: { "mpc_type": [ "sh", "mal" ], "$bar_part_col$": [ sorting_time_s ] }
 
         legend_fig:
           format: "{}"
-          cols: [ "$bar_part_col$" ]
+          cols: [ "mpc_type", "$bar_part_col$" ]
           kwargs: { loc: "upper center", ncol: 4, bbox_to_anchor: [ 0.51, 0.075 ], columnspacing: 3.5,  fancybox: True }
 
 
         title:
           format: "{}"
-          plot_cols: [ "mpc.script_name" ]
+          plot_cols: [ "mpc.script_args.dataset" ]
 
         group_labels:
-          cols: [ 'mpc_type' ]
+          cols: [ 'mpc.script_args.score_method' ]
           format: "{}"
 
-        figure_size: [ 2.5, 1.8 ]
+        figure_size: [ 3.5, 2.6 ]
         bar_width: 1.0 #1.2
 
         labels:
@@ -154,6 +172,10 @@ $ETL$:
           audit_prediction_shap: "$\\bf{SHAP}$"
           audit_fairness: "$\\bf{Fairness}$"
 
+          l2: "$\\text{L}_2$"
+          cosine: "Cos"
+          cosine_presort_l2: "Cos+Presort"
+
           adult: "Adult"
           mnist_full: "MNIST"
           cifar_alexnet: "C10"
@@ -165,6 +187,13 @@ $ETL$:
 
           sh: "SH"
           mal: "MAL"
+
+          score_separate_time_s: "Score computation"
+          sorting_time_s: "Sorting"
+          inference_time_s: "Inference"
+          score_time_s: "Score"
+          inference_bw_bytes: "Inference"
+          score_bw_bytes: "Score"
 
         show_debug_info: False
 
@@ -207,3 +236,20 @@ $ETL$:
 #            n_y_ticks: 5
 #
 #            y_lim_row: [ [ 0, 1.6 ], [ 0, 1.6 ], [ 0, 50 ], [ 0, 500 ], [ 0, 500 ], [ 0, 400 ], [ 0, 8000 ], [ 0, 20000 ] ]
+
+          lan_rounds:
+            bar_part_cols: [ n_rounds ]
+            y_label: "Rounds"
+            y_unit_divider: 1.0 # transform to MB
+
+            plot_cols_filter:
+              network_type: [ 'lan' ] # I only want wan
+
+          detailed_score:
+            bar_part_cols: [ score_separate_time_s, sorting_time_s ] # pre_sorting_time_s, pre_l2_time_s, post_cosine_time_s ]
+            y_unit_divider: 60.0 # switch to mins from secs
+            y_label: "Detailed Time [min]"
+
+            plot_cols_filter:
+              network_type: [ 'lan' ]
+

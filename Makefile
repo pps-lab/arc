@@ -75,11 +75,14 @@ ring-test: simlink
 ring-sha: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False consistency_check__sha3
 
+ring-l2: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__l2
 ring-cos: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine
-
 ring-cosopt: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine_presort_l2
+ring-cosopt-c: simlink
+	cd MP-SPDZ && ./compile.py $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine_presort_l2
 
 compile-field: simlink
 	cd MP-SPDZ && ./compile.py $(script) $(AUDITARGS) emulate__True debug__True
@@ -113,3 +116,7 @@ plots:
 	cd doe-suite && $(MAKE) etl-super config=train out=$(out) pipelines=compare_relatedwork
 	cd doe-suite && $(MAKE) etl-super config=audit out=$(out) pipelines=compare_relatedwork
 	cd doe-suite && $(MAKE) etl-super config=inference out=$(out) pipelines=storage
+
+docker:
+	cp ~/.ssh/id_rsa.pub docker_public_key.pub && \
+	docker build --ssh default -f Dockerfile-mpspdz -t mpspdz --progress=plain .

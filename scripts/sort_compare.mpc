@@ -1,0 +1,20 @@
+
+
+from Compiler.types import MultiArray, Array, Matrix, sfix, cfix, sint, cint, regint, MemValue
+
+from Compiler import library as lib
+from Compiler.library import print_ln
+
+data_one = Matrix(26000, 2, sfix)
+data_two = Matrix(26000, 64, sfix)
+
+lib.start_timer(timer_id=100)
+
+data_one.sort()
+
+lib.stop_timer(timer_id=100)
+lib.start_timer(timer_id=101)
+
+data_two.sort()
+
+lib.stop_timer(timer_id=101)

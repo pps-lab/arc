@@ -39,8 +39,7 @@ $SUITE_VARS$:
       n_samples: 1
       n_input_parties: "[% my_run.n_parties %]"
 
-      dataset:
-        $FACTOR$: [ adult_3p ]
+      dataset: $FACTOR$
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
@@ -63,7 +62,9 @@ audit_score_3pc:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-adult
+#        - setup-adult
+        - download-dataset
+#        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
@@ -94,13 +95,35 @@ audit_score_3pc:
         domain: ring_split
         compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
         custom_prime: null
+        script_args:
+          dataset: adult_3p
 
-#    - mpc_type: mal
+    - mpc_type: mal
+      mpc: # should convert
+        protocol_setup: "sy-rep-ring-party"
+        domain: ring_split
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+        custom_prime: null
+        script_args:
+          dataset: adult_3p
+
+#    - mpc_type: sh
 #      mpc: # should convert
-#        protocol_setup: "sy-rep-ring-party"
+#        protocol_setup: "semi_honest_3"
 #        domain: ring_split
 #        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
 #        custom_prime: null
+#        script_args:
+#          dataset: mnist_full_3party
+
+#    - mpc_type: sh
+#      mpc: # should convert
+#        protocol_setup: "semi_honest_3"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+#        custom_prime: null
+#        script_args:
+#          dataset: cifar_alexnet_3party
 
 #
 #audit_robustness_3pc_wan:

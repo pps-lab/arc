@@ -44,6 +44,7 @@
   loop: "{{ exp_hosts_lst_exp[exp_name] }}"
   vars:
     private_ip_lookup: "{{ hostvars['localhost']['ec2_instance_info'] | json_query('instances[*].{key: private_dns_name, value: private_ip_address}') | items2dict }}"
+  when: "'ec2_instance_info' in hostvars['localhost']"
 
 - name: remove existing rust version
   become: true
@@ -59,7 +60,7 @@
   ignore_errors: yes
 
 - name: Download Installer
-#  when: cargo_exists is failed
+  when: cargo_exists is failed
   get_url:
     url: https://sh.rustup.rs
     dest: /tmp/sh.rustup.rs
@@ -69,7 +70,7 @@
     - rust
 
 - name: install rust/cargo
-#  when: cargo_exists is failed
+  when: cargo_exists is failed
   shell: |
     source ~/.bashrc
     /tmp/sh.rustup.rs -y
@@ -83,6 +84,8 @@
   ansible.builtin.shell: |
     source ~/.bashrc
     . "$HOME/.cargo/env"
+    rustup install 1.76.0
+    rustup default nightly-2024-02-04
     cargo build --release --features parallel
   args:
     chdir: "{{ exp_consistency_dir }}"
