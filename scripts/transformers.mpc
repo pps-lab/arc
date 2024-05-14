@@ -1,0 +1,63 @@
+
+import ml
+import math
+
+#ml.report_progress = True
+
+from transformers import BertModel, BertTokenizer
+
+# Load pre-trained BERT model and tokenizer
+model_name = 'prajjwal1/bert-tiny'  # You can choose other versions of BERT like 'bert-large-uncased'
+
+# Load the tokenizer
+tokenizer = BertTokenizer.from_pretrained(model_name)
+
+# Load the BERT model
+model = BertModel.from_pretrained(model_name)
+
+# Example of using the tokenizer and model
+text = "Hello, how are you?"
+encoded_input = tokenizer(text, return_tensors='pt')  # 'pt' refers to PyTorch tensors
+output = model(**encoded_input)
+
+# Output of the model includes hidden states and attention details
+print(encoded_input)
+print(output)
+
+X_test_input_ids = sfix.input_tensor_via(0, encoded_input['input_ids'].numpy())
+X_test_token_type_ids = sfix.input_tensor_via(0, encoded_input['token_type_ids'].numpy())
+X_test_attention_mask = sfix.input_tensor_via(0, encoded_input['attention_mask'].numpy())
+
+layers = ml.layers_from_torch(model, X_test_input_ids.shape, input_via=0, batch_size=1)
+
+print("LAYERS")
+print(layers)
+
+program.options_from_args()
+
+batch_size = 64
+ml.Layer.back_batch_size = batch_size
+N = 1000
+n_test = 100
+n_features = 28 ** 2
+n_inner = 128
+activation='relu'
+approx=False
+
+optimizer = ml.Optimizer(layers)
+optimizer.reset()
+# optimizer.print_random_update = True
+pred = optimizer.eval(X_test_input_ids)
+
+
+if True:
+    # we dont test the opening part
+    # print_ln('Truth %s', (y_test).reveal_nested())
+    print_ln('Prediction %s', (pred).reveal_nested())
+    # print_ln('Difference %s', (Matrix.create_from(pred) - y_test).reveal_nested())
+    # print_ln('Secure test loss: %s',
+    #          ((sum((pred[:] - y_test[:]) ** 2)) /
+    #           (y.shape[1] * len(y_test))).reveal())
+
+# library.stop_timer(timer_id=114)
+
