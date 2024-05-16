@@ -24,9 +24,16 @@ output = model(**encoded_input)
 print(encoded_input)
 print(output)
 
+# get embedding of encoded_input
+embedding = model.embeddings(encoded_input['input_ids'], token_type_ids=encoded_input['token_type_ids']).detach()
+print("Embed", embedding)
+
 X_test_input_ids = sfix.input_tensor_via(0, encoded_input['input_ids'].numpy())
 X_test_token_type_ids = sfix.input_tensor_via(0, encoded_input['token_type_ids'].numpy())
 X_test_attention_mask = sfix.input_tensor_via(0, encoded_input['attention_mask'].numpy())
+
+X_test_embed = sfix.input_tensor_via(0, embedding.numpy())
+print("X_test_embed.shape", X_test_embed.shape)
 
 layers = ml.layers_from_torch(model, X_test_input_ids.shape, input_via=0, batch_size=1)
 
@@ -45,9 +52,9 @@ activation='relu'
 approx=False
 
 optimizer = ml.Optimizer(layers)
-optimizer.reset()
-# optimizer.print_random_update = True
-pred = optimizer.eval(X_test_input_ids)
+# optimizer.reset()
+optimizer.print_random_update = True
+pred = optimizer.eval(X_test_embed)
 
 
 if True:
