@@ -4,6 +4,9 @@ import math
 
 #ml.report_progress = True
 
+# or: 64, 36?
+# sfix.set_precision(16, 31)
+
 from transformers import BertModel, BertTokenizer
 
 # Load pre-trained BERT model and tokenizer

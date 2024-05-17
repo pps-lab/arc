@@ -1,0 +1,56 @@
+import operator
+from functools import reduce
+
+import ml
+
+n_batch = 32
+n_d = 2
+n_input = 8
+n_output = 4
+
+n_threads = 1
+
+X = sfix.Tensor([n_batch * 10, n_d, n_input])
+
+@for_range_opt([n_batch * 10, n_d, n_input])
+def _(i, j, k):
+    X[i][j][k] = i
+
+# X[1][1][0] = 5
+X[0][0][0] = 15
+X[0][0][1] = 25
+
+matrix_one = sfix.Tensor([n_batch, n_d, n_input])
+W = sfix.Tensor([n_input, n_output])
+W.assign_all(1)
+
+layer_norm = ml.LayerNorm(X.shape, approx=False)
+layer_norm.reset()
+layer_norm.X.address = X.address
+
+batch = regint.Array(n_batch)
+batch.assign(regint.inc(n_batch))
+
+print_ln("Layer norm X: %s", layer_norm.X[1].reveal_nested())
+layer_norm.forward(batch)
+print_ln("Layer norm: %s", layer_norm.Y.reveal_nested())
+# print_ln("Layer norm: %s", layer_norm.Y[1].reveal_nested())
+# print_ln("Layer norm: %s", layer_norm.Y[2].reveal_nested())
+
+# Pytorch equivalent
+import torch
+import numpy
+pytorch_matrix_one = torch.zeros(n_batch, n_d, n_input)
+for i in range(n_batch):
+    pytorch_matrix_one[i, :, :] = i
+
+pytorch_matrix_one[1, 1, 0] = 5
+pytorch_matrix_one[0, 0, 0] = 15
+pytorch_matrix_one[0, 0, 1] = 25
+print("Pytorch matrix one", pytorch_matrix_one.shape, pytorch_matrix_one)
+pytorch_weights = torch.ones(n_input)
+
+ln = torch.nn.LayerNorm(n_input)
+ln.reset_parameters()
+pytorch_matrix_two = ln(pytorch_matrix_one)
+print("Pytorch matrix two", pytorch_matrix_two.shape, pytorch_matrix_two)

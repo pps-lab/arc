@@ -1,0 +1,146 @@
+import operator
+from functools import reduce
+
+n_batch = 32
+n_d = 8
+n_input = 8
+n_output = 4
+
+n_threads = 1
+
+X = sfix.Tensor([n_batch * 10, n_d, n_input])
+
+@for_range_opt([n_batch * 10, n_d, n_input])
+def _(i, j, k):
+    X[i][j][k] = i
+
+
+import torch, numpy
+
+pytorch_weights = torch.rand(n_input, n_output)
+
+matrix_one = sfix.Tensor([n_batch, n_d, n_input])
+W = sfix.input_tensor_via(0, pytorch_weights.numpy())
+
+matrix_two = sfix.Tensor([n_batch, n_d, n_output])
+
+# pytorch equivalent of matrix_one * matrix_two
+# array of [n_batch, n_d, n_input] where the rows are the batch
+pytorch_matrix_one = torch.rand(n_batch, n_d, n_input)
+# for i in range(n_batch):
+#     pytorch_matrix_one[i, :, :] = i
+
+matrix_one = sfix.input_tensor_via(0, pytorch_matrix_one.numpy())
+
+# pytorch_matrix_one[0, 0, 0] = 15.0
+print("Pytorch matrix one", pytorch_matrix_one.shape, pytorch_matrix_one)
+pytorch_matrix_two = torch.matmul(pytorch_matrix_one, pytorch_weights)
+print("Pytorch matrix two", pytorch_matrix_two.shape, pytorch_matrix_two)
+
+batch = regint.Array(n_batch)
+batch.assign(regint.inc(n_batch))
+
+max_size = n_batch
+
+# start_timer(timer_id=1)
+# @multithread(n_threads, n_batch, max_size)
+# def _(base, size):
+#     X_sub = sfix.Matrix(n_batch, n_input, address=X.address)
+#     print_ln("X_sub: %s", X_sub.reveal_nested())
+#     print(base, size)
+#     matrix_two.assign_part_vector(
+#         X_sub.direct_mul(W, indices=(
+#             batch.get_vector(base, size), regint.inc(n_input),
+#             regint.inc(n_input), regint.inc(n_output))), base)
+#
+#
+#
+# stop_timer(timer_id=1)
+
+start_timer(timer_id=2)
+
+# either: try to be smart with address and do in memory
+# or: just do per batch loading
+
+# like this i dont think we can multithread over the batch
+@for_range(n_d)
+def _(i):
+    X_sub = sfix.Matrix(n_batch, n_input)
+    @for_range(n_batch)
+    def _(j):
+        X_sub[j][:] = matrix_one[j][i][:]
+
+    X_sub_out = sfix.Matrix(n_batch, n_output)
+    X_sub_out.assign_vector(X_sub.direct_mul(W))
+    print("sizes", X_sub_out.sizes)
+
+    # put it back
+    @for_range(n_batch)
+    def _(j):
+        matrix_two[j][i][:] = X_sub_out[j][:]
+
+    print_ln("X_sub22: %s", X_sub.reveal_nested())
+
+print_ln("")
+print_ln("Matrix two: %s %s", matrix_two.shape, matrix_two.reveal_nested())
+
+# matrix_two.assign_part_vector(
+#     X_sub.dot(W)
+# )
+
+# @multithread(n_threads, n_batch, max_size)
+# def _(base, size):
+#     pass
+# @for_range(n_d)
+# def _(i):
+    #     X_sub = sfix.Matrix(max_size, n_input)
+    #     temp = X.get_part_vector_second_dim(base + (i * max_size * n_input), size)
+    #     print("Temp", temp)
+    #     # print_ln("Temp: %s", temp.reveal_nested())
+    #     X_sub.assign_vector(temp)
+    #
+    #     # X_sub.assign_vector(X[:][0][:].get_slice_vector(batch))
+    #     print_ln("X_sub: %s", X_sub.reveal_nested())
+    #     print_ln("X %s", Matrix.create_from(X[:][0]).reveal_nested())
+    #     print(base, size)
+    # matrix_two.assign_part_vector(
+    #     X_sub.dot(W)
+    # )
+    # for i in range()
+
+stop_timer(timer_id=2)
+
+# print_ln("Matrix one: %s", matrix_one.reveal_nested())
+print_ln("")
+print_ln("Matrix two: %s", matrix_two.reveal_nested())
+
+
+
+
+# @multithread(n_threads, n_batch, max_size)
+# def _2(base, size):
+#     # X_sub = sfix.MultiArray([n_batch, n_input, address=X.address)
+#     X_total = MultiArray([n_batch, n_d, n_input], sfix)
+#
+#     indices = regint.Array(max_size)
+#     indices.assign_vector(batch.get_vector(base, size))
+#     X_total.assign_vector(X.get_slice_vector(indices))
+#     print_ln("X_total: %s", X_total.reveal_nested())
+#     print_ln(X_total.address + reduce(operator.mul, X_total.sizes) * X_total.value_type.n_elements())
+#     print("xtotaladdress", X_total.address)
+#
+#     addresses = X_total.get_addresses(None, 1, 0)
+#     print("addresses", addresses)
+#     print_ln("Addresses: %s %s", addresses, type(addresses))
+    # @for_range_opt(n_d)
+    # def _(i):
+    #     X_sub = sfix.Matrix(n_batch, n_input)
+    #     X_sub.assign_vector(X_total.get_vector_by_indices(None, i, None))
+    #     print_ln("X_sub: %s", X_sub.reveal_nested())
+    #     print(base, size)
+    #     matrix_two.assign_part_vector(
+    #         X_sub.direct_mul(W, indices=(
+    #             batch.get_vector(base, size), regint.inc(n_input),
+    #             regint.inc(n_input), regint.inc(n_output))), base)
+
+# print_ln("Matrix two: %s", matrix_two.reveal_nested())
