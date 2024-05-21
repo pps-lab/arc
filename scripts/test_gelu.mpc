@@ -1,0 +1,107 @@
+import operator
+from functools import reduce
+
+import torch
+import numpy
+import ml
+
+n_batch = 32
+n_d = 2
+n_input = 8
+n_output = 4
+
+n_threads = 1
+
+print("Precision", sfix.f, sfix.k)
+sfix.set_precision(32, 62)
+
+x_pt = 3.9825
+x_second = 0.5
+
+# x_pt = -0.471436
+
+x_arr = sfix.Array(2)
+x_arr[0] = x_pt
+x_arr[1] = x_second
+
+x = x_arr.get_vector()
+
+
+def compute_gelu_pt(z):
+    print("z^3", torch.pow(z, 3))
+    print("tanh input", 0.7978845608 * (z + 0.044715 * torch.pow(z, 3)))
+    print("tanh", torch.tanh(0.7978845608 * (z + 0.044715 * torch.pow(z, 3))))
+    return 0.5 * z * (1 + torch.tanh(0.7978845608 * (z + 0.044715 * torch.pow(z, 3))))
+
+def tanh(x):
+    exp_2x = ml.exp(2 * x)
+    print_ln("exp_2x input %s", (2 * x).reveal())
+    print_ln("exp_2x %s", exp_2x.reveal())
+    print_ln("exp_2x div %s", (exp_2x - 1).reveal() / (exp_2x + 1).reveal())
+    return (exp_2x - 1) / (exp_2x + 1)
+
+def compute_gelu_spdz(z):
+    print_ln("z^3 %s", (z ** 3).reveal())
+    print_ln("tanh input %s", (0.7978845608 * (z + 0.044715 * z ** 3)).reveal())
+    print_ln("tanh %s", tanh(0.7978845608 * (z + 0.044715 * z ** 3)).reveal())
+    return 0.5 * z * (1 + tanh(0.7978845608 * (z + 0.044715 * z ** 3)))
+
+def compute_gelu_approx(x):
+    poly_f_0_a = -0.5054031199708174
+    poly_f_0_b = -0.42226581151983866
+    poly_f_0_c = -0.11807612951181953
+    poly_f_0_d = -0.011034134030615728
+
+    poly_f_1_a = 0.008526321541038084
+    poly_f_1_b = 0.5
+    poly_f_1_c = 0.3603292692789629
+    poly_f_1_e = -0.037688200365904236
+    poly_f_1_g = 0.0018067462606141187
+
+    b0 = x < -4
+    b1 = x < -1.95
+    b2 = 3 < x
+
+    z0 = b0 ^ b1
+    z1 = b1 ^ b2 ^ 1
+    z2 = b2
+
+    xb = x
+    xc = x ** 2
+    xd = xc * xb
+    xe = xc ** 2
+    xg = xd ** 2
+
+    f_0 = poly_f_0_a + poly_f_0_b * xb + poly_f_0_c * xc + poly_f_0_d * xd
+    f_1 = poly_f_1_a + poly_f_1_b * xb + poly_f_1_c * xc + poly_f_1_e * xe + poly_f_1_g * xg
+
+    # print_ln("z_0 * f_0 = %s * %s", z0.reveal(), f_0.reveal())
+    # print_ln("z_1 * f_1 = %s * %s", z1.reveal(), f_1.reveal())
+    # print_ln("z_2 * x = %s * %s", z2.reveal(), x.reveal())
+
+    return (z0 * f_0) + (z1 * f_1) + (z2 * x)
+
+print("Gelu pt", compute_gelu_pt(torch.tensor([x_pt, x_second])))
+
+start_timer(timer_id=101)
+print_ln("Gelu spdz %s", compute_gelu_spdz(x).reveal())
+stop_timer(timer_id=101)
+
+start_timer(timer_id=102)
+print_ln("Gelu approx %s", compute_gelu_approx(x).reveal())
+stop_timer(timer_id=102)
+
+X = sfix.Tensor([n_batch * 10, n_d, n_input])
+
+@for_range_opt([n_batch * 10, n_d, n_input])
+def _(i, j, k):
+    X[i][j][k] = i
+
+# X[1][1][0] = 5
+X[0][0][0] = 15
+X[0][0][1] = 25
+
+matrix_one = sfix.Tensor([n_batch, n_d, n_input])
+W = sfix.Tensor([n_input, n_output])
+W.assign_all(1)
+

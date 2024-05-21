@@ -2,27 +2,23 @@
 import ml
 import math
 
-#ml.report_progress = True
-
-# or: 64, 36?
-# sfix.set_precision(16, 31)
-# sfix.set_precision(32, 62) # needed for GeLu precision
+# evaluates the processing of a single bert sequence
 
 # with higher precision we get wrong values?
 
-from transformers import BertModel, BertForSequenceClassification, BertTokenizer
+from transformers import BertModel, BertTokenizer
 
 # Load pre-trained BERT model and tokenizer
-model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
+model_name = 'bert-base'  # You can choose other versions of BERT like 'bert-large-uncased'
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
 
 # Load the BERT model
-model = BertForSequenceClassification.from_pretrained(model_name)
+model = BertModel.from_pretrained(model_name)
 
 # Example of using the tokenizer and model
-text = "Hello, how are you?"
+text = "Hello, how are you? What is the capital of the country of Sweden?"
 encoded_input = tokenizer(text, return_tensors='pt')  # 'pt' refers to PyTorch tensors
 output = model(**encoded_input)
 
@@ -34,28 +30,18 @@ print(output)
 embedding = model.bert.embeddings(encoded_input['input_ids'], token_type_ids=encoded_input['token_type_ids']).detach()
 print("Embed", embedding)
 
-X_test_input_ids = sfix.input_tensor_via(0, encoded_input['input_ids'].numpy())
-X_test_token_type_ids = sfix.input_tensor_via(0, encoded_input['token_type_ids'].numpy())
-X_test_attention_mask = sfix.input_tensor_via(0, encoded_input['attention_mask'].numpy())
-
 X_test_embed = sfix.input_tensor_via(0, embedding.numpy())
 print("X_test_embed.shape", X_test_embed.shape)
 
-layers = ml.layers_from_torch(model, X_test_input_ids.shape, input_via=0, batch_size=1)
+layers = ml.layers_from_torch(model, X_test_embed.shape, input_via=0, batch_size=1)
 
 print("LAYERS")
 print(layers)
 
 program.options_from_args()
 
-batch_size = 64
+batch_size = 1
 ml.Layer.back_batch_size = batch_size
-N = 1000
-n_test = 100
-n_features = 28 ** 2
-n_inner = 128
-activation='relu'
-approx=False
 
 optimizer = ml.Optimizer(layers)
 # optimizer.reset()

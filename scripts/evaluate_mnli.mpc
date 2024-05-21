@@ -1,0 +1,72 @@
+
+import ml
+
+import datasets
+from datasets import load_dataset
+from transformers import BertModel, BertForSequenceClassification, BertTokenizer
+import torch
+
+# Load pre-trained BERT model and tokenizer
+model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
+
+# Load the tokenizer
+tokenizer = BertTokenizer.from_pretrained(model_name)
+
+# Load the BERT model
+model = BertForSequenceClassification.from_pretrained(model_name)
+#
+# # Load the MNLI dataset
+mnli_dataset = load_dataset('multi_nli')
+#
+# # Access the evaluation datasets
+mnli_validation_matched = mnli_dataset['validation_matched']
+mnli_validation_mismatched = mnli_dataset['validation_mismatched']
+
+print("mnli_validation_matched", mnli_validation_matched.shape)
+
+# Function to tokenize the dataset
+def tokenized_fn(example):
+    encoded_input = tokenizer(example['premise'], example['hypothesis'], truncation=True, max_length=8)
+    return encoded_input
+
+def embed_fn(example):
+    embedding_list = []
+    for input_id, token_type_ids in zip(example["input_ids"], example["token_type_ids"]):
+        # embedding_list.append(torch.ones([8]))
+        embedding = model.bert.embeddings(input_id, token_type_ids=token_type_ids).detach()
+
+    return { 'embedding': embedding_list }
+
+# Tokenize the validation datasets
+tokenized_validation_matched = mnli_validation_matched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+tokenized_validation_mismatched = mnli_validation_mismatched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+
+print(tokenized_validation_mismatched, type(tokenized_validation_mismatched))
+
+def build_sfix_tensor(dataset):
+    with dataset.formatted_as("torch", ["embedding", "label"]):
+        tensor_embedding = torch.concat(list(map(lambda x: x['embedding'], dataset.iter(batch_size=1))))
+        tensor_label = torch.concat(list(map(lambda x: x['label'], dataset.iter(batch_size=1))))
+
+        tensor_embedding_sfix = sfix.input_tensor_via(0, tensor_embedding.numpy())
+        tensor_label_sfix = sfix.input_tensor_via(0, tensor_label.numpy())
+
+        return tensor_embedding_sfix, tensor_label_sfix
+
+def get_predictions(model, test_x, test_y):
+
+    layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=1)
+    optimizer = ml.Optimizer(layers)
+    # optimizer.reset()
+    # optimizer.print_random_update = True
+    pred = optimizer.reveal_correctness(test_x, test_y)
+
+def run(dataset):
+    test_x, test_y = build_sfix_tensor(dataset)
+    get_predictions(model, test_x, test_y)
+
+print("Running tokenized_validation_matched")
+run(tokenized_validation_matched)
+
+print("Running tokenized_validation_mismatched")
+run(tokenized_validation_mismatched)
