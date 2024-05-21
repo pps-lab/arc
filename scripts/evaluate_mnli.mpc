@@ -1,7 +1,6 @@
 
 import ml
 
-import datasets
 from datasets import load_dataset
 from transformers import BertModel, BertForSequenceClassification, BertTokenizer
 import torch
