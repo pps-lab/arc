@@ -26,9 +26,10 @@ class QnliBertInputLoader(AbstractInputLoader):
         self._model_type = BertForSequenceClassification
         self._tokenizer_type = BertTokenizer
         self._model_name = 'prajjwal1/bert-tiny-mnli'
+        self._task_name = 'qnli'
 
         train_dataset_size = sum(n_wanted_train_samples)
-        print(f"Compile loading Adult data...")
+        print(f"Compile loading QNLI data...")
         print(f"  {train_dataset_size} training samples")
         print(f"  {n_wanted_trigger_samples} audit trigger samples")
         print(f"  {n_wanted_test_samples} test samples (not audit relevant)")
@@ -42,7 +43,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         self._test_samples = MultiArray([n_wanted_test_samples, INPUT_FEATURES], sfix)
         self._test_labels = sint.Tensor([n_wanted_test_samples])
 
-        train_datasets, backdoor_dataset, test_dataset = self._load_dataset_pytorch(dataset, n_train_samples, debug=debug)
+        train_datasets, backdoor_dataset, test_dataset = self._load_dataset_huggingface(dataset, n_train_samples, debug=debug)
         self._load_input_data_pytorch(train_datasets, backdoor_dataset, test_dataset,
                                       n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_wanted_test_samples,
                                       audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, emulate=emulate, debug=debug, consistency_check=consistency_check, load_model_weights=load_model_weights,
@@ -87,27 +88,40 @@ class QnliBertInputLoader(AbstractInputLoader):
     def _load_dataset_huggingface(self, dataset, n_train_samples, debug):
 
         from datasets import load_dataset
-        tokenizer = self._tokenizer_type.from_pretrained(model_name)
+        tokenizer = self._tokenizer_type.from_pretrained(self._model_name)
         model = self._model_type.from_pretrained(self._model_name)
 
-        mnli_dataset = load_dataset('multi_nli') # TODO: QNLI?
+        dataset = load_dataset('glue', 'qnli') # TODO: QNLI?
         #
         # # Access the evaluation datasets
         # mnli_validation_mismatched = mnli_dataset['validation_mismatched']
 
+
+
+        task_to_keys = {
+            "cola": ("sentence", None),
+            "mnli": ("premise", "hypothesis"),
+            "mrpc": ("sentence1", "sentence2"),
+            "qnli": ("question", "sentence"),
+            "qqp": ("question1", "question2"),
+            "rte": ("sentence1", "sentence2"),
+            "sst2": ("sentence", None),
+            "stsb": ("sentence1", "sentence2"),
+            "wnli": ("sentence1", "sentence2"),
+        }
+
         # Function to tokenize the dataset
         def tokenized_fn(example):
-            encoded_input = tokenizer(example['premise'], example['hypothesis'], truncation=True, max_length=128) # SEQ LEN
+            sentence1_key, sentence2_key = task_to_keys[self._task_name]
+            args = (
+                (example[sentence1_key],) if sentence2_key is None else (example[sentence1_key], example[sentence2_key])
+            )
+            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=8)
             return encoded_input
 
         def embed_fn(example):
-            embedding_list = []
-            for input_id, token_type_ids in zip(example["input_ids"], example["token_type_ids"]):
-                # embedding_list.append(torch.ones([8]))
-                embedding = model.bert.embeddings(input_id, token_type_ids=token_type_ids).detach()
-                embedding_list.append(embedding)
-
-            return { 'embedding': embedding_list }
+            embedding = model.bert.embeddings(torch.tensor(example["input_ids"]), token_type_ids=torch.tensor(example["token_type_ids"])).detach()
+            return { 'embedding': embedding }
 
         def build_pt_tensor(dataset):
             with dataset.formatted_as("torch", ["embedding", "label"]):
@@ -117,27 +131,28 @@ class QnliBertInputLoader(AbstractInputLoader):
                 return tensor_embedding, tensor_label
 
         # Tokenize the validation datasets
-        mnli_validation_matched = mnli_dataset['validation_matched']
-        tokenized_validation_matched = mnli_validation_matched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+        validation = dataset['validation']
+        tokenized_validation_matched = validation.take(2000).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
         # tokenized_validation_mismatched = mnli_validation_mismatched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
         test_x, test_y = build_pt_tensor(tokenized_validation_matched)
 
         backdoor_dataset = test_x[:-10], test_y[:-10]
-        test_dataset = test_x[:1000], test_y[:1000]
+        test_dataset = test_x[:1000], test_y[:1000] if self._test_samples.sizes[0] != 0 else None, None
 
         # Training datasets
-        mnli_training = mnli_dataset['training']
-        tokenized_training = mnli_training.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
-        train_x, train_y = build_pt_tensor(tokenized_training)
+        train_datasets = [0] * len(n_train_samples)
+        if sum(n_train_samples) != 0 and self._train_samples.sizes[0] != 0:
+            mnli_training = dataset['train']
+            tokenized_training = mnli_training.take(sum(n_train_samples)).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+            train_x, train_y = build_pt_tensor(tokenized_training)
 
-        # Now split by n_train_samples
-        train_datasets = []
-        for party_idx, train_sample_len in enumerate(n_train_samples):
-            # TODO
+            # Now split x_train by the entries in n_train_samples
+            train_datasets = []
+            start = 0
+            for party_idx, train_sample_len in enumerate(n_train_samples):
+                end = start + train_sample_len
+                train_datasets.append((train_x[start:end], train_y[start:end]))
+                start = end
 
-
-                # tensor_embedding_sfix = sfix.input_tensor_via(0, tensor_embedding.numpy())
-                # tensor_label_sfix = sfix.input_tensor_via(0, tensor_label.numpy())
-
-                # return tensor_embedding_sfix, tensor_label_sfix
+        return train_datasets, backdoor_dataset, test_dataset
 

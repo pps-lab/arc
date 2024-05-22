@@ -1,4 +1,4 @@
-from Compiler.script_utils.data import mnist, cifar, adult, ember
+from Compiler.script_utils.data import mnist, cifar, adult, ember, qnli_bert
 from Compiler.library import get_number_of_players
 
 import ruamel.yaml
@@ -31,6 +31,8 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
         il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor, input_shape_size=input_shape_size)
     elif dataset.lower().startswith("ember"):
         il = ember.EmberInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor, input_shape_size=input_shape_size)
+    elif dataset.lower().startswith("glue-qnli"):
+        il = qnli_bert.QnliBertInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_wanted_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor, input_shape_size=input_shape_size)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
@@ -58,6 +60,8 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
         il = adult.AdultInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor, input_shape_size=input_shape_size)
     elif dataset.lower().startswith("ember"):
         il = ember.EmberInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor, input_shape_size=input_shape_size)
+    elif dataset.lower().startswith("glue-qnli"):
+        il = qnli_bert.QnliBertInputLoader(dataset, n_train_samples=n_train_samples, n_wanted_train_samples=n_wanted_train_samples, n_wanted_trigger_samples=n_trigger_samples, n_wanted_test_samples=n_test_samples, audit_trigger_idx=audit_trigger_idx, batch_size=batch_size, debug=debug, emulate=emulate, consistency_check=consistency_check, load_model_weights=load_model_weights, sha3_approx_factor=sha3_approx_factor, input_shape_size=input_shape_size)
     else:
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
@@ -66,9 +70,14 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
 def _load_dataset_args(dataset):
     if dataset == "mnist_full_A":
         dataset = "mnist_full_3party"
-    if dataset == "glue-qnli":
-        # TODO: make up a roughly even split of reasonable size
-        total_n_train = # TODO: lookup
+    elif dataset == "glue-qnli":
+        # make up a roughly even split of reasonable size
+        n_parties = 3
+        total_n_train = 104743
+        n_train_samples = [total_n_train // n_parties] * n_parties
+        n_trigger_samples = 1
+        n_test_samples = 1000
+        return n_train_samples, n_trigger_samples, n_test_samples
 
     with open(f"Player-Data/{dataset}/compile_args.yml") as f:
         args = ruamel.yaml.safe_load(f)

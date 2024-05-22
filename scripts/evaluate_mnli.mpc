@@ -7,7 +7,8 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+# model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -21,7 +22,7 @@ dataset = load_dataset('glue', task_name)
 # Access the evaluation dataset
 validation = dataset['validation']
 
-n_samples_to_run = 20
+n_samples_to_run = 10
 
 
 # # # Load the MNLI dataset
@@ -92,8 +93,11 @@ def get_predictions(model, tokenized_dataset):
             probabilities = torch.softmax(logits, dim=-1)
             predictions.append(probabilities)
     return predictions
+
 pt_predictions = get_predictions(model, tokenized_validation_matched_pt)
+pt_predictions_top = torch.argmax(torch.cat(pt_predictions), dim=-1)
 print_ln("PT Predictions %s", str(pt_predictions))
+print_ln("PT Predictions Top %s", str(pt_predictions_top))
 
 def build_sfix_tensor(dataset):
     with dataset.formatted_as("torch", ["embedding", "label"]):
@@ -113,19 +117,29 @@ def build_sfix_tensor(dataset):
 
         return tensor_embedding_sfix, tensor_label_sfix
 
+import numpy
 def get_predictions(model, test_x, test_y):
 
     layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=n_samples_to_run) # set batch size bigger?
     optimizer = ml.Optimizer(layers)
     # optimizer.reset()
     # optimizer.print_random_update = True
-    # pred = optimizer.reveal_correctness(test_x, test_y)
+    pt_predictions_tensor_spdz = sfix.input_tensor_via(0, numpy.array(numpy.concatenate(pt_predictions)))
+    # print_ln("PT Predictions %s %s", pt_predictions_tensor_spdz.reveal_nested(),  numpy.array(numpy.concatenate(pt_predictions)))
+    # pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, n_samples_to_run)
     # print_ln("PRED %s", pred)
+
+    # pred = optimizer.eval(test_x)
+    # for l, p in zip(test_y.reveal_nested(), pred.reveal_nested()):
+    #     print_str("%s == ", l)
+    #     print_str("%s, ", p)
+
     pred = optimizer.eval(test_x)
-    for l, p in zip(test_y.reveal_nested(), pred.reveal_nested()):
+    for l, p in zip(pt_predictions_top, pred.reveal_nested()):
         print_str("%s == ", l)
         print_str("%s, ", p)
     print_ln(" ")
+
 
 def run(dataset):
     test_x, test_y = build_sfix_tensor(dataset)
