@@ -21,7 +21,7 @@ dataset = load_dataset('glue', task_name)
 # Access the evaluation dataset
 validation = dataset['validation']
 
-n_samples_to_run = 10
+n_samples_to_run = 20
 
 
 # # # Load the MNLI dataset
@@ -61,8 +61,8 @@ def embed_fn(example):
     embedding_list = []
     # for input_id, token_type_ids in zip(example["input_ids"], example["token_type_ids"]):
     #     # embedding_list.append(torch.ones([8]))
-    #     print(torch.tensor(input_id))
-    #     print("token_Type_ids", torch.tensor(token_type_ids))
+    print(torch.tensor(example["input_ids"]))
+    print("token_Type_ids", torch.tensor(example["token_type_ids"]))
     #     embedding = model.bert.embeddings(torch.tensor(input_id), token_type_ids=torch.tensor(token_type_ids)).detach()
     #     embedding_list.append(embedding)
 
@@ -82,14 +82,15 @@ def get_predictions(model, tokenized_dataset):
     model.eval()
     predictions = []
     with torch.no_grad():
-        for i in range(10):
+        for i in range(n_samples_to_run):
             example = tokenized_dataset[i]
-            inputs = {key: torch.tensor([val]) for key, val in example.items() if key in ['input_ids', 'attention_mask']}
+            inputs = {key: torch.tensor([val]) for key, val in example.items() if key in ['input_ids', 'attention_mask', 'token_type_ids']}
             print("PT Inputs", inputs)
             outputs = model(**inputs)
             logits = outputs.logits
             # predicted_class = torch.argmax(logits, dim=-1).item()
-            predictions.append(logits)
+            probabilities = torch.softmax(logits, dim=-1)
+            predictions.append(probabilities)
     return predictions
 pt_predictions = get_predictions(model, tokenized_validation_matched_pt)
 print_ln("PT Predictions %s", str(pt_predictions))
@@ -119,9 +120,12 @@ def get_predictions(model, test_x, test_y):
     # optimizer.reset()
     # optimizer.print_random_update = True
     # pred = optimizer.reveal_correctness(test_x, test_y)
+    # print_ln("PRED %s", pred)
     pred = optimizer.eval(test_x)
-    print_ln("test_y %s", test_y.reveal_nested())
-    print_ln("Predictions %s", pred.reveal_nested())
+    for l, p in zip(test_y.reveal_nested(), pred.reveal_nested()):
+        print_str("%s == ", l)
+        print_str("%s, ", p)
+    print_ln(" ")
 
 def run(dataset):
     test_x, test_y = build_sfix_tensor(dataset)

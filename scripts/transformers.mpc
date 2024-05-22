@@ -64,13 +64,9 @@ optimizer = ml.Optimizer(layers)
 
 ALL_LAYERS = optimizer.layers
 
-print_ln("LINEAR Layer weights before %s: %s", layers[-2], layers[-2].W.reveal_nested())
-
 # optimizer.reset()
 # optimizer.print_random_update = True
 pred = optimizer.eval(X_test_embed, top=True)
-
-print_ln("LINEAR Layer weights after %s: %s", layers[-2], layers[-2].W.reveal_nested())
 
 
 if True:
