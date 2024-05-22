@@ -104,8 +104,8 @@ def build_sfix_tensor(dataset):
 
         print("TENSOR LABEL", tensor_label)
 
-        tensor_embedding = tensor_embedding[:1]
-        tensor_label = tensor_label[:11]
+        # tensor_embedding = tensor_embedding[:1]
+        # tensor_label = tensor_label[:11]
 
         tensor_embedding_sfix = sfix.input_tensor_via(0, tensor_embedding.numpy())
         tensor_label_sfix = sint.input_tensor_via(0, tensor_label.numpy())
@@ -114,7 +114,7 @@ def build_sfix_tensor(dataset):
 
 def get_predictions(model, test_x, test_y):
 
-    layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=1) # set batch size bigger?
+    layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=n_samples_to_run) # set batch size bigger?
     optimizer = ml.Optimizer(layers)
     # optimizer.reset()
     # optimizer.print_random_update = True
