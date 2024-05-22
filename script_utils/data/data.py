@@ -66,6 +66,9 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
 def _load_dataset_args(dataset):
     if dataset == "mnist_full_A":
         dataset = "mnist_full_3party"
+    if dataset == "glue-qnli":
+        # TODO: make up a roughly even split of reasonable size
+        total_n_train = # TODO: lookup
 
     with open(f"Player-Data/{dataset}/compile_args.yml") as f:
         args = ruamel.yaml.safe_load(f)

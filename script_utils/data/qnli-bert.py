@@ -122,14 +122,19 @@ class QnliBertInputLoader(AbstractInputLoader):
         # tokenized_validation_mismatched = mnli_validation_mismatched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
         test_x, test_y = build_pt_tensor(tokenized_validation_matched)
 
-        # Training datasets
+        backdoor_dataset = test_x[:-10], test_y[:-10]
+        test_dataset = test_x[:1000], test_y[:1000]
 
-        training = mnli_dataset['training']
+        # Training datasets
+        mnli_training = mnli_dataset['training']
         tokenized_training = mnli_training.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
         train_x, train_y = build_pt_tensor(tokenized_training)
 
-        # Now split by number of parties
-        #
+        # Now split by n_train_samples
+        train_datasets = []
+        for party_idx, train_sample_len in enumerate(n_train_samples):
+            # TODO
+
 
                 # tensor_embedding_sfix = sfix.input_tensor_via(0, tensor_embedding.numpy())
                 # tensor_label_sfix = sfix.input_tensor_via(0, tensor_label.numpy())

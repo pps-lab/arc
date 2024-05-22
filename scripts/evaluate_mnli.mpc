@@ -6,7 +6,8 @@ from transformers import BertModel, BertForSequenceClassification, BertTokenizer
 import torch
 
 # Load pre-trained BERT model and tokenizer
-model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
+# model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
+model_name = 'M-FAC/bert-tiny-finetuned-qnli'
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -14,58 +15,120 @@ tokenizer = BertTokenizer.from_pretrained(model_name)
 # Load the BERT model
 model = BertForSequenceClassification.from_pretrained(model_name)
 #
-# # Load the MNLI dataset
-mnli_dataset = load_dataset('multi_nli')
-#
-# # Access the evaluation datasets
-mnli_validation_matched = mnli_dataset['validation_matched']
-mnli_validation_mismatched = mnli_dataset['validation_mismatched']
+task_name = 'qnli'
+dataset = load_dataset('glue', task_name)
 
-print("mnli_validation_matched", mnli_validation_matched.shape)
+# Access the evaluation dataset
+validation = dataset['validation']
+
+n_samples_to_run = 10
+
+
+# # # Load the MNLI dataset
+# mnli_dataset = load_dataset('multi_nli')
+# #
+# # # Access the evaluation datasets
+# mnli_validation_matched = mnli_dataset['validation_matched']
+# mnli_validation_mismatched = mnli_dataset['validation_mismatched']
+
+print("mnli_validation_matched", validation.shape)
+
+task_to_keys = {
+    "cola": ("sentence", None),
+    "mnli": ("premise", "hypothesis"),
+    "mrpc": ("sentence1", "sentence2"),
+    "qnli": ("question", "sentence"),
+    "qqp": ("question1", "question2"),
+    "rte": ("sentence1", "sentence2"),
+    "sst2": ("sentence", None),
+    "stsb": ("sentence1", "sentence2"),
+    "wnli": ("sentence1", "sentence2"),
+}
 
 # Function to tokenize the dataset
 def tokenized_fn(example):
-    encoded_input = tokenizer(example['premise'], example['hypothesis'], truncation=True, max_length=8)
+    sentence1_key, sentence2_key = task_to_keys[task_name]
+    args = (
+        (example[sentence1_key],) if sentence2_key is None else (example[sentence1_key], example[sentence2_key])
+    )
+    print("ARGS", args)
+    encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=8)
+    print("ECODED", encoded_input)
     return encoded_input
 
 def embed_fn(example):
+    import numpy as np
     embedding_list = []
-    for input_id, token_type_ids in zip(example["input_ids"], example["token_type_ids"]):
-        # embedding_list.append(torch.ones([8]))
-        embedding = model.bert.embeddings(input_id, token_type_ids=token_type_ids).detach()
+    # for input_id, token_type_ids in zip(example["input_ids"], example["token_type_ids"]):
+    #     # embedding_list.append(torch.ones([8]))
+    #     print(torch.tensor(input_id))
+    #     print("token_Type_ids", torch.tensor(token_type_ids))
+    #     embedding = model.bert.embeddings(torch.tensor(input_id), token_type_ids=torch.tensor(token_type_ids)).detach()
+    #     embedding_list.append(embedding)
 
-    return { 'embedding': embedding_list }
+    embedding = model.bert.embeddings(torch.tensor(example["input_ids"]), token_type_ids=torch.tensor(example["token_type_ids"])).detach()
+    return { 'embedding': embedding }
 
 # Tokenize the validation datasets
-tokenized_validation_matched = mnli_validation_matched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
-tokenized_validation_mismatched = mnli_validation_mismatched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+# with mnli_validation_matched.formatted_as("torch", ["input_ids", "token_type_ids"]):
+tokenized_validation_matched_pt = validation.take(n_samples_to_run).map(tokenized_fn, batched=True)
+tokenized_validation = tokenized_validation_matched_pt.map(embed_fn, batched=True)
+# with mnli_validation_mismatched.formatted_as("torch", ["input_ids", "token_type_ids"]):
 
-print(tokenized_validation_mismatched, type(tokenized_validation_mismatched))
+print(tokenized_validation, type(tokenized_validation))
+
+# get performance on PT model
+def get_predictions(model, tokenized_dataset):
+    model.eval()
+    predictions = []
+    with torch.no_grad():
+        for i in range(10):
+            example = tokenized_dataset[i]
+            inputs = {key: torch.tensor([val]) for key, val in example.items() if key in ['input_ids', 'attention_mask']}
+            print("PT Inputs", inputs)
+            outputs = model(**inputs)
+            logits = outputs.logits
+            # predicted_class = torch.argmax(logits, dim=-1).item()
+            predictions.append(logits)
+    return predictions
+pt_predictions = get_predictions(model, tokenized_validation_matched_pt)
+print_ln("PT Predictions %s", str(pt_predictions))
 
 def build_sfix_tensor(dataset):
     with dataset.formatted_as("torch", ["embedding", "label"]):
         tensor_embedding = torch.concat(list(map(lambda x: x['embedding'], dataset.iter(batch_size=1))))
         tensor_label = torch.concat(list(map(lambda x: x['label'], dataset.iter(batch_size=1))))
 
+        # one-hot encode tensor_label
+        tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
+
+        print("TENSOR LABEL", tensor_label)
+
+        tensor_embedding = tensor_embedding[:1]
+        tensor_label = tensor_label[:11]
+
         tensor_embedding_sfix = sfix.input_tensor_via(0, tensor_embedding.numpy())
-        tensor_label_sfix = sfix.input_tensor_via(0, tensor_label.numpy())
+        tensor_label_sfix = sint.input_tensor_via(0, tensor_label.numpy())
 
         return tensor_embedding_sfix, tensor_label_sfix
 
 def get_predictions(model, test_x, test_y):
 
-    layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=1)
+    layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=1) # set batch size bigger?
     optimizer = ml.Optimizer(layers)
     # optimizer.reset()
     # optimizer.print_random_update = True
-    pred = optimizer.reveal_correctness(test_x, test_y)
+    # pred = optimizer.reveal_correctness(test_x, test_y)
+    pred = optimizer.eval(test_x)
+    print_ln("test_y %s", test_y.reveal_nested())
+    print_ln("Predictions %s", pred.reveal_nested())
 
 def run(dataset):
     test_x, test_y = build_sfix_tensor(dataset)
     get_predictions(model, test_x, test_y)
 
 print("Running tokenized_validation_matched")
-run(tokenized_validation_matched)
+run(tokenized_validation)
 
-print("Running tokenized_validation_mismatched")
-run(tokenized_validation_mismatched)
+# print("Running tokenized_validation_mismatched")
+# run(tokenized_validation_mismatched)

@@ -60,7 +60,7 @@ approx=False
 optimizer = ml.Optimizer(layers)
 # optimizer.reset()
 # optimizer.print_random_update = True
-pred = optimizer.eval(X_test_embed)
+pred = optimizer.eval(X_test_embed, top=True)
 
 
 if True:
