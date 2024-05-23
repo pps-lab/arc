@@ -21,11 +21,13 @@ class QnliBertInputLoader(AbstractInputLoader):
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples
         """
-        INPUT_FEATURES = 128 # sequence length
+        hidden_size = 128 # sequence length
+        seq_len = 8
         self._dataset = dataset
         self._model_type = BertForSequenceClassification
         self._tokenizer_type = BertTokenizer
-        self._model_name = 'prajjwal1/bert-tiny-mnli'
+        # self._model_name = 'prajjwal1/bert-tiny-mnli'
+        self._model_name = 'M-FAC/bert-tiny-finetuned-qnli'
         self._task_name = 'qnli'
 
         train_dataset_size = sum(n_wanted_train_samples)
@@ -34,13 +36,13 @@ class QnliBertInputLoader(AbstractInputLoader):
         print(f"  {n_wanted_trigger_samples} audit trigger samples")
         print(f"  {n_wanted_test_samples} test samples (not audit relevant)")
 
-        self._train_samples = Matrix(train_dataset_size, INPUT_FEATURES, sfix)
+        self._train_samples = sfix.Tensor([train_dataset_size, seq_len, hidden_size])
         self._train_labels = sint.Tensor([train_dataset_size])
 
-        self._audit_trigger_samples = sfix.Tensor([n_wanted_trigger_samples, INPUT_FEATURES])
+        self._audit_trigger_samples = sfix.Tensor([n_wanted_trigger_samples, seq_len, hidden_size])
         self._audit_trigger_mislabels = sint.Tensor([n_wanted_trigger_samples])
 
-        self._test_samples = MultiArray([n_wanted_test_samples, INPUT_FEATURES], sfix)
+        self._test_samples = MultiArray([n_wanted_test_samples, seq_len, hidden_size], sfix)
         self._test_labels = sint.Tensor([n_wanted_test_samples])
 
         train_datasets, backdoor_dataset, test_dataset = self._load_dataset_huggingface(dataset, n_train_samples, debug=debug)
@@ -81,7 +83,8 @@ class QnliBertInputLoader(AbstractInputLoader):
 
         layers = ml.layers_from_torch(model, input_shape, input_via=input_via, batch_size=1)
 
-        model = ml.SGD(layers)
+        # model = ml.SGD(layers)
+        model = ml.Optimizer(layers)
 
         return model
 
@@ -136,8 +139,8 @@ class QnliBertInputLoader(AbstractInputLoader):
         # tokenized_validation_mismatched = mnli_validation_mismatched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
         test_x, test_y = build_pt_tensor(tokenized_validation_matched)
 
-        backdoor_dataset = test_x[:-10], test_y[:-10]
-        test_dataset = test_x[:1000], test_y[:1000] if self._test_samples.sizes[0] != 0 else None, None
+        backdoor_dataset = test_x[:-self._audit_trigger_samples.sizes[0]], test_y[:-self._audit_trigger_samples.sizes[0]]
+        test_dataset = test_x[:self._test_samples.sizes[0]], test_y[:self._test_samples.sizes[0]] if self._test_samples.sizes[0] != 0 else None, None
 
         # Training datasets
         train_datasets = [0] * len(n_train_samples)

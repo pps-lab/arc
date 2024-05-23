@@ -14,6 +14,7 @@ from Compiler.script_utils import config, timers, input_consistency
 
 class InferenceConfig(config.BaseAuditModel):
     n_samples: int = 1 # -1 = all
+    batch_size: int = 1
 
 program.options_from_args()
 cfg = config.from_program_args(program.args, InferenceConfig)

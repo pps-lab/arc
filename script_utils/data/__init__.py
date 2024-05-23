@@ -156,6 +156,7 @@ class AbstractInputLoader(ABC):
             print_ln("  loading %s test samples...", self.test_dataset_size())
             # self._test_samples.input_from(load_party_id)
             test_samples_loaded = sfix.input_tensor_via(party_id_last, test_dataset[POS_SAMPLES])
+            print("test_samples_loaded", test_samples_loaded.shape, test_samples_loaded)
             self._test_samples.assign(test_samples_loaded)
             # insert_or_append(input_consistency_array_per_party, party_id_last, test_samples_loaded)
             input_consistency_array_per_party[party_id_last].test_x.append(test_samples_loaded)
