@@ -7,8 +7,10 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-# model_name = 'M-FAC/bert-tiny-finetuned-qnli'
-model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+max_length = 8
+# model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+# max_length = 20
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -22,7 +24,7 @@ dataset = load_dataset('glue', task_name)
 # Access the evaluation dataset
 validation = dataset['validation']
 
-n_samples_to_run = 10
+n_samples_to_run = 1
 
 
 # # # Load the MNLI dataset
@@ -53,7 +55,7 @@ def tokenized_fn(example):
         (example[sentence1_key],) if sentence2_key is None else (example[sentence1_key], example[sentence2_key])
     )
     print("ARGS", args)
-    encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=8)
+    encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=max_length)
     print("ECODED", encoded_input)
     return encoded_input
 
@@ -94,11 +96,21 @@ def get_predictions(model, tokenized_dataset):
             predictions.append(probabilities)
     return predictions
 
+activation_list = []
+def get_activation(name):
+    def hook(model, input, output):
+        activation_list.append((name, output[0].detach()))
+    return hook
+for layer_id, bert_layer in enumerate(model.bert.encoder.layer):
+    bert_layer.register_forward_hook(get_activation(f'bert.encoder.layer.{layer_id}'))
+
 pt_predictions = get_predictions(model, tokenized_validation_matched_pt)
 pt_predictions_top = torch.argmax(torch.cat(pt_predictions), dim=-1)
 print_ln("PT Predictions %s", str(pt_predictions))
 print_ln("PT Predictions Top %s", str(pt_predictions_top))
+print("Running n_samples_to_run", n_samples_to_run)
 
+print("Bert activations ", activation_list)
 def build_sfix_tensor(dataset):
     with dataset.formatted_as("torch", ["embedding", "label"]):
         tensor_embedding = torch.concat(list(map(lambda x: x['embedding'], dataset.iter(batch_size=1))))
@@ -106,11 +118,6 @@ def build_sfix_tensor(dataset):
 
         # one-hot encode tensor_label
         tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
-
-        print("TENSOR LABEL", tensor_label)
-
-        # tensor_embedding = tensor_embedding[:1]
-        # tensor_label = tensor_label[:11]
 
         tensor_embedding_sfix = sfix.input_tensor_via(0, tensor_embedding.numpy())
         tensor_label_sfix = sint.input_tensor_via(0, tensor_label.numpy())
@@ -120,11 +127,13 @@ def build_sfix_tensor(dataset):
 import numpy
 def get_predictions(model, test_x, test_y):
 
+    # print_ln("Embeddings %s", test_x.reveal_nested())
+
     layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=n_samples_to_run) # set batch size bigger?
     optimizer = ml.Optimizer(layers)
     # optimizer.reset()
     # optimizer.print_random_update = True
-    pt_predictions_tensor_spdz = sfix.input_tensor_via(0, numpy.array(numpy.concatenate(pt_predictions)))
+    # pt_predictions_tensor_spdz = sfix.input_tensor_via(0, numpy.array(numpy.concatenate(pt_predictions)))
     # print_ln("PT Predictions %s %s", pt_predictions_tensor_spdz.reveal_nested(),  numpy.array(numpy.concatenate(pt_predictions)))
     # pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, n_samples_to_run)
     # print_ln("PRED %s", pred)
@@ -140,10 +149,32 @@ def get_predictions(model, test_x, test_y):
         print_str("%s, ", p)
     print_ln(" ")
 
+    # compare the values in activation_list with the values in the layers
+    relevant_model_layers = optimizer.layers[:-4]
+    print("relevant_model_layers", relevant_model_layers)
+    for pt_values, relevant_model_layer in zip(activation_list, relevant_model_layers):
+        # compute diff
+        pt_at_runtime = sfix.input_tensor_via(0, pt_values[1].numpy()).get_vector().reveal()
+        layer_output = relevant_model_layer.Y.get_vector().reveal()
+
+        # display first 3 of both
+        print_ln("pt_at_runtime %s", pt_at_runtime[:8])
+        print_ln("layer_output  %s", layer_output[:8])
+        # compute diff
+        diff = sum((pt_at_runtime - layer_output) ** 2)
+        print_ln("diff %s", diff)
+
 
 def run(dataset):
     test_x, test_y = build_sfix_tensor(dataset)
     get_predictions(model, test_x, test_y)
+
+# sfix.round_nearest = True
+# program.use_trunc_pr = False
+# sfix.set_precision(18)
+# cfix.set_precision(18)
+cfix.set_precision(f=32, k=62)
+sfix.set_precision(f=32, k=62)
 
 print("Running tokenized_validation_matched")
 run(tokenized_validation)

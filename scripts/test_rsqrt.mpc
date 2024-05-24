@@ -1,0 +1,23 @@
+
+
+# test mpc_math.InvertSqrt and compare with ground truth
+
+import numpy as np
+from Compiler import mpc_math, util
+
+# cfix.set_precision(32, 62)
+# sfix.set_precision(32, 62)
+
+def InvertSqrtGroundTruth(x):
+    return 1.0 / np.sqrt(x)
+
+input_value = 0.001
+
+# ground truth
+ground_truth = InvertSqrtGroundTruth(input_value)
+test = mpc_math.InvertSqrt(sfix(input_value))
+test_sfix = 1 / mpc_math.sqrt(sfix(input_value))
+
+print_ln("ground_truth %s == InvertSqrt %s", ground_truth, test.reveal())
+print_ln("1 / sqrt() %s == InvertSqrt %s", test_sfix.reveal(), test.reveal())
+

@@ -1,3 +1,6 @@
+import operator
+from functools import reduce
+
 from Compiler import ml
 from Compiler.types import MultiArray, sfix, sint, Array, Matrix
 from Compiler.library import print_ln
@@ -29,6 +32,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         # self._model_name = 'prajjwal1/bert-tiny-mnli'
         self._model_name = 'M-FAC/bert-tiny-finetuned-qnli'
         self._task_name = 'qnli'
+        self._max_length = 8
 
         train_dataset_size = sum(n_wanted_train_samples)
         print(f"Compile loading QNLI data...")
@@ -57,9 +61,9 @@ class QnliBertInputLoader(AbstractInputLoader):
 
 
     def model_latent_space_layer(self):
-        raise NotImplementedError("No latent space implemented yet")
-        expected_latent_space_size = 32
-        return self._model.layers[-3], expected_latent_space_size
+        expected_latent_space_size = reduce(operator.mul, self._model.layers.sizes[1:])
+        print("Model latent space layer", self._model.layers[-1], expected_latent_space_size)
+        return self._model.layers[-2], expected_latent_space_size
 
 
     def model_layers(self):
@@ -119,7 +123,7 @@ class QnliBertInputLoader(AbstractInputLoader):
             args = (
                 (example[sentence1_key],) if sentence2_key is None else (example[sentence1_key], example[sentence2_key])
             )
-            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=8)
+            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=self._max_length)
             return encoded_input
 
         def embed_fn(example):
