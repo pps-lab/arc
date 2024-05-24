@@ -24,7 +24,7 @@ dataset = load_dataset('glue', task_name)
 # Access the evaluation dataset
 validation = dataset['validation']
 
-n_samples_to_run = 1
+n_samples_to_run = 64
 
 
 # # # Load the MNLI dataset
@@ -129,25 +129,25 @@ def get_predictions(model, test_x, test_y):
 
     # print_ln("Embeddings %s", test_x.reveal_nested())
 
-    layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=n_samples_to_run) # set batch size bigger?
+    layers = ml.layers_from_torch(model, test_x.shape, input_via=0, batch_size=1) # set batch size bigger?
     optimizer = ml.Optimizer(layers)
     # optimizer.reset()
     # optimizer.print_random_update = True
-    # pt_predictions_tensor_spdz = sfix.input_tensor_via(0, numpy.array(numpy.concatenate(pt_predictions)))
+    pt_predictions_tensor_spdz = sfix.input_tensor_via(0, numpy.array(numpy.concatenate(pt_predictions)))
     # print_ln("PT Predictions %s %s", pt_predictions_tensor_spdz.reveal_nested(),  numpy.array(numpy.concatenate(pt_predictions)))
-    # pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, n_samples_to_run)
-    # print_ln("PRED %s", pred)
+    pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, batch_size=32)
+    print_ln("PRED %s", pred)
 
     # pred = optimizer.eval(test_x)
     # for l, p in zip(test_y.reveal_nested(), pred.reveal_nested()):
     #     print_str("%s == ", l)
     #     print_str("%s, ", p)
 
-    pred = optimizer.eval(test_x)
-    for l, p in zip(pt_predictions_top, pred.reveal_nested()):
-        print_str("%s == ", l)
-        print_str("%s, ", p)
-    print_ln(" ")
+    # pred = optimizer.eval(test_x, batch_size=)
+    # for l, p in zip(pt_predictions_top, pred.reveal_nested()):
+    #     print_str("%s == ", l)
+    #     print_str("%s, ", p)
+    # print_ln(" ")
 
     # compare the values in activation_list with the values in the layers
     relevant_model_layers = optimizer.layers[:-4]
@@ -173,8 +173,8 @@ def run(dataset):
 # program.use_trunc_pr = False
 # sfix.set_precision(18)
 # cfix.set_precision(18)
-cfix.set_precision(f=32, k=62)
-sfix.set_precision(f=32, k=62)
+# cfix.set_precision(f=32, k=62)
+# sfix.set_precision(f=32, k=62)
 
 print("Running tokenized_validation_matched")
 run(tokenized_validation)

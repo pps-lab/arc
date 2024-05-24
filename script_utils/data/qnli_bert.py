@@ -33,6 +33,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         self._model_name = 'M-FAC/bert-tiny-finetuned-qnli'
         self._task_name = 'qnli'
         self._max_length = 8
+        self._n_classes = 2
 
         train_dataset_size = sum(n_wanted_train_samples)
         print(f"Compile loading QNLI data...")
@@ -41,13 +42,13 @@ class QnliBertInputLoader(AbstractInputLoader):
         print(f"  {n_wanted_test_samples} test samples (not audit relevant)")
 
         self._train_samples = sfix.Tensor([train_dataset_size, seq_len, hidden_size])
-        self._train_labels = sint.Tensor([train_dataset_size])
+        self._train_labels = sint.Tensor([train_dataset_size, self._n_classes])
 
         self._audit_trigger_samples = sfix.Tensor([n_wanted_trigger_samples, seq_len, hidden_size])
-        self._audit_trigger_mislabels = sint.Tensor([n_wanted_trigger_samples])
+        self._audit_trigger_mislabels = sint.Tensor([n_wanted_trigger_samples, self._n_classes])
 
         self._test_samples = MultiArray([n_wanted_test_samples, seq_len, hidden_size], sfix)
-        self._test_labels = sint.Tensor([n_wanted_test_samples])
+        self._test_labels = sint.Tensor([n_wanted_test_samples, self._n_classes])
 
         train_datasets, backdoor_dataset, test_dataset = self._load_dataset_huggingface(dataset, n_train_samples, debug=debug)
         self._load_input_data_pytorch(train_datasets, backdoor_dataset, test_dataset,
@@ -68,17 +69,11 @@ class QnliBertInputLoader(AbstractInputLoader):
 
     def model_layers(self):
         raise NotImplementedError("Pytorch loader only")
-        layers = [
-            ml.keras.layers.Dense(32, activation='relu'),
-            ml.keras.layers.Dense(2, activation='softmax')
-        ]
-        return layers
 
     def one_hot_labels(self):
         return False
 
     def _load_model(self, input_shape, batch_size, input_via):
-
         # Load pre-trained BERT model and tokenizer
           # You can choose other versions of BERT like 'bert-large-uncased'
 
@@ -102,9 +97,6 @@ class QnliBertInputLoader(AbstractInputLoader):
         #
         # # Access the evaluation datasets
         # mnli_validation_mismatched = mnli_dataset['validation_mismatched']
-
-
-
         task_to_keys = {
             "cola": ("sentence", None),
             "mnli": ("premise", "hypothesis"),
@@ -134,6 +126,7 @@ class QnliBertInputLoader(AbstractInputLoader):
             with dataset.formatted_as("torch", ["embedding", "label"]):
                 tensor_embedding = torch.concat(list(map(lambda x: x['embedding'], dataset.iter(batch_size=1))))
                 tensor_label = torch.concat(list(map(lambda x: x['label'], dataset.iter(batch_size=1))))
+                tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
 
                 return tensor_embedding, tensor_label
 
