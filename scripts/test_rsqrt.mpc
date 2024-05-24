@@ -5,8 +5,8 @@
 import numpy as np
 from Compiler import mpc_math, util
 
-# cfix.set_precision(32, 62)
-# sfix.set_precision(32, 62)
+cfix.set_precision(32, 62)
+sfix.set_precision(32, 62)
 
 def InvertSqrtGroundTruth(x):
     return 1.0 / np.sqrt(x)
