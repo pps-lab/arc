@@ -53,59 +53,59 @@ $SUITE_VARS$:
     stage: # "compile" in run and then in next run "run"
       $FACTOR$: [ compile, run ] # ensure that this is last factor
 
-audit_score_3pc:
-  n_repetitions: 1
-  host_types:
-    consistency:
-      n: 3
-      check_status: True
-      init_roles:
-        - setup-base
-        - setup-consistency
-#        - setup-adult
-        - download-dataset
-#        - setup-spdz-secrets
-      $CMD$:
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
-
-  base_experiment:
-#    consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
-#      type:
-#        $FACTOR$: [ sha3s, cerebro, pc ]
-
-    network_type: lan
-    mpc_type: $FACTOR$
-
-    mpc:
-      script_name: audit_owner_score
-      script_args:
-        sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
-
-        pre_score_select_k: 50
-        score_method:
-          $FACTOR$: [ l2, cosine, cosine_presort_l2 ]
-
-  factor_levels:
-
-    - mpc_type: sh
-      mpc: # should convert
-        protocol_setup: "semi_honest_3"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
-        custom_prime: null
-        script_args:
-          dataset: adult_3p
-
-    - mpc_type: mal
-      mpc: # should convert
-        protocol_setup: "sy-rep-ring-party"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
-        custom_prime: null
-        script_args:
-          dataset: adult_3p
+#audit_score_3pc:
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+##        - setup-adult
+##        - download-dataset
+##        - setup-spdz-secrets
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+##    consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
+##      type:
+##        $FACTOR$: [ sha3s, cerebro, pc ]
+#
+#    network_type: lan
+#    mpc_type: $FACTOR$
+#
+#    mpc:
+#      script_name: audit_owner_score
+#      script_args:
+#        sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
+#
+#        pre_score_select_k: 50
+#        score_method:
+#          $FACTOR$: [ l2, cosine, cosine_presort_l2 ]
+#
+#  factor_levels:
+#
+#    - mpc_type: sh
+#      mpc: # should convert
+#        protocol_setup: "semi_honest_3"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+#        custom_prime: null
+#        script_args:
+#          dataset: adult_3p
+#
+#    - mpc_type: mal
+#      mpc: # should convert
+#        protocol_setup: "sy-rep-ring-party"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+#        custom_prime: null
+#        script_args:
+#          dataset: adult_3p
 
 #    - mpc_type: sh
 #      mpc: # should convert
@@ -124,6 +124,63 @@ audit_score_3pc:
 #        custom_prime: null
 #        script_args:
 #          dataset: cifar_alexnet_3party
+
+
+audit_score_3pc_wan:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+        - setup-network-delay
+#        - download-dataset
+      #        - setup-adult
+      #        - setup-spdz-secrets
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+    #    consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
+    #      type:
+    #        $FACTOR$: [ sha3s, cerebro, pc ]
+
+    network_type: wan
+    mpc_type: $FACTOR$
+
+    mpc:
+      script_name: audit_owner_score
+      script_args:
+        sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
+
+        skip_inference: True
+        pre_score_select_k: 50
+        score_method:
+          $FACTOR$: [ l2, cosine, cosine_presort_l2 ]
+
+  factor_levels:
+
+    - mpc_type: sh
+      mpc: # should convert
+        protocol_setup: "semi_honest_3"
+        domain: ring_split
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+        custom_prime: null
+        script_args:
+          dataset: adult_3p
+
+#    - mpc_type: mal
+#      mpc: # should convert
+#        protocol_setup: "sy-rep-ring-party"
+#        domain: ring_split
+#        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+#        custom_prime: null
+#        script_args:
+#          dataset: adult_3p
 
 #
 #audit_robustness_3pc_wan:

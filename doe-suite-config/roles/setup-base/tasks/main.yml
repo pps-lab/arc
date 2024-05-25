@@ -181,7 +181,7 @@
 
 - name: Generate SSL Certificates for 20 players locally if not exist yet # TODO: Does this expire? does this work in parallel?
   delegate_to: localhost
-  when: result.valid_at.one_day == False
+#  when: result.valid_at.one_day == False
   ansible.builtin.shell:
     chdir: "{{ does_project_dir }}"
     cmd: "bash {{ does_project_dir }}/MP-SPDZ/Scripts/setup-ssl.sh 20 MP-SPDZ/Player-SSL-Data/"

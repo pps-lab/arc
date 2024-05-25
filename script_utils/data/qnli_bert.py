@@ -1,4 +1,5 @@
 import operator
+import os.path
 from functools import reduce
 
 from Compiler import ml
@@ -34,6 +35,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         self._task_name = 'qnli'
         self._max_length = 8
         self._n_classes = 2
+        self.input_shape_size = input_shape_size
 
         train_dataset_size = sum(n_wanted_train_samples)
         print(f"Compile loading QNLI data...")
@@ -62,8 +64,8 @@ class QnliBertInputLoader(AbstractInputLoader):
 
 
     def model_latent_space_layer(self):
-        expected_latent_space_size = reduce(operator.mul, self._model.layers.sizes[1:])
-        print("Model latent space layer", self._model.layers[-1], expected_latent_space_size)
+        expected_latent_space_size = reduce(operator.mul, self._model.layers[-2].X.sizes[1:])
+        print("Model latent space layer", self._model.layers[-2], expected_latent_space_size)
         return self._model.layers[-2], expected_latent_space_size
 
 
@@ -89,7 +91,7 @@ class QnliBertInputLoader(AbstractInputLoader):
 
     def _load_dataset_huggingface(self, dataset, n_train_samples, debug):
 
-        from datasets import load_dataset
+        from datasets import load_dataset, load_from_disk
         tokenizer = self._tokenizer_type.from_pretrained(self._model_name)
         model = self._model_type.from_pretrained(self._model_name)
 
@@ -143,7 +145,14 @@ class QnliBertInputLoader(AbstractInputLoader):
         train_datasets = [0] * len(n_train_samples)
         if sum(n_train_samples) != 0 and self._train_samples.sizes[0] != 0:
             mnli_training = dataset['train']
-            tokenized_training = mnli_training.take(sum(n_train_samples)).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+            cache_dir = "/tmp/qnli_cache"
+            if os.path.exists(cache_dir):
+                tokenized_training = load_from_disk(cache_dir)
+                print("Loaded tokenized training from cache")
+            else:
+                tokenized_training = mnli_training.take(sum(n_train_samples)).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+                tokenized_training.save_to_disk(cache_dir)
+                print("Saved tokenized training to cache")
             train_x, train_y = build_pt_tensor(tokenized_training)
 
             # Now split x_train by the entries in n_train_samples

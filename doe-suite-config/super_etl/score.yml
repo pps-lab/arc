@@ -9,7 +9,8 @@ $SUITE_ID$:
 #  audit_score_1715022414
 #  audit_score_
   audit_score:
-    audit_score_3pc: 1715244038 #1715183578 #1715068629 #1714741168
+    audit_score_3pc: 1715611041 #1715183578 #1715068629 #1714741168
+    audit_score_3pc_wan: # TODO
 
 $ETL$:
   raw:
@@ -81,7 +82,8 @@ $ETL$:
           pre_sorting_bw_bytes: [ "spdz_timer_bw_104" ]
           global_data_sent_bytes: [ "spdz_timer_bw_100" ]
 
-          n_rounds: [ "spdz_player_round_number" ]
+          n_rounds: [ "spdz_timer_rounds_101" ]
+          n_rounds_overhead: [ "spdz_timer_rounds_102", "spdz_timer_rounds_103" ]
 
     loaders:
       CsvSummaryLoader: { }
@@ -101,7 +103,7 @@ $ETL$:
 
           host_idx: [ 0 ] # only plot one party
           'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
-          'network_type': [ lan ]
+          'network_type': [ lan, wan ]
           'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet_3party ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
 #          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
 
@@ -115,22 +117,19 @@ $ETL$:
             filter: { 'mpc.script_args.dataset': [ "adult" ] }
 
           - style: { color: "#d5e1a3", edgecolor: grey }
-            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ inference_time_s, inference_bw_bytes ] }
+            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ inference_time_s, inference_bw_bytes, n_rounds ] }
 #
           - style: { color: "#e7eec9", edgecolor: grey }
-            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ score_time_s, score_bw_bytes ] }
+            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ score_time_s, score_bw_bytes, n_rounds_overhead ] }
 
-          - style: { color: "#e7eec9", edgecolor: grey }
-            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ n_rounds ] }
-#
+#          - style: { color: "#e7eec9", edgecolor: grey }
+#            filter: { "mpc_type": [ "sh" ], "$bar_part_col$": [ n_rounds ] }
+##
           - style: { color: "#4c72b0", edgecolor: grey }
-            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ inference_time_s, inference_bw_bytes ] }
+            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ inference_time_s, inference_bw_bytes, n_rounds ] }
 
           - style: { color: "#a6b8d8", edgecolor: grey }
-            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ score_time_s, score_bw_bytes ] }
-
-          - style: { color: "#a6b8d8", edgecolor: grey }
-            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ n_rounds ] }
+            filter: { "mpc_type": [ "mal" ], "$bar_part_col$": [ score_time_s, score_bw_bytes, n_rounds_overhead ] }
 
           - style: { color: "red", edgecolor: grey }
             filter: { "mpc_type": [ "sh", "mal" ], "$bar_part_col$": [ score_separate_time_s ] }
@@ -144,8 +143,8 @@ $ETL$:
 
 
         title:
-          format: "{}"
-          plot_cols: [ "mpc.script_args.dataset" ]
+          format: "{} ({})"
+          plot_cols: [ "mpc.script_args.dataset", "network_type" ]
 
         group_labels:
           cols: [ 'mpc.script_args.score_method' ]
@@ -238,7 +237,7 @@ $ETL$:
 #            y_lim_row: [ [ 0, 1.6 ], [ 0, 1.6 ], [ 0, 50 ], [ 0, 500 ], [ 0, 500 ], [ 0, 400 ], [ 0, 8000 ], [ 0, 20000 ] ]
 
           lan_rounds:
-            bar_part_cols: [ n_rounds ]
+            bar_part_cols: [ n_rounds, n_rounds_overhead ]
             y_label: "Rounds"
             y_unit_divider: 1.0 # transform to MB
 
@@ -246,7 +245,7 @@ $ETL$:
               network_type: [ 'lan' ] # I only want wan
 
           detailed_score:
-            bar_part_cols: [ score_separate_time_s, sorting_time_s ] # pre_sorting_time_s, pre_l2_time_s, post_cosine_time_s ]
+            bar_part_cols: [ sorting_time_s, pre_sorting_time_s, pre_l2_time_s, post_cosine_time_s ]
             y_unit_divider: 60.0 # switch to mins from secs
             y_label: "Detailed Time [min]"
 

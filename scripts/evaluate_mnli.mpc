@@ -7,10 +7,10 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-model_name = 'M-FAC/bert-tiny-finetuned-qnli'
-max_length = 8
-# model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
-# max_length = 20
+# model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+# max_length = 8
+model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+max_length = 20
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -24,7 +24,7 @@ dataset = load_dataset('glue', task_name)
 # Access the evaluation dataset
 validation = dataset['validation']
 
-n_samples_to_run = 2
+n_samples_to_run = 1
 
 
 # # # Load the MNLI dataset

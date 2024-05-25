@@ -17,7 +17,7 @@ class AuditConfig(config.BaseAuditModel):
     K: int = 25 # knn K
     mod_zscore_threshold: float = 2.5
 
-    # n_batches: int = 10
+    n_batches: int = 1
 
 program.options_from_args()
 cfg = config.from_program_args(program.args, AuditConfig)
