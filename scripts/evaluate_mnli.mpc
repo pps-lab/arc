@@ -24,7 +24,7 @@ dataset = load_dataset('glue', task_name)
 # Access the evaluation dataset
 validation = dataset['validation']
 
-n_samples_to_run = 64
+n_samples_to_run = 2
 
 
 # # # Load the MNLI dataset
@@ -135,7 +135,7 @@ def get_predictions(model, test_x, test_y):
     # optimizer.print_random_update = True
     pt_predictions_tensor_spdz = sfix.input_tensor_via(0, numpy.array(numpy.concatenate(pt_predictions)))
     # print_ln("PT Predictions %s %s", pt_predictions_tensor_spdz.reveal_nested(),  numpy.array(numpy.concatenate(pt_predictions)))
-    pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, batch_size=32)
+    pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, batch_size=1)
     print_ln("PRED %s", pred)
 
     # pred = optimizer.eval(test_x)
@@ -155,7 +155,7 @@ def get_predictions(model, test_x, test_y):
     for pt_values, relevant_model_layer in zip(activation_list, relevant_model_layers):
         # compute diff
         pt_at_runtime = sfix.input_tensor_via(0, pt_values[1].numpy()).get_vector().reveal()
-        layer_output = relevant_model_layer.Y.get_vector().reveal()
+        layer_output = relevant_model_layer.Y[0].get_vector().reveal()
 
         # display first 3 of both
         print_ln("pt_at_runtime %s", pt_at_runtime[:8])
