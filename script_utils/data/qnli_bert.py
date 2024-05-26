@@ -39,7 +39,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         self.input_shape_size = input_shape_size
 
         self._model = self._model_type.from_pretrained(self._model_name)
-        seq_len = self._model.config.max_length
+        self._seq_len = 128
         hidden_size = self._model.config.hidden_size # sequence length
 
         train_dataset_size = sum(n_wanted_train_samples)
@@ -48,13 +48,13 @@ class QnliBertInputLoader(AbstractInputLoader):
         print(f"  {n_wanted_trigger_samples} audit trigger samples")
         print(f"  {n_wanted_test_samples} test samples (not audit relevant)")
 
-        self._train_samples = sfix.Tensor([train_dataset_size, seq_len, hidden_size])
+        self._train_samples = sfix.Tensor([train_dataset_size, self._seq_len, hidden_size])
         self._train_labels = sint.Tensor([train_dataset_size, self._n_classes])
 
-        self._audit_trigger_samples = sfix.Tensor([n_wanted_trigger_samples, seq_len, hidden_size])
+        self._audit_trigger_samples = sfix.Tensor([n_wanted_trigger_samples, self._seq_len, hidden_size])
         self._audit_trigger_mislabels = sint.Tensor([n_wanted_trigger_samples, self._n_classes])
 
-        self._test_samples = MultiArray([n_wanted_test_samples, seq_len, hidden_size], sfix)
+        self._test_samples = MultiArray([n_wanted_test_samples, self._seq_len, hidden_size], sfix)
         self._test_labels = sint.Tensor([n_wanted_test_samples, self._n_classes])
 
         train_datasets, backdoor_dataset, test_dataset = self._load_dataset_huggingface(dataset, n_train_samples, debug=debug)
@@ -69,9 +69,9 @@ class QnliBertInputLoader(AbstractInputLoader):
 
 
     def model_latent_space_layer(self):
-        expected_latent_space_size = reduce(operator.mul, self._model.layers[-2].X.sizes[1:])
-        print("Model latent space layer", self._model.layers[-2], expected_latent_space_size)
-        return self._model.layers[-2], expected_latent_space_size
+        expected_latent_space_size = reduce(operator.mul, self._model.layers[-3].X.sizes[1:])
+        print("Model latent space layer", self._model.layers[-3], expected_latent_space_size)
+        return self._model.layers[-3], expected_latent_space_size
 
 
     def model_layers(self):
@@ -117,7 +117,7 @@ class QnliBertInputLoader(AbstractInputLoader):
             args = (
                 (example[sentence1_key],) if sentence2_key is None else (example[sentence1_key], example[sentence2_key])
             )
-            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=self._model.config.max_length)
+            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=self._seq_len)
             return encoded_input
 
         def embed_fn(example):

@@ -15,7 +15,7 @@ tokenizer = BertTokenizer.from_pretrained(model_name)
 
 # Load the BERT model
 model = BertForSequenceClassification.from_pretrained(model_name)
-max_length = model.config.max_length
+max_length = 128
 
 #
 task_name = 'qnli'
@@ -169,8 +169,8 @@ def run(dataset):
     test_x, test_y = build_sfix_tensor(dataset)
     get_predictions(model, test_x, test_y)
 
-# sfix.round_nearest = True
-# program.use_trunc_pr = False
+sfix.round_nearest = True
+program.use_trunc_pr = False
 # sfix.set_precision(18)
 # cfix.set_precision(18)
 # cfix.set_precision(f=32, k=62)
