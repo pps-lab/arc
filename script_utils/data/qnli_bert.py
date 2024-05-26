@@ -28,7 +28,6 @@ class QnliBertInputLoader(AbstractInputLoader):
         """
         transformers.logging.set_verbosity_error()
 
-        hidden_size = 128 # sequence length
         self._dataset = dataset
         self._model_type = BertForSequenceClassification
         self._tokenizer_type = BertTokenizer
@@ -41,6 +40,7 @@ class QnliBertInputLoader(AbstractInputLoader):
 
         self._model = self._model_type.from_pretrained(self._model_name)
         seq_len = self._model.config.max_length
+        hidden_size = self._model.config.hidden_size # sequence length
 
         train_dataset_size = sum(n_wanted_train_samples)
         print(f"Compile loading QNLI data...")
@@ -140,6 +140,8 @@ class QnliBertInputLoader(AbstractInputLoader):
 
         backdoor_dataset = test_x[:-self._audit_trigger_samples.sizes[0]], test_y[:-self._audit_trigger_samples.sizes[0]]
         test_dataset = test_x[:self._test_samples.sizes[0]], test_y[:self._test_samples.sizes[0]] if self._test_samples.sizes[0] != 0 else None, None
+
+        print("Test dataset", test_dataset[0].shape)
 
         # Training datasets
         train_datasets = [0] * len(n_train_samples)
