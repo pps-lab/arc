@@ -7,8 +7,8 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-model_name = 'M-FAC/bert-tiny-finetuned-qnli'
-# model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+# model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -172,7 +172,7 @@ def run(dataset):
     get_predictions(model, test_x, test_y)
 
 # sfix.round_nearest = True
-program.use_trunc_pr = True
+program.use_trunc_pr = False
 # sfix.set_precision(18)
 # cfix.set_precision(18)
 # cfix.set_precision(f=32, k=62)
