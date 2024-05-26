@@ -7,8 +7,8 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-# model_name = 'M-FAC/bert-mini-finetuned-qnli'
-model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+# model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -16,6 +16,8 @@ tokenizer = BertTokenizer.from_pretrained(model_name)
 # Load the BERT model
 model = BertForSequenceClassification.from_pretrained(model_name)
 max_length = 128
+
+ml.set_n_threads(24)
 
 #
 task_name = 'qnli'
@@ -150,19 +152,19 @@ def get_predictions(model, test_x, test_y):
     # print_ln(" ")
 
     # compare the values in activation_list with the values in the layers
-    relevant_model_layers = optimizer.layers[:-4]
-    print("relevant_model_layers", relevant_model_layers)
-    for pt_values, relevant_model_layer in zip(activation_list, relevant_model_layers):
-        # compute diff
-        pt_at_runtime = sfix.input_tensor_via(0, pt_values[1].numpy()).get_vector().reveal()
-        layer_output = relevant_model_layer.Y[0].get_vector().reveal()
-
-        # display first 3 of both
-        print_ln("pt_at_runtime %s", pt_at_runtime[:8])
-        print_ln("layer_output  %s", layer_output[:8])
-        # compute diff
-        diff = sum((pt_at_runtime - layer_output) ** 2)
-        print_ln("diff %s", diff)
+    # relevant_model_layers = optimizer.layers[:-4]
+    # print("relevant_model_layers", relevant_model_layers)
+    # for pt_values, relevant_model_layer in zip(activation_list, relevant_model_layers):
+    #     # compute diff
+    #     pt_at_runtime = sfix.input_tensor_via(0, pt_values[1].numpy()).get_vector().reveal()
+    #     layer_output = relevant_model_layer.Y[0].get_vector().reveal()
+    #
+    #     # display first 3 of both
+    #     print_ln("pt_at_runtime %s", pt_at_runtime[:8])
+    #     print_ln("layer_output  %s", layer_output[:8])
+    #     # compute diff
+    #     diff = sum((pt_at_runtime - layer_output) ** 2)
+    #     print_ln("diff %s", diff)
 
 
 def run(dataset):
