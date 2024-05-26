@@ -7,9 +7,9 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-# model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+model_name = 'M-FAC/bert-mini-finetuned-qnli'
 # max_length = 8
-model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+# model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
@@ -176,6 +176,8 @@ def run(dataset):
 # cfix.set_precision(18)
 # cfix.set_precision(f=32, k=62)
 # sfix.set_precision(f=32, k=62)
+# cfix.set_precision(f=14, k=31)
+# sfix.set_precision(f=14, k=31)
 
 print("Running tokenized_validation_matched")
 run(tokenized_validation)
