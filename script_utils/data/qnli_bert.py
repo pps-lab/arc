@@ -8,6 +8,7 @@ from Compiler.library import print_ln
 
 from Compiler.script_utils.data import AbstractInputLoader
 
+import transformers
 from transformers import BertForSequenceClassification, BertTokenizer
 
 from typing import List, Optional
@@ -25,8 +26,9 @@ class QnliBertInputLoader(AbstractInputLoader):
         - Party0 also contains the audit_trigger samples and the model weights
         - Party1 also contains the test samples
         """
+        transformers.logging.set_verbosity_error()
+
         hidden_size = 128 # sequence length
-        seq_len = 8
         self._dataset = dataset
         self._model_type = BertForSequenceClassification
         self._tokenizer_type = BertTokenizer
@@ -36,6 +38,9 @@ class QnliBertInputLoader(AbstractInputLoader):
         self._task_name = 'qnli'
         self._n_classes = 2
         self.input_shape_size = input_shape_size
+
+        self._model = self._model_type.from_pretrained(self._model_name)
+        seq_len = self._model.config.max_length
 
         train_dataset_size = sum(n_wanted_train_samples)
         print(f"Compile loading QNLI data...")
@@ -80,9 +85,8 @@ class QnliBertInputLoader(AbstractInputLoader):
           # You can choose other versions of BERT like 'bert-large-uncased'
 
         # Load the tokenizer
-        model = self._model_type.from_pretrained(self._model_name)
 
-        layers = ml.layers_from_torch(model, input_shape, input_via=input_via, batch_size=1)
+        layers = ml.layers_from_torch(self._model, input_shape, input_via=input_via, batch_size=1)
 
         # model = ml.SGD(layers)
         model = ml.Optimizer(layers)
@@ -93,7 +97,6 @@ class QnliBertInputLoader(AbstractInputLoader):
 
         from datasets import load_dataset, load_from_disk
         tokenizer = self._tokenizer_type.from_pretrained(self._model_name)
-        model = self._model_type.from_pretrained(self._model_name)
 
         dataset = load_dataset('glue', 'qnli')
         task_to_keys = {
@@ -114,11 +117,11 @@ class QnliBertInputLoader(AbstractInputLoader):
             args = (
                 (example[sentence1_key],) if sentence2_key is None else (example[sentence1_key], example[sentence2_key])
             )
-            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=model.config.max_length)
+            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=self._model.config.max_length)
             return encoded_input
 
         def embed_fn(example):
-            embedding = model.bert.embeddings(torch.tensor(example["input_ids"]), token_type_ids=torch.tensor(example["token_type_ids"])).detach()
+            embedding = self._model.bert.embeddings(torch.tensor(example["input_ids"]), token_type_ids=torch.tensor(example["token_type_ids"])).detach()
             return { 'embedding': embedding }
 
         def build_pt_tensor(dataset):
