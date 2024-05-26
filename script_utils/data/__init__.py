@@ -4,11 +4,9 @@ from Compiler.library import print_ln, start_timer, stop_timer
 from Compiler.types import sint, sfix
 from Compiler.script_utils import input_consistency, timers
 
-from Compiler.ml import FixConv2d, Dense, BatchNorm, Layer
+from Compiler.ml import FixConv2d, Dense, BatchNorm, Layer, BertLayer, BertPooler
 
 from Compiler.script_utils.input_consistency import InputObject
-
-from ml import BertLayer, BertPooler
 
 
 class AbstractInputLoader(ABC):
@@ -314,8 +312,6 @@ class AbstractInputLoader(ABC):
                 output_matrices.append(layer.multi_head_attention.output.layer_norm.bias)
                 output_matrices.append(layer.intermediate.dense.W)
                 output_matrices.append(layer.intermediate.dense.b)
-                output_matrices.append(layer.intermediate.layer_norm.weights)
-                output_matrices.append(layer.intermediate.layer_norm.bias)
                 output_matrices.append(layer.output.dense.W)
                 output_matrices.append(layer.output.dense.b)
                 output_matrices.append(layer.output.layer_norm.weights)
