@@ -33,7 +33,6 @@ class QnliBertInputLoader(AbstractInputLoader):
         # self._model_name = 'prajjwal1/bert-tiny-mnli'
         self._model_name = 'M-FAC/bert-tiny-finetuned-qnli'
         self._task_name = 'qnli'
-        self._max_length = 8
         self._n_classes = 2
         self.input_shape_size = input_shape_size
 
@@ -95,10 +94,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         tokenizer = self._tokenizer_type.from_pretrained(self._model_name)
         model = self._model_type.from_pretrained(self._model_name)
 
-        dataset = load_dataset('glue', 'qnli') # TODO: QNLI?
-        #
-        # # Access the evaluation datasets
-        # mnli_validation_mismatched = mnli_dataset['validation_mismatched']
+        dataset = load_dataset('glue', 'qnli')
         task_to_keys = {
             "cola": ("sentence", None),
             "mnli": ("premise", "hypothesis"),
@@ -117,7 +113,7 @@ class QnliBertInputLoader(AbstractInputLoader):
             args = (
                 (example[sentence1_key],) if sentence2_key is None else (example[sentence1_key], example[sentence2_key])
             )
-            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=self._max_length)
+            encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=model.config.max_length)
             return encoded_input
 
         def embed_fn(example):
