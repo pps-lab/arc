@@ -169,8 +169,8 @@ def run(dataset):
     test_x, test_y = build_sfix_tensor(dataset)
     get_predictions(model, test_x, test_y)
 
-sfix.round_nearest = True
-program.use_trunc_pr = False
+# sfix.round_nearest = True
+program.use_trunc_pr = True
 # sfix.set_precision(18)
 # cfix.set_precision(18)
 # cfix.set_precision(f=32, k=62)
