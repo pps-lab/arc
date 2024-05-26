@@ -10,13 +10,14 @@ import torch
 # model_name = 'M-FAC/bert-tiny-finetuned-qnli'
 # max_length = 8
 model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
-max_length = 20
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
 
 # Load the BERT model
 model = BertForSequenceClassification.from_pretrained(model_name)
+max_length = model.config.max_length
+
 #
 task_name = 'qnli'
 dataset = load_dataset('glue', task_name)
