@@ -8,6 +8,8 @@ from Compiler.ml import FixConv2d, Dense, BatchNorm, Layer
 
 from Compiler.script_utils.input_consistency import InputObject
 
+from ml import BertLayer, BertPooler
+
 
 class AbstractInputLoader(ABC):
 
@@ -298,6 +300,30 @@ class AbstractInputLoader(ABC):
                 output_matrices.append(layer.bias)
                 output_matrices.append(layer.mu_hat)
                 output_matrices.append(layer.var_hat)
+            elif isinstance(layer, BertLayer):
+                print(layer)
+                output_matrices.append(layer.multi_head_attention.wq.W)
+                output_matrices.append(layer.multi_head_attention.wq.b)
+                output_matrices.append(layer.multi_head_attention.wk.W)
+                output_matrices.append(layer.multi_head_attention.wk.b)
+                output_matrices.append(layer.multi_head_attention.wv.W)
+                output_matrices.append(layer.multi_head_attention.wv.b)
+                output_matrices.append(layer.multi_head_attention.output.dense.W)
+                output_matrices.append(layer.multi_head_attention.output.dense.b)
+                output_matrices.append(layer.multi_head_attention.output.layer_norm.weights)
+                output_matrices.append(layer.multi_head_attention.output.layer_norm.bias)
+                output_matrices.append(layer.intermediate.dense.W)
+                output_matrices.append(layer.intermediate.dense.b)
+                output_matrices.append(layer.intermediate.layer_norm.weights)
+                output_matrices.append(layer.intermediate.layer_norm.bias)
+                output_matrices.append(layer.output.dense.W)
+                output_matrices.append(layer.output.dense.b)
+                output_matrices.append(layer.output.layer_norm.weights)
+                output_matrices.append(layer.output.layer_norm.bias)
+            elif isinstance(layer, BertPooler):
+                print(layer)
+                output_matrices.append(layer.dense.W)
+                output_matrices.append(layer.dense.b)
             else:
                 print("Skipping layer in input consistency", layer)
 
