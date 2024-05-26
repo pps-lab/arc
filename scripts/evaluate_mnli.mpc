@@ -7,9 +7,8 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-model_name = 'M-FAC/bert-mini-finetuned-qnli'
-# max_length = 8
-# model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+# model_name = 'M-FAC/bert-mini-finetuned-qnli'
+model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
 
 # Load the tokenizer
 tokenizer = BertTokenizer.from_pretrained(model_name)
