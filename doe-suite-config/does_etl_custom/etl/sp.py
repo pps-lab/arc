@@ -135,6 +135,8 @@ class ComputationMultiplierTransformer(Transformer):
         "adult": 204,
     }
 
+    n_epochs: Dict[str, int] = {}
+
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
         if 'mpc.script_args.n_batches' not in df.columns:
@@ -155,9 +157,10 @@ class ComputationMultiplierTransformer(Transformer):
             batch_size = int(x['mpc.script_args.batch_size'].unique()[0])
             batch_size_rel = batch_size / 128
             full_epoch = self.batches_per_epoch_bs_128[dataset]
+            n_epochs = self.n_epochs.get(dataset, 1)
 
-            multiplier = (full_epoch / n_batches) / batch_size_rel
-            print(f"Multiplier: {multiplier} for dataset {dataset} and n_batches {n_batches}")
+            multiplier = (n_epochs * full_epoch / n_batches) / batch_size_rel
+            print(f"Multiplier: {multiplier} for dataset {dataset}, n_batches {n_batches} and {n_epochs}")
 
             for timer_value_type in self.timer_value_types:
                 timer_id = f"spdz_timer{timer_value_type}_{self.timer_id_computation}"

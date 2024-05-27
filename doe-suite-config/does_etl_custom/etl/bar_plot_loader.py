@@ -233,9 +233,11 @@ def format_axis_label(value, _):
 
         return formatted_number
 
-
-    if abs(value) >= 1e9:
-
+    if abs(value) >= 1e12:
+        formatted_number = format(value / 1e12)
+        formatted_number += "T"
+        val = formatted_number
+    elif abs(value) >= 1e9:
         formatted_number = format(value / 1e9)
         formatted_number += "B"
         val = formatted_number
@@ -243,7 +245,6 @@ def format_axis_label(value, _):
         formatted_number = format(value / 1e6)
         formatted_number += "M"
         val = formatted_number
-
     elif abs(value) >= 1e3:
         formatted_number = format(value / 1e3)
         formatted_number += "k"
