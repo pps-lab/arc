@@ -88,8 +88,8 @@ class QnliBertInputLoader(AbstractInputLoader):
 
         layers = ml.layers_from_torch(self._model, input_shape, input_via=input_via, batch_size=1)
 
-        # model = ml.SGD(layers)
-        model = ml.Optimizer(layers)
+        model = ml.SGD(layers)
+        # model = ml.Optimizer(layers)
 
         return model
 
