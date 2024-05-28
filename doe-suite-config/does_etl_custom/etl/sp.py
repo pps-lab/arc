@@ -14,6 +14,7 @@ from doespy.etl.steps.transformers import Transformer
 from doespy.etl.steps.loaders import Loader, PlotLoader
 
 from does_etl_custom.etl.config import setup_plt
+from does_etl_custom.etl.bar_plot_loader import MetricConfig
 
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
@@ -133,6 +134,7 @@ class ComputationMultiplierTransformer(Transformer):
         "cifar_alexnet": 391,
         "mnist_full": 469,
         "adult": 204,
+        "glue_qnli_bert": 13092, # TODO: Is this correct?
     }
 
     n_epochs: Dict[str, int] = {}
@@ -144,16 +146,16 @@ class ComputationMultiplierTransformer(Transformer):
 
         def t(x):
             # check if this group contains an n_batches that is set
-            if x['mpc.script_args.n_batches'].isna().any():
+            if self.n_epochs == False and x['mpc.script_args.n_batches'].isna().any():
                 return x
 
             assert x['mpc.script_args.dataset'].unique().size == 1
             assert x['mpc.script_args.n_batches'].unique().size == 1
 
             dataset = x['mpc.script_args.dataset'].unique()[0]
-            n_batches = int(x['mpc.script_args.n_batches'].unique()[0])
-            if n_batches == 0:
-                return x
+            n_batches = int(x['mpc.script_args.n_batches'].unique()[0]) if not x['mpc.script_args.n_batches'].isna().all() else self.batches_per_epoch_bs_128[dataset]
+            # if n_batches == 0:
+            #     return x
             batch_size = int(x['mpc.script_args.batch_size'].unique()[0])
             batch_size_rel = batch_size / 128
             full_epoch = self.batches_per_epoch_bs_128[dataset]
@@ -254,6 +256,9 @@ class StatTransformer(Transformer):
     stats: Dict[str, list]
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
+
+        # print rows of df where stat == spdz_timer_1102
+        print(df[(df['stat'] == 'spdz_timer_1102') & (df['mpc.script_args.dataset'] == 'adult')])
 
         assert 'stat_value' in df.columns, f"stat_value not in df.columns: {df.columns}. This might not be the right transformer class for this dataframe."
         df.loc[:, 'stat_value'] = pd.to_numeric(df['stat_value'], errors='coerce')
@@ -646,3 +651,287 @@ class ComputationSpecificMultiplierTransformer(Transformer):
 
         df = df.groupby(self.run_def_cols).apply(t).reset_index(drop=True)
         return df
+
+class FilteredTableLoader(Loader):
+
+    metrics: Dict[str, MetricConfig]
+
+    plot_cols: List[str]
+    group_cols: List[str] # for each combination of these clumns, will have a top-level column
+
+    bar_cols: List[str] # for each value of these columns, will have a bar in each group
+    cols_values_filter: Dict[str, List[str]]
+
+    def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> pd.DataFrame:
+        df_filtered = self.filter_df(df)
+
+        output_dir = self.get_output_dir(etl_info)
+        filename = f"table_filtered"
+
+        df_filtered = df_filtered[['mpc.script_args.dataset', 'network_type', 'mpc_type', 'mpc_time_s', 'consistency_args.type', 'auditing_overhead_s']]
+
+        # Pivot the DataFrame
+        df_pivot = df_filtered.pivot_table(
+            index=['mpc.script_args.dataset', 'network_type', 'mpc_type', 'mpc_time_s'],
+            columns='consistency_args.type',
+            values='auditing_overhead_s',
+            aggfunc='first'  # or 'mean' or 'sum' depending on your requirement
+        ).reset_index()
+
+        def first_non_nan(series):
+            return series.dropna().iloc[0] if not series.dropna().empty else None
+
+        # Rename the columns for clarity
+        df_pivot.columns.name = None
+        df_pivot = df_pivot.rename(columns={'sha3s': 'auditing_overhead_sha3s', 'cerebro': 'auditing_overhead_cerebro', 'pc': 'auditing_overhead_pc'})
+        df_merged = df_pivot.groupby(['mpc.script_args.dataset', 'network_type', 'mpc_type']).agg({
+            'mpc_time_s': 'first',
+            'auditing_overhead_sha3s': first_non_nan,
+            'auditing_overhead_cerebro': first_non_nan,
+            'auditing_overhead_pc': first_non_nan
+        }).reset_index()
+        print("DF pivot", df_merged)
+
+        latex = self.dataframe_to_latex(df_merged)
+        print("LATEX")
+        print(latex)
+
+        # for metric_name, metric_cfg in self.metrics.items():
+        #     df_aggregated = self.aggregate_data(df_filtered, metric_cfg)
+        #
+        #
+        #     # Set the index to group_cols and bar_cols
+        #     # df_aggregated.set_index(self.group_cols + self.bar_cols, inplace=True)
+        #     # print("agg", df_aggregated)
+        #     #
+        #     # # Create a new DataFrame with multi-level columns
+        #     # new_df = df[metric_cfg.bar_part_cols].unstack(level=self.bar_cols)
+        #     pivot_df = df_aggregated.pivot_table(index=self.group_cols, columns=self.bar_cols, values=metric_cfg.bar_part_cols)
+        #     print(f"Aggregated data for metric {metric_name}", pivot_df)
+        #
+        #     # idx_plot = (idx_plot, ) if not isinstance(idx_plot, tuple) else idx_plot
+        #     # plot_id = {k: v for k, v in zip(self.plot_cols, list(idx_plot))}
+        #
+        #     out = os.path.join(output_dir, metric_name)
+        #     os.makedirs(out, exist_ok=True)
+        #     self.save_data(df_filtered, filename=filename, output_dir=out)
+
+    def dataframe_to_latex(self, df):
+        latex_code = r"\begin{table*}[h!]\centering" + "\n"
+        latex_code += r"\begin{tabular}{ccccccc}" + "\n"
+        latex_code += r"\toprule" + "\n"
+        latex_code += r"\multirow{2}{*}{Dataset} & \multirow{2}{*}{Network} & \multirow{2}{*}{MPC} & \multirow{2}{*}{Training Time} & \multicolumn{3}{c}{Consistency Overhead} \\" + "\n"
+        latex_code += r"\cmidrule{5-7}" + "\n"
+        latex_code += r"& & & & \textbf{Ours} & \gls{a:sha3} & \gls{a:ped} \\" + "\n"
+        latex_code += r"\midrule" + "\n"
+
+        last_dataset = ""
+        last_network = ""
+        last_mpc = ""
+
+        def label(lbl):
+            labels = {
+                "sha3s": r"\gls{a:sha3}",
+                "cerebro": r"\gls{a:ped}",
+                "pc": "Ours",
+
+                "cifar_alexnet": "\gls{sc:cifar}",
+                "mnist_full": r"\gls{sc:mnist}",
+                "adult": r"\gls{sc:adult}",
+                "glue_qnli_bert": r"\gls{sc:qnli}",
+
+                "lan": "LAN",
+                "wan": "WAN",
+
+                "sh": "SH",
+                "mal": "MAL",
+            }
+            return labels.get(lbl, lbl)
+
+        format_map = {
+            ("adult", "lan"): "s",
+            ("adult", "wan"): "h",
+            ("mnist_full", "lan"): "m",
+            ("mnist_full", "wan"): "d",
+            ("cifar_alexnet", "lan"): "h",
+            ("cifar_alexnet", "wan"): "d",
+            ("glue_qnli_bert", "lan"): "h",
+            ("glue_qnli_bert", "wan"): "d",
+        }
+
+        # def determine_format(elements):
+        #     intervals = (
+        #         ('w', 604800),  # 60 * 60 * 24 * 7
+        #         ('d', 86400),    # 60 * 60 * 24
+        #         ('h', 3600),    # 60 * 60
+        #         ('m', 60),
+        #         ('s', 1),
+        #     )
+        #
+        #     for name, count in intervals:
+        #         value = seconds / count
+        #         if value >= 1:
+        #             return name
+
+        def ro(num, relative_to=None, time_unit=None):
+            if pd.isna(num):
+                return ""
+            value = self.format_axis_label(num, time_unit)
+            if relative_to is None:
+                return value
+
+            percentage = num / relative_to
+            percentage_str = f" ({percentage:.2g}x)"
+
+            return f"{value}{percentage_str}"
+
+        for index, row in df.iterrows():
+            dataset = row['mpc.script_args.dataset']
+            network = row['network_type']
+            mpc = row['mpc_type']
+
+            if dataset != last_dataset and last_dataset != "":
+                latex_code += r"\midrule"
+
+            dataset_cell = f"\multirow{{{len(df[df['mpc.script_args.dataset'] == dataset])}}}{{*}}{{{label(dataset)}}}" if dataset != last_dataset else ""
+            network_cell = f"\multirow{{{len(df[(df['mpc.script_args.dataset'] == dataset) & (df['network_type'] == network)])}}}{{*}}{{{label(network)}}}" if network != last_network else ""
+            mpc_cell = f"\multirow{{{len(df[(df['mpc.script_args.dataset'] == dataset) & (df['network_type'] == network) & (df['mpc_type'] == mpc)])}}}{{*}}{{{label(mpc)}}}" if mpc != last_mpc else ""
+
+            time_unit = format_map[(dataset, network)]
+            latex_code += fr"{dataset_cell} & {network_cell} & {mpc_cell} & {ro(row['mpc_time_s'], None, time_unit)} & {ro(row['auditing_overhead_pc'], row['mpc_time_s'], time_unit)} & {ro(row['auditing_overhead_sha3s'], row['mpc_time_s'], time_unit)} & {ro(row['auditing_overhead_cerebro'], row['mpc_time_s'], time_unit)}  \\" + "\n"
+
+            if dataset != last_dataset:
+                last_dataset = dataset
+            if network != last_network:
+                last_network = network
+            if mpc != last_mpc:
+                last_mpc = mpc
+
+            latex_code += "\n"
+
+        latex_code += r"\bottomrule" + "\n"
+        latex_code += r"\end{tabular}" + "\n"
+        latex_code += r"\caption{Overhead of consistency approaches we evaluate relative to end-to-end training. Time is given in seconds (s), minutes (m), hours (h) and days (d).}" + "\n"
+        latex_code += r"\ltab{e2e_training}" + "\n"
+        latex_code += r"\end{table*}" + "\n"
+
+        return latex_code
+
+    def format_axis_label(self, value, time_unit):
+        """
+        Custom formatting function for y-axis labels.
+        """
+
+        def format(value):
+
+            if abs(value) < 0.001:
+                formatted_number = f'{value:.4f}'
+            elif abs(value) < 0.01:
+                formatted_number = f'{value:.3f}'
+            elif abs(value) < 0.1:
+                formatted_number = f'{value:.2f}'
+            else:
+                formatted_number = f'{value:.1f}'
+
+            # remove trailing zero
+            if "." in formatted_number:
+                formatted_number = formatted_number.rstrip('0').rstrip('.')
+
+            return formatted_number
+
+        # val is in seconds
+        def format_duration(seconds, unit):
+            intervals = (
+                ('w', 604800),  # 60 * 60 * 24 * 7
+                ('d', 86400),    # 60 * 60 * 24
+                ('h', 3600),    # 60 * 60
+                ('m', 60),
+                ('s', 1),
+            )
+
+            for name, count in intervals:
+                value = seconds / count
+                if name == unit:
+                    # rounded_value = np.format_float_positional(value, trim='-', precision=2)
+                    # rounded_value = self.num_fmt(value)  # round to 2 decimal places
+                    if value > 10:
+                        rounded_value = f"{value:.0f}"
+                    elif value < 1:
+                        rounded_value = f"{value:.2g}"
+                    else:
+                        rounded_value = f"{value:.1f}"
+                    return f"{rounded_value}{name}"
+
+        formatted_number = format_duration(value, time_unit)
+        val = formatted_number
+
+        return val
+
+    def filter_df(self, df: pd.DataFrame) -> pd.DataFrame:
+
+        n_rows_intial = len(df)
+        df_filtered = df.copy()
+
+        plot_cols = [(col, self.cols_values_filter[col]) for col in self.plot_cols]
+        group_cols = [(col, self.cols_values_filter[col]) for col in self.group_cols]
+        bar_cols = [(col, self.cols_values_filter[col]) for col in self.bar_cols]
+        # filter out non-relevant results
+        for col, allowed in plot_cols + group_cols + bar_cols:
+
+            # convert column to string for filtering
+            try:
+                df_filtered[col] = df_filtered[col].astype(str)
+            except KeyError:
+                raise KeyError(f"col={col} not in df.columns={df.columns}")
+
+            print(f"Filtering {col} to {allowed}    all={df[col].unique()}")
+            # filter out non-relevant results
+            df_filtered = df_filtered[df_filtered[col].isin(allowed)]
+            # convert to categorical
+            df_filtered[col] = pd.Categorical(df_filtered[col], ordered=True, categories=allowed)
+        df_filtered.sort_values(by=self.plot_cols + self.group_cols + self.bar_cols, inplace=True)
+
+        print(f"Filtered out {n_rows_intial - len(df_filtered)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df_filtered)}")
+
+        return df_filtered
+
+    def aggregate_data(self, df_plot, metric_cfg: MetricConfig):
+
+        # allow changing the unit of the metric before calculating the mean / std
+        df_plot[metric_cfg.bar_part_cols] = df_plot[metric_cfg.bar_part_cols] * metric_cfg.y_unit_multiplicator / metric_cfg.y_unit_divider
+
+        # check if multiple rows exist for self.group_cols + self.bar_cols
+        # if so, output warning
+        # create a bar for each bar_cols group in each group_cols group
+        grouped_over_reps = df_plot.groupby(by = self.group_cols + self.bar_cols)
+        # print first group rows
+        for group in grouped_over_reps.groups:
+            if len(grouped_over_reps.get_group(group)) > 1:
+                # TODO [SOMETHING IS HARDCODED HERE?]
+                print(f"Group rows: {grouped_over_reps.get_group(group)}")
+                print(f"Const args: {grouped_over_reps.get_group(group)['consistency_args.type']}")
+
+
+        combined = grouped_over_reps[metric_cfg.bar_part_cols].agg(['mean', 'std'])
+
+        combined[("$total$", "mean")] = combined.loc[:, pd.IndexSlice[metric_cfg.bar_part_cols, "mean"]].sum(axis=1)
+        for col in metric_cfg.bar_part_cols:
+            combined[(f"$total_share_{col}$", "mean")] = combined[col]["mean"] / combined["$total$"]["mean"]
+            combined[(f"$total_factor_{col}$", "mean")] = combined["$total$"]["mean"] / combined[col]["mean"]
+
+
+        return combined.reset_index()
+
+    def save_data(self, df: pd.DataFrame, filename: str, output_dir: str, output_filetypes: List[str] = ["html"]):
+        """:meta private:"""
+        os.makedirs(output_dir, exist_ok=True)
+
+        for ext in output_filetypes:
+            if ext == "html":
+                html_table = df.to_html()
+                path = os.path.join(output_dir, f"{filename}.html")
+
+                with open(path, 'w') as file:
+                    file.write(html_table)
+            else:
+                raise ValueError(f"PlotLoader: Unknown file type {ext}")
