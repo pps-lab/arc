@@ -32,8 +32,8 @@ class QnliBertInputLoader(AbstractInputLoader):
         self._model_type = BertForSequenceClassification
         self._tokenizer_type = BertTokenizer
         # self._model_name = 'prajjwal1/bert-tiny-mnli'
-        self._model_name = 'M-FAC/bert-tiny-finetuned-qnli'
-        # self._model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
+        # self._model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+        self._model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
         self._task_name = 'qnli'
         self._n_classes = 2
         self.input_shape_size = input_shape_size
