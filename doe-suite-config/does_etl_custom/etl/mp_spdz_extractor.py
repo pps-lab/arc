@@ -22,14 +22,16 @@ class MpSpdzStderrExtractor(Extractor):
         input_results = re.findall(input_regex, content)
 
         n_input_cerebro = len(input_results)
-        print("Found n_input results", n_input_cerebro)
+        if n_input_cerebro > 0:
+            print("Found n_input results", n_input_cerebro)
 
         output_regex = "CEREBRO_OUTPUT_SIZE=\((.*),(\d*)\)"
         output_results = re.findall(output_regex, content)
 
         # add up second group
         n_output_cerebro = sum([int(x[1]) for x in output_results])
-        print("Found n_output results", n_output_cerebro)
+        if n_output_cerebro > 0:
+            print("Found n_output results", n_output_cerebro)
 
         output_list = []
         if n_input_cerebro > 0:

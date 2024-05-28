@@ -633,17 +633,8 @@ $ETL$:
             plot_cols_filter:
               network_type: [ 'wan' ] # I only want wan
 
-            y_lim_row: [  [0, 28], [0, 1000], [0, 7200]]
+            y_lim_row: [  [0, 28], [0, 1000], [0, 32000]]
             n_y_ticks: 5
-
-          #wan_bandwidth_low:
-          #  bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
-          #  y_label: "Z: WAN Bandwidth [MB]"
-          #  y_unit_multiplicator: 1.0e-6 # transform to MB
-          #  plot_cols_filter:
-          #    network_type: [ 'wan' ]
-          #  y_lim_row: [[0, 150], [0, 6000], [0, 26000]] #[[0, 150], [0, 200], [0, 500]]
-
 
           storage:
             bar_part_cols: [ storage_inference ]
