@@ -155,7 +155,10 @@ class QnliBertInputLoader(AbstractInputLoader):
                 tokenized_training = mnli_training.take(sum(n_train_samples)).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
                 tokenized_training.save_to_disk(cache_dir)
                 print("Saved tokenized training to cache")
+
+            print("Building pt tensor")
             train_x, train_y = build_pt_tensor(tokenized_training)
+            print("Building pt tensor done")
 
             # Now split x_train by the entries in n_train_samples
             train_datasets = []
