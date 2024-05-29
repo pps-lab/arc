@@ -23,7 +23,7 @@ $SUITE_VARS$:
     use_split: True
 
   mpc:
-    player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+    player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`large_memory`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
     abs_path_to_code_dir: "{{ exp_code_dir }}"
     player_count: 3
     protocol_setup: $FACTOR$
@@ -64,7 +64,7 @@ $SUITE_VARS$:
 sh:
   n_repetitions: 1
   host_types:
-    consistency:
+    large_memory:
       n: 3
       check_status: True
       init_roles:
