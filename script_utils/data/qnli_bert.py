@@ -131,19 +131,31 @@ class QnliBertInputLoader(AbstractInputLoader):
                 tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
 
                 return tensor_embedding, tensor_label
-        def build_pt_tensor_new(dataset, batch_size=64):
-            embeddings = []
-            labels = []
+        def build_pt_tensor_new(dataset, batch_size=64, start=0, end=None):
+            # If end is not specified, process until the end of the dataset
+            if end is None:
+                end = len(dataset)
+            total_samples = end - start
+            # Ensure that the end index does not exceed the dataset length
+            assert end <= len(dataset)
 
             with dataset.formatted_as("torch", ["embedding", "label"]):
-                for batch in dataset.iter(batch_size=batch_size):
-                    embeddings.append(batch['embedding'])
-                    labels.append(batch['label'])
+                data_shape = dataset[0]['embedding'].shape
 
-            # Concatenate all embeddings and labels
-            tensor_embedding = torch.cat(embeddings, dim=0)
-            tensor_label = torch.cat(labels, dim=0)
-            tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
+                tensor_embedding = torch.zeros((total_samples, *data_shape), dtype=torch.float32)
+                tensor_label = torch.zeros((total_samples, self._n_classes), dtype=torch.float32)
+
+                current_index = 0
+                for batch in dataset.select(range(start, end)).iter(batch_size=batch_size):
+                    batch_size_actual = batch['embedding'].shape[0]
+                    # print(batch_size_actual, "act", tensor_embedding.shape, batch['embedding'].shape)
+                    tensor_embedding[current_index:current_index + batch_size_actual] = batch['embedding']
+                    label_onehot = torch.nn.functional.one_hot(batch['label'], num_classes=-1)
+                    tensor_label[current_index:current_index + batch_size_actual] = label_onehot
+                    current_index += batch_size_actual
+
+            print("Tensor embedding shape", tensor_embedding.element_size(), tensor_embedding.nelement())
+            print("Tensor label shape", tensor_label.element_size(), tensor_label.nelement())
 
             return tensor_embedding, tensor_label
 
@@ -151,7 +163,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         validation = dataset['validation']
         tokenized_validation_matched = validation.take(2000).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
         # tokenized_validation_mismatched = mnli_validation_mismatched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
-        test_x, test_y = build_pt_tensor(tokenized_validation_matched)
+        test_x, test_y = build_pt_tensor_new(tokenized_validation_matched)
 
         backdoor_dataset = test_x[:-self._audit_trigger_samples.sizes[0]], test_y[:-self._audit_trigger_samples.sizes[0]]
         test_dataset = test_x[:self._test_samples.sizes[0]], test_y[:self._test_samples.sizes[0]] if self._test_samples.sizes[0] != 0 else None, None
@@ -162,7 +174,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         train_datasets = [0] * len(n_train_samples)
         if sum(n_train_samples) != 0 and self._train_samples.sizes[0] != 0:
             mnli_training = dataset['train']
-            cache_dir = "/tmp/qnli_cache"
+            cache_dir = f"/tmp/qnli_cache_{self._model_name}"
             if os.path.exists(cache_dir):
                 tokenized_training = load_from_disk(cache_dir)
                 print("Loaded tokenized training from cache")
