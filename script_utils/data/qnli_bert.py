@@ -131,6 +131,21 @@ class QnliBertInputLoader(AbstractInputLoader):
                 tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
 
                 return tensor_embedding, tensor_label
+        def build_pt_tensor_new(dataset, batch_size=64):
+            embeddings = []
+            labels = []
+
+            with dataset.formatted_as("torch", ["embedding", "label"]):
+                for batch in dataset.iter(batch_size=batch_size):
+                    embeddings.append(batch['embedding'])
+                    labels.append(batch['label'])
+
+            # Concatenate all embeddings and labels
+            tensor_embedding = torch.cat(embeddings, dim=0)
+            tensor_label = torch.cat(labels, dim=0)
+            tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
+
+            return tensor_embedding, tensor_label
 
         # Tokenize the validation datasets
         validation = dataset['validation']
@@ -157,7 +172,14 @@ class QnliBertInputLoader(AbstractInputLoader):
                 print("Saved tokenized training to cache")
 
             print("Building pt tensor")
-            train_x, train_y = build_pt_tensor(tokenized_training)
+            import time
+            # start_time = time.time()
+            # train_x, train_y = build_pt_tensor(tokenized_training)
+            # print("Old Took", time.time() - start_time, "seconds")
+            start_time = time.time()
+            train_x, train_y = build_pt_tensor_new(tokenized_training, batch_size=128)
+            print("New Took", time.time() - start_time, "seconds")
+
             print("Building pt tensor done")
 
             # Now split x_train by the entries in n_train_samples
