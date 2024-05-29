@@ -183,7 +183,7 @@ class QnliBertInputLoader(AbstractInputLoader):
                 tokenized_training.save_to_disk(cache_dir)
                 print("Saved tokenized training to cache")
 
-            print("Building pt tensor", flush=True)
+            print("Building training data tensor", flush=True)
             import time
             # start_time = time.time()
             # train_x, train_y = build_pt_tensor(tokenized_training)
@@ -195,7 +195,7 @@ class QnliBertInputLoader(AbstractInputLoader):
             for party_idx, train_sample_len in enumerate(n_train_samples):
                 end = start + train_sample_len
 
-                print("Building party ", party_idx, "tensor", flush=True)
+                print("Building party", party_idx, "tensor", flush=True)
                 start_time = time.time()
                 train_x, train_y = build_pt_tensor_new(tokenized_training, batch_size=128, start=start, end=end)
                 print("New Took", time.time() - start_time, "seconds")
