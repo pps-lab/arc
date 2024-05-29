@@ -176,7 +176,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         train_datasets = [0] * len(n_train_samples)
         if sum(n_train_samples) != 0 and self._train_samples.sizes[0] != 0:
             mnli_training = dataset['train']
-            cache_dir = f"/tmp/qnli_cache_{self._model_name}_{sum(n_train_samples)}"
+            cache_dir = f"/tmp/qnli_cache_{self._model_name}_{sum(n_train_samples)}_{self._seq_len}"
             if os.path.exists(cache_dir):
                 tokenized_training = load_from_disk(cache_dir)
                 print("Loaded tokenized training from cache")
