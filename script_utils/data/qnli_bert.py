@@ -40,7 +40,7 @@ class QnliBertInputLoader(AbstractInputLoader):
 
         self._model = self._model_type.from_pretrained(self._model_name)
         self._seq_len = 128
-        hidden_size = self._model.config.hidden_size # sequence length
+        hidden_size = self._model.config.hidden_size
 
         train_dataset_size = sum(n_wanted_train_samples)
         print(f"Compile loading QNLI data...")
@@ -120,9 +120,9 @@ class QnliBertInputLoader(AbstractInputLoader):
             encoded_input = tokenizer(*args, truncation=True, padding='max_length', max_length=self._seq_len)
             return encoded_input
 
-        def embed_fn(example):
-            embedding = self._model.bert.embeddings(torch.tensor(example["input_ids"]), token_type_ids=torch.tensor(example["token_type_ids"])).detach()
-            return { 'embedding': embedding }
+        # def embed_fn(example):
+        #     embedding = self._model.bert.embeddings(torch.tensor(example["input_ids"]), token_type_ids=torch.tensor(example["token_type_ids"])).detach()
+        #     return { 'embedding': embedding }
 
         def build_pt_tensor(dataset):
             with dataset.formatted_as("torch", ["embedding", "label"]):
@@ -139,17 +139,17 @@ class QnliBertInputLoader(AbstractInputLoader):
             # Ensure that the end index does not exceed the dataset length
             assert end <= len(dataset)
 
-            with dataset.formatted_as("torch", ["embedding", "label"]):
-                data_shape = dataset[0]['embedding'].shape
+            with dataset.formatted_as("torch", ["input_ids", "token_type_ids", "label"]):
+                data_shape = (self._seq_len, self._model.config.hidden_size)
 
                 tensor_embedding = torch.zeros((total_samples, *data_shape), dtype=torch.float32)
                 tensor_label = torch.zeros((total_samples, self._n_classes), dtype=torch.float32)
 
                 current_index = 0
                 for batch in dataset.select(range(start, end)).iter(batch_size=batch_size):
-                    batch_size_actual = batch['embedding'].shape[0]
-                    # print(batch_size_actual, "act", tensor_embedding.shape, batch['embedding'].shape)
-                    tensor_embedding[current_index:current_index + batch_size_actual] = batch['embedding']
+                    embedding = self._model.bert.embeddings(batch["input_ids"], token_type_ids=batch["token_type_ids"]).detach()
+                    batch_size_actual = embedding.shape[0]
+                    tensor_embedding[current_index:current_index + batch_size_actual] = embedding
                     label_onehot = torch.nn.functional.one_hot(batch['label'], num_classes=-1)
                     tensor_label[current_index:current_index + batch_size_actual] = label_onehot
                     current_index += batch_size_actual
@@ -157,11 +157,13 @@ class QnliBertInputLoader(AbstractInputLoader):
             print("Tensor embedding shape", tensor_embedding.element_size(), tensor_embedding.nelement())
             print("Tensor label shape", tensor_label.element_size(), tensor_label.nelement())
 
+            # print("Tensor embedding", tensor_embedding.shape, tensor_embedding)
+
             return tensor_embedding, tensor_label
 
         # Tokenize the validation datasets
         validation = dataset['validation']
-        tokenized_validation_matched = validation.take(2000).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+        tokenized_validation_matched = validation.take(2000).map(tokenized_fn, batched=True)
         # tokenized_validation_mismatched = mnli_validation_mismatched.map(tokenized_fn, batched=True).map(embed_fn, batched=True)
         test_x, test_y = build_pt_tensor_new(tokenized_validation_matched)
 
@@ -179,7 +181,7 @@ class QnliBertInputLoader(AbstractInputLoader):
                 tokenized_training = load_from_disk(cache_dir)
                 print("Loaded tokenized training from cache")
             else:
-                tokenized_training = mnli_training.take(sum(n_train_samples)).map(tokenized_fn, batched=True).map(embed_fn, batched=True)
+                tokenized_training = mnli_training.take(sum(n_train_samples)).map(tokenized_fn, batched=True)
                 tokenized_training.save_to_disk(cache_dir)
                 print("Saved tokenized training to cache")
 
