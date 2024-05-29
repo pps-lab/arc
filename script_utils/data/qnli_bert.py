@@ -188,19 +188,22 @@ class QnliBertInputLoader(AbstractInputLoader):
             # start_time = time.time()
             # train_x, train_y = build_pt_tensor(tokenized_training)
             # print("Old Took", time.time() - start_time, "seconds")
-            start_time = time.time()
-            train_x, train_y = build_pt_tensor_new(tokenized_training, batch_size=128)
-            print("New Took", time.time() - start_time, "seconds")
-
-            print("Building pt tensor done", flush=True)
 
             # Now split x_train by the entries in n_train_samples
             train_datasets = []
             start = 0
             for party_idx, train_sample_len in enumerate(n_train_samples):
                 end = start + train_sample_len
-                train_datasets.append((train_x[start:end], train_y[start:end]))
+
+                print("Building party ", party_idx, "tensor", flush=True)
+                start_time = time.time()
+                train_x, train_y = build_pt_tensor_new(tokenized_training, batch_size=128, start=start, end=end)
+                print("New Took", time.time() - start_time, "seconds")
+
+                train_datasets.append((train_x, train_y))
                 start = end
+
+            print("Building train tensor done")
 
         return train_datasets, backdoor_dataset, test_dataset
 
