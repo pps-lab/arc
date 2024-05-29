@@ -380,23 +380,34 @@ def output(inputs: InputObject, type, n_threads: int, sha3_approx_factor: int, c
 def output_format(inputs: InputObject):
     from Compiler.script_utils.data import AbstractInputLoader
     fmt = []
-    print("OUTPUT FORMAT")
     if len(inputs.model) > 0:
-        total_len = sum([m.total_size() for m in inputs.model])
-        full_arr = Array(total_len, sfix)
-        idx = 0
+        total_lengths = [m.total_size() for m in inputs.model]
+        total_len = sum(total_lengths)
+        # print("Total model size", total_len, total_lengths, len(total_lengths))
+        # full_arr = Array(total_len, sfix)
+        # idx = 0
+        # for i in range(len(inputs.model)):a
+        #     arr = inputs.model[i].to_array()
+        #     full_arr.assign(arr, idx)
+        #     print("After assign")
+        #     idx += arr.length
+
+        # # Rewrite as runtime loop
+        # position = 0
         for i in range(len(inputs.model)):
             arr = inputs.model[i].to_array()
-            full_arr.assign(arr, idx)
-            idx += arr.length
+            arr.write_to_file()
+            # position += arr.length
 
-        sfix.write_to_file(full_arr)
-        fmt.append({ "type": full_arr.value_type.__name__, "object_type": "m", "length": total_len })
+        # sfix.write_to_file(full_arr)
+        fmt.append({ "type": inputs.model[0].value_type.__name__, "object_type": "m", "length": total_len })
+
+    print("Done model")
 
     if len(inputs.x) > 0:
         assert len(inputs.x) == 1
         prediction_x = inputs.x[0]
-        sfix.write_to_file(prediction_x.to_array())
+        prediction_x.to_array().write_to_file()
         fmt.append({ "type": prediction_x.value_type.__name__, "object_type": "x", "length": prediction_x.total_size() })
 
     if len(inputs.y) > 0:
@@ -408,6 +419,8 @@ def output_format(inputs: InputObject):
         else:
             sfix.write_to_file(prediction_y)
             fmt.append({ "type": prediction_y.value_type.__name__, "object_type": "y", "length": prediction_y.total_size() })
+
+    print("Done with outputs")
 
     write_output_format_to_file(fmt)
 

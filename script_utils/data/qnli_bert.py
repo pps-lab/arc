@@ -137,7 +137,7 @@ class QnliBertInputLoader(AbstractInputLoader):
                 end = len(dataset)
             total_samples = end - start
             # Ensure that the end index does not exceed the dataset length
-            assert end <= len(dataset)
+            assert end <= len(dataset), f"End index {end} exceeds dataset length {len(dataset)}"
 
             with dataset.formatted_as("torch", ["input_ids", "token_type_ids", "label"]):
                 data_shape = (self._seq_len, self._model.config.hidden_size)
@@ -176,7 +176,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         train_datasets = [0] * len(n_train_samples)
         if sum(n_train_samples) != 0 and self._train_samples.sizes[0] != 0:
             mnli_training = dataset['train']
-            cache_dir = f"/tmp/qnli_cache_{self._model_name}"
+            cache_dir = f"/tmp/qnli_cache_{self._model_name}_{sum(n_train_samples)}"
             if os.path.exists(cache_dir):
                 tokenized_training = load_from_disk(cache_dir)
                 print("Loaded tokenized training from cache")
