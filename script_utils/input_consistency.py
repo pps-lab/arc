@@ -380,6 +380,7 @@ def output(inputs: InputObject, type, n_threads: int, sha3_approx_factor: int, c
 def output_format(inputs: InputObject):
     from Compiler.script_utils.data import AbstractInputLoader
     fmt = []
+    print("OUTPUT FORMAT")
     if len(inputs.model) > 0:
         total_len = sum([m.total_size() for m in inputs.model])
         full_arr = Array(total_len, sfix)
