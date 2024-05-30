@@ -42,6 +42,7 @@ sfix.round_nearest = cfg.round_nearest
 
 ml.set_n_threads(cfg.n_threads)
 ml.Layer.back_batch_size = cfg.batch_size
+ml.Layer.debug_bert_output = cfg.debug
 
 library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
 input_shape_size = cfg.batch_size * cfg.n_batches if cfg.n_batches > 0 else None
