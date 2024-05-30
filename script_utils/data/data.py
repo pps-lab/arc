@@ -74,7 +74,7 @@ def _load_dataset_args(dataset):
         # make up a roughly even split of reasonable size
         n_parties = 3
         # total_n_train = 104743
-        total_n_train = 1000
+        total_n_train = 1500
         n_train_samples = [total_n_train // n_parties] * n_parties
         n_trigger_samples = 1
         n_test_samples = 1000
