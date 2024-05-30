@@ -39,7 +39,7 @@ class QnliBertInputLoader(AbstractInputLoader):
         self.input_shape_size = input_shape_size
 
         self._model = self._model_type.from_pretrained(self._model_name)
-        self._seq_len = 16
+        self._seq_len = 128
         hidden_size = self._model.config.hidden_size
 
         train_dataset_size = sum(n_wanted_train_samples)
