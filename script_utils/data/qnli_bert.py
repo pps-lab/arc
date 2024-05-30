@@ -86,7 +86,7 @@ class QnliBertInputLoader(AbstractInputLoader):
 
         # Load the tokenizer
 
-        layers = ml.layers_from_torch(self._model, input_shape, input_via=input_via, batch_size=1)
+        layers = ml.layers_from_torch(self._model, input_shape, input_via=input_via, batch_size=batch_size)
 
         model = ml.SGD(layers)
         # model = ml.Optimizer(layers)
