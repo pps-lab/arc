@@ -18,7 +18,7 @@ class AuditConfig(config.BaseAuditModel):
     mod_zscore_threshold: float = 2.5
 
     n_batches: int = 1
-    n_train_samples_bert = 1000
+    n_s_bert = 1000
 
 program.options_from_args()
 cfg = config.from_program_args(program.args, AuditConfig)
@@ -33,7 +33,7 @@ library.start_timer(timer_id=timers.TIMER_LOAD_DATA)
 input_shape_size = cfg.batch_size * cfg.n_batches if cfg.n_batches > 0 else None
 input_loader = data.get_input_loader(dataset=cfg.dataset, audit_trigger_idx=cfg.audit_trigger_idx, batch_size=cfg.batch_size,
                                      debug=cfg.debug, emulate=cfg.emulate, consistency_check=cfg.consistency_check, sha3_approx_factor=cfg.sha3_approx_factor,
-                                     input_shape_size=input_shape_size, n_train_samples_bert=cfg.n_train_samples_bert)
+                                     input_shape_size=input_shape_size, n_train_samples_bert=cfg.n_s_bert)
 library.stop_timer(timer_id=timers.TIMER_LOAD_DATA)
 
 
