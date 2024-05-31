@@ -15,7 +15,7 @@ $SUITE_VARS$:
 
   sleep_time: 30
   _runtime_info:
-    budget: 10000
+    budget_wan: 100000
 
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
@@ -64,7 +64,7 @@ $SUITE_VARS$:
       $FACTOR$: [ compile, run ] # ensure that this is last factor
 
 
-audit_sample_knnshapley:
+audit_sample_knnshapley_wan_sh:
   n_repetitions: 1
   host_types:
     large_memory:
@@ -74,6 +74,7 @@ audit_sample_knnshapley:
         - setup-base
         - setup-consistency
         - setup-spdz-secrets
+        - setup-network-delay
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
@@ -83,67 +84,58 @@ audit_sample_knnshapley:
     consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
       type:
         $FACTOR$: [ sha3s, cerebro, pc ]
-#        $FACTOR$: [ pc ]
     mpc:
       script_name: audit_sample_knnshapley
 
-    network_type: lan
+    network_type: wan
     mpc_type: $FACTOR$
 
 
   factor_levels:
 
-#    - mpc_type: mal
-#      mpc: # should convert
-#        protocol_setup: "sy-rep-ring-party"
-#        domain: ring_split
-#        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
-#        custom_prime: null
-
     - mpc_type: sh
       mpc: # should convert
         protocol_setup: "semi_honest_3"
         domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
         custom_prime: null
 
 
-#audit_sample_knnshapley_mal:
-#  n_repetitions: 1
-#  host_types:
-#    large_memory:
-#      n: 3
-#      check_status: True
-#      init_roles:
-#        - setup-base
-#        - setup-consistency
-#        - setup-spdz-secrets
-#      $CMD$:
-#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
-#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
-#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
-#
-#  base_experiment:
-#    consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
-#      type:
-#        $FACTOR$: [ sha3s, cerebro, pc ]
-#    #        $FACTOR$: [ pc ]
-#    mpc:
-#      script_name: audit_sample_knnshapley
-#
-#    network_type: lan
-#    mpc_type: $FACTOR$
-#
-#
-#  factor_levels:
-#
-#        - mpc_type: mal
-#          mpc: # should convert
-#            protocol_setup: "sy-rep-ring-party"
-#            domain: ring_split
-#            compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget %]", '-Z', '3', '-D' ]
-#            custom_prime: null
+audit_sample_knnshapley_wan_mal:
+  n_repetitions: 1
+  host_types:
+    large_memory:
+      n: 3
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+        - setup-spdz-secrets
+        - setup-network-delay
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
+  base_experiment:
+    consistency_args: # need this so that this comes before compile, run factors, ie mpc dict should always be last
+      type:
+        $FACTOR$: [ sha3s, cerebro, pc ]
+    mpc:
+      script_name: audit_sample_knnshapley
+
+    network_type: wan
+    mpc_type: $FACTOR$
+
+
+  factor_levels:
+
+    - mpc_type: mal
+      mpc: # should convert
+        protocol_setup: "sy-rep-ring-party"
+        domain: ring_split
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
+        custom_prime: null
 
 
 $ETL$: {}

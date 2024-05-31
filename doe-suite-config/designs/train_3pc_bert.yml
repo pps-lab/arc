@@ -12,7 +12,7 @@ $SUITE_VARS$:
   convert_debug: False
   convert_chunk_size: 200000
 
-  sleep_time: 30
+  sleep_time: 60
   _runtime_info:
     budget: 10000
 
@@ -23,7 +23,7 @@ $SUITE_VARS$:
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
     gen_pp: True
     type:
-      $FACTOR$: [ pc ] #, cerebro, pc ]
+      $FACTOR$: [ pc, cerebro, sha3s ] #, cerebro, pc ]
     use_split: True
 
   mpc:
@@ -53,17 +53,13 @@ $SUITE_VARS$:
 #      cifar_alexnet_3party
 
       # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
-      batch_size: 2 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+      batch_size: 1 #1024 #256 # was 128 before   # 60000 -> insufficient memory
       n_batches: 1
-      n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+      n_threads: 72
 
-      n_s_bert: 5000
+      n_s_bert: 2500
       # TODO
-
-      audit_trigger_idx: 0 # select single audit trigger (from all)
-
       consistency_check: "[% my_run.consistency_args.type %]"
-
 
     stage: # "compile" in run and then in next run "run"
       $FACTOR$: [ compile, run ] # ensure that this is last factor
@@ -119,7 +115,7 @@ mal:
   base_experiment:
     consistency_args:
       type:
-        $FACTOR$: [ pc ]
+        $FACTOR$: [ pc, cerebro, sha3s ]
     convert_chunk_size: 100000
 
     network_type: lan

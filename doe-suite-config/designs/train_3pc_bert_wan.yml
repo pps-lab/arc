@@ -4,22 +4,26 @@ $SUITE_VARS$:
   _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
   cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID>"
 
+  $INCLUDE_VARS$: dataset.yml
+
   commit_output: True
   convert_ring_bits: 31
   convert_n_threads: 36
-  convert_chunk_size: 100000
+  convert_debug: False
+  convert_chunk_size: 200000
 
-  $INCLUDE_VARS$: dataset.yml
-
-  network_type: lan
+  sleep_time: 30
+  _runtime_info:
+    budget: 100000
 
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
     hosts_file: "{{ exp_consistency_hosts_file }}"
     pc: kzg
-    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].model_input_size %]"
+    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
     gen_pp: True
-    type: pc
+    type:
+      $FACTOR$: [ sha3s, cerebro, pc ]
     use_split: True
 
   mpc:
@@ -32,31 +36,35 @@ $SUITE_VARS$:
     domain: $FACTOR$
     custom_prime: $FACTOR$
 
-    script_name: "inference"
+    script_name: "training"
 
     script_args:
-      n_samples: 1
       n_input_parties: 3
+      sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor_full | default(1) %]"
 
-      consistency_check: "[% my_run.consistency_args.type %]"
-      sha3_approx_factor: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].sha3_approx_factor | default(1) %]"
+      #      n_epochs: 0
 
       debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
       emulate: False
+#      dataset: mnist_full_3party
       dataset:
         $FACTOR$: [ glue-qnli ]
+      #          $FACTOR$: [ adult_3p ]
+#      cifar_alexnet_3party
 
       # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
       batch_size: 1 #1024 #256 # was 128 before   # 60000 -> insufficient memory
-      n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+      n_batches: 1
+      n_threads: 72 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
 
-      audit_trigger_idx: 0 # select single audit trigger (from all)
+      n_s_bert: 2500
 
+      consistency_check: "[% my_run.consistency_args.type %]"
 
     stage: # "compile" in run and then in next run "run"
       $FACTOR$: [ compile, run ] # ensure that this is last factor
 
-wan:
+wan_sh:
   n_repetitions: 1
   host_types:
     large_memory:
@@ -67,37 +75,69 @@ wan:
         - setup-consistency
         - setup-spdz-secrets
         - setup-network-delay
+      #        - download-dataset
+      #        - setup-largeprimes
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
 
   base_experiment:
-
     consistency_args:
       type:
-        $FACTOR$: [ pc, sha3s, cerebro ]
+        $FACTOR$: [ sha3s, cerebro, pc ]
+
+    convert_chunk_size: $FACTOR$
 
     network_type: wan
     mpc_type: $FACTOR$
-#    mpc:
-#      program_args:
-#        b: 1000
 
   factor_levels:
 
-    - mpc_type: sh
+    - convert_chunk_size: 200000
+      mpc_type: "sh"
       mpc:
         protocol_setup: "semi_honest_3"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
+        domain: ring
+        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-D', '-Z', '3' ]
         custom_prime: null
 
-    - mpc_type: mal
-      mpc:
-        protocol_setup: "sy-rep-ring-party"
-        domain: ring_split
-        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-Z', '3', '-D' ]
-        custom_prime: null
+
+#wan_mal:
+#  n_repetitions: 1
+#  host_types:
+#    large_memory:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#        - setup-spdz-secrets
+#        - setup-network-delay
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+#    consistency_args:
+#      type:
+#        $FACTOR$: [ sha3s, cerebro, pc ]
+#
+#    convert_chunk_size: $FACTOR$
+#
+#    network_type: wan
+#    mpc_type: $FACTOR$
+#
+#  factor_levels:
+#
+#    - convert_chunk_size: 100000
+#      mpc_type: "mal"
+#      mpc:
+#        protocol_setup: "sy-rep-ring-party"
+#        domain: ring
+#        compiler_args: [ '-R', '64', '-C', '--budget', "[% my_run._runtime_info.budget_wan %]", '-D', '-Z', '3' ]
+#        custom_prime: null
+
 
 $ETL$: {}

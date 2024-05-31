@@ -13,6 +13,8 @@ $SUITE_VARS$:
 
   network_type: lan
 
+  sleep_time: 30
+
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
     hosts_file: "{{ exp_consistency_hosts_file }}"
