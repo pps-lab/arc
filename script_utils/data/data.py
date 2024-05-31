@@ -7,9 +7,9 @@ import glob, os, shutil
 import numpy as np
 
 
-def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, sha3_approx_factor, load_model_weights=True, load_dataset=True, input_shape_size=None):
+def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, sha3_approx_factor, load_model_weights=True, load_dataset=True, input_shape_size=None, n_train_samples_bert=None):
 
-    n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
+    n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset, n_train_samples_bert)
     _clean_dataset_folder()
 
     if not debug:
@@ -37,9 +37,9 @@ def get_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, con
         raise ValueError(f"Dataset {dataset} not supported yet!")
     return il
 
-def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, sha3_approx_factor, n_target_test_samples, load_model_weights=True, input_shape_size=None):
+def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, emulate, consistency_check, sha3_approx_factor, n_target_test_samples, load_model_weights=True, input_shape_size=None, n_train_samples_bert=None):
 
-    n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset)
+    n_train_samples, n_trigger_samples, n_test_samples = _load_dataset_args(dataset, n_train_samples_bert)
     _clean_dataset_folder()
 
     # total_train_samples = sum(n_train_samples)
@@ -67,14 +67,14 @@ def get_inference_input_loader(dataset, batch_size, audit_trigger_idx, debug, em
     return il
 
 
-def _load_dataset_args(dataset):
+def _load_dataset_args(dataset, n_train_samples_bert=None):
     if dataset == "mnist_full_A":
         dataset = "mnist_full_3party"
     elif dataset == "glue-qnli":
         # make up a roughly even split of reasonable size
         n_parties = 3
         # total_n_train = 104743
-        total_n_train = 750
+        total_n_train = 750 if n_train_samples_bert is None else n_train_samples_bert
         n_train_samples = [total_n_train // n_parties] * n_parties
         n_trigger_samples = 1
         n_test_samples = 1000
