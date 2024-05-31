@@ -12,6 +12,10 @@ $SUITE_VARS$:
   convert_debug: False
   convert_chunk_size: 200000
 
+  sleep_time: 30
+  _runtime_info:
+    budget: 10000
+
   consistency_args:
     abs_path_to_code_dir: "{{ exp_consistency_dir }}"
     hosts_file: "{{ exp_consistency_hosts_file }}"
@@ -19,7 +23,7 @@ $SUITE_VARS$:
     pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
     gen_pp: True
     type:
-      $FACTOR$: [ sha3s ] #, cerebro, pc ]
+      $FACTOR$: [ pc ] #, cerebro, pc ]
     use_split: True
 
   mpc:
@@ -49,9 +53,12 @@ $SUITE_VARS$:
 #      cifar_alexnet_3party
 
       # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
-      batch_size: 1 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+      batch_size: 2 #1024 #256 # was 128 before   # 60000 -> insufficient memory
       n_batches: 1
       n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+
+      n_s_bert: 5000
+      # TODO
 
       audit_trigger_idx: 0 # select single audit trigger (from all)
 
@@ -70,7 +77,7 @@ sh:
       init_roles:
         - setup-base
         - setup-consistency
-#        - setup-spdz-secrets
+        - setup-spdz-secrets
 #        - download-dataset
         #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -94,7 +101,7 @@ sh:
 mal:
   n_repetitions: 1
   host_types:
-    consistency:
+    large_memory:
       n: 3
       check_status: True
       init_roles:
@@ -112,13 +119,11 @@ mal:
   base_experiment:
     consistency_args:
       type:
-        $FACTOR$: [ sha3s, cerebro, pc ]
+        $FACTOR$: [ pc ]
     convert_chunk_size: 100000
 
     network_type: lan
     mpc_type: mal
-
-    sleep_time: 10
 
   factor_levels:
 

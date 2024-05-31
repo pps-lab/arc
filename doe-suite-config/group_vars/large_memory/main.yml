@@ -1,6 +1,8 @@
 ---
 
-instance_type: c5.9xlarge
+instance_type: c5d.metal
+
+#instance_type: c5.18xlarge
 #instance_type: c5d.metal
 #instance_type: t2.xlarge
 ec2_volume_size: 300
