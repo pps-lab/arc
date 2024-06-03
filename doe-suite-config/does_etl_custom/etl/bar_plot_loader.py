@@ -60,9 +60,11 @@ class MetricConfig(MyETLBaseModel):
     plot_cols_filter: Dict[str, List[str]] = None
 
     bar_cols_filter: Dict[str, List[str]] = None
+    bar_cols_filter_last_row: Dict[str, List[str]] = None
+    bar_cols_filter_last_row_num: int = 2
 
     bar_pos_bias: float = 0.0
-
+    bar_pos_bias_last: float = 0.0
 
 
 
@@ -719,6 +721,7 @@ class BarPlotLoader(PlotLoader):
 
         n_bars_per_group, n_bar_groups = self.get_bars_info(df1)
 
+        print("subplot idx", subplot_idx)
 
         w = self.bar_width / n_bar_groups # divide by number of rows
 
@@ -740,8 +743,8 @@ class BarPlotLoader(PlotLoader):
 
             group_ticks.append((group_pos_center, {**plot_id, **bar_group_id}))
 
-            bar_cols = self.bar_cols[0] if len(self.bar_cols) == 1 else self.bar_cols
 
+            bar_cols = self.bar_cols[0] if len(self.bar_cols) == 1 else self.bar_cols
 
             # TODO [nku] REFACTOR THE ZOOM PART
             use_zoom = not metric_cfg.log_y
@@ -828,12 +831,26 @@ class BarPlotLoader(PlotLoader):
                         print(f"    Skipping bar because {bar_id} does not match metric filter: {metric_cfg.bar_cols_filter}")
                         continue
 
+                if subplot_idx[1] == metric_cfg.bar_cols_filter_last_row_num and metric_cfg.bar_cols_filter_last_row is not None:
+                    skip = False
+
+                    for col, allowed in metric_cfg.bar_cols_filter_last_row.items():
+                        if bar_id[col] not in allowed:
+                            skip = True
+                    if skip:
+                        print(f"    Skipping bar because {bar_id} does not match metric filter: {metric_cfg.bar_cols_filter_last_row}")
+                        continue
+
                 # increment for each column + center
                 bar_pos = group_pos_left + (i_bar*w) + (w/2.)
 
 
                 # TODO: could be made nicer -> but would require a lot more complex bar positioning logic
-                bar_pos += metric_cfg.bar_pos_bias * w
+                if subplot_idx[1] == metric_cfg.bar_cols_filter_last_row_num \
+                    and metric_cfg.bar_pos_bias == 0.0:
+                    bar_pos += metric_cfg.bar_pos_bias_last * w
+                else:
+                    bar_pos += metric_cfg.bar_pos_bias * w
 
                 # TODO: this bar position is probably wrong
 

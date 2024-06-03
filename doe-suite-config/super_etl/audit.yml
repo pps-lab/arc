@@ -26,7 +26,16 @@ $SUITE_ID$:
     audit_shap_wan: 1705959794
 
   audit_knnshapley_bert:
-    audit_sample_knnshapley: 1716899604
+    audit_sample_knnshapley: 1717158669
+
+  audit_knnshapley_bert_wan: 1717156384
+  audit_knnshapley_bert_wan_others: 1717172572
+
+  audit_knnshapley_bert_mal: 1717165278
+  audit_knnshapley_bert_mal_ours: 1717182305
+#  audit_knnshapley_bert_mal_ours_
+
+#    audit_sample_knnshapley_wan: 1717156384
 
 $ETL$:
   raw:
@@ -53,6 +62,10 @@ $ETL$:
       audit_shap: "*"
       audit_shap_wan: "*"
       audit_knnshapley_bert: "*"
+      audit_knnshapley_bert_wan: "*"
+      audit_knnshapley_bert_mal: "*"
+      audit_knnshapley_bert_mal_ours: "*"
+      audit_knnshapley_bert_wan_others: "*"
 
     extractors:
 #      MpSpdzResultExtractor: { } # this parses results from the audit
@@ -63,6 +76,7 @@ $ETL$:
           - ^cerebro_output_stderr\.log$
           - ^sha3_input_stderr\.log$
           - ^sha3_output_stderr\.log$
+        ignore_errors: no
       ConsistencyExtractor: { }
       IgnoreExtractor:
         file_regex:
@@ -220,7 +234,7 @@ $ETL$:
             y_label: "LAN Time [min]"
 
 #            y_lim_row: [ [0, 1], [0, 1], [0, 4], [0, 32], [0, 32], [0, 20], [0, 320], [0, 1000]]
-            y_lim_row: [ [0, 1], [0, 1], [0, 32], [0, 32], [0, 20], [0, 1000], [0, 100000000]]
+            y_lim_row: [ [0, 1], [0, 1], [0, 32], [0, 32], [0, 20], [0, 1000], [0, 10000]]
             n_y_ticks: 5
 
             plot_cols_filter:
@@ -236,8 +250,12 @@ $ETL$:
 
             n_y_ticks: 5
 #            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 4.8], [0, 40], [0, 60], [0, 40], [0, 500], [0, 1600]]
-            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 40], [0, 60], [0, 40], [0, 1600], [0, 16000]]
+            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 40], [0, 60], [0, 40], [0, 1600], [0, 4000]]
 
+            bar_cols_filter_last_row:
+              mpc_type: [ 'sh' ]
+            bar_pos_bias_last: 0.5
+            bar_cols_filter_last_row_num: 6
 
             plot_cols_filter:
               network_type: [ 'wan' ] # I only want wan
@@ -245,15 +263,15 @@ $ETL$:
 
           wan_bandwidth:
             bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
-            y_label: "WAN Bandwidth [GB]"
+            y_label: "Bandwidth [GB]"
             y_unit_multiplicator: 1.0e-9 # transform to MB
 
             plot_cols_filter:
-              network_type: [ 'wan' ] # I only want wan
+              network_type: [ 'lan' ] # I only want wan
             n_y_ticks: 5
 
 #            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 50], [0, 500], [0, 500], [0, 400], [0, 8000], [0, 20000]]
-            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 500], [0, 500], [0, 500], [0, 20000], [0, 200000]]
+            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 500], [0, 500], [0, 500], [0, 20000], [0, 500000]]
 
 #
 #

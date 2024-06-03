@@ -78,7 +78,7 @@ dataset_info:
     sha3_approx_factor: 1000
 
   glue-qnli:
-    max_input_size: 86000000
+    max_input_size: 153558054
     model_input_size: 85647000
     edabit_batch_size_inference:
       sh: 50

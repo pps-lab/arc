@@ -13,7 +13,7 @@ $SUITE_VARS$:
   convert_n_threads: 36
   convert_chunk_size: 150000
 
-  sleep_time: 90
+  sleep_time: 120
   _runtime_info:
     budget: 10000
 

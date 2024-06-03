@@ -134,7 +134,7 @@ class ComputationMultiplierTransformer(Transformer):
         "cifar_alexnet": 391,
         "mnist_full": 469,
         "adult": 204,
-        "glue_qnli_bert": 13092, # TODO: Is this correct?
+        "glue_qnli_bert": 19.5, # TODO: Is this correct?
     }
 
     n_epochs: Dict[str, int] = {}
@@ -759,20 +759,6 @@ class FilteredTableLoader(Loader):
             ("glue_qnli_bert", "wan"): "d",
         }
 
-        # def determine_format(elements):
-        #     intervals = (
-        #         ('w', 604800),  # 60 * 60 * 24 * 7
-        #         ('d', 86400),    # 60 * 60 * 24
-        #         ('h', 3600),    # 60 * 60
-        #         ('m', 60),
-        #         ('s', 1),
-        #     )
-        #
-        #     for name, count in intervals:
-        #         value = seconds / count
-        #         if value >= 1:
-        #             return name
-
         def ro(num, relative_to=None, time_unit=None):
             if pd.isna(num):
                 return ""
@@ -781,7 +767,7 @@ class FilteredTableLoader(Loader):
                 return value
 
             percentage = num / relative_to
-            percentage_str = f" ({percentage:.2g}x)"
+            percentage_str = f" ({percentage:.0f}x)"
 
             return f"{value}{percentage_str}"
 
@@ -798,7 +784,7 @@ class FilteredTableLoader(Loader):
             mpc_cell = f"\multirow{{{len(df[(df['mpc.script_args.dataset'] == dataset) & (df['network_type'] == network) & (df['mpc_type'] == mpc)])}}}{{*}}{{{label(mpc)}}}" if mpc != last_mpc else ""
 
             time_unit = format_map[(dataset, network)]
-            latex_code += fr"{dataset_cell} & {network_cell} & {mpc_cell} & {ro(row['mpc_time_s'], None, time_unit)} & {ro(row['auditing_overhead_pc'], row['mpc_time_s'], time_unit)} & {ro(row['auditing_overhead_sha3s'], row['mpc_time_s'], time_unit)} & {ro(row['auditing_overhead_cerebro'], row['mpc_time_s'], time_unit)}  \\" + "\n"
+            latex_code += fr"{dataset_cell} & {network_cell} & {mpc_cell} & {ro(row['mpc_time_s'], None, time_unit)} & {ro(row['auditing_overhead_pc'], None, time_unit)} & {ro(row['auditing_overhead_sha3s'], row['auditing_overhead_pc'], time_unit)} & {ro(row['auditing_overhead_cerebro'], row['auditing_overhead_pc'], time_unit)}  \\" + "\n"
 
             if dataset != last_dataset:
                 last_dataset = dataset
@@ -811,7 +797,7 @@ class FilteredTableLoader(Loader):
 
         latex_code += r"\bottomrule" + "\n"
         latex_code += r"\end{tabular}" + "\n"
-        latex_code += r"\caption{Overhead of consistency approaches we evaluate relative to end-to-end training. Time is given in seconds (s), minutes (m), hours (h) and days (d).}" + "\n"
+        latex_code += r"\caption{Overhead of consistency approaches we evaluate relative to (extrapolated) end-to-end training. Multipliers in parentheses are slowdown over ours. Time is given in seconds (s), minutes (m), hours (h), days (d) and weeks (w).}" + "\n"
         latex_code += r"\ltab{e2e_training}" + "\n"
         latex_code += r"\end{table*}" + "\n"
 
@@ -851,16 +837,8 @@ class FilteredTableLoader(Loader):
 
             for name, count in intervals:
                 value = seconds / count
-                if name == unit:
-                    # rounded_value = np.format_float_positional(value, trim='-', precision=2)
-                    # rounded_value = self.num_fmt(value)  # round to 2 decimal places
-                    if value > 10:
-                        rounded_value = f"{value:.0f}"
-                    elif value < 1:
-                        rounded_value = f"{value:.2g}"
-                    else:
-                        rounded_value = f"{value:.1f}"
-                    return f"{rounded_value}{name}"
+                if value >= 1:
+                    return format(value) + name
 
         formatted_number = format_duration(value, time_unit)
         val = formatted_number
