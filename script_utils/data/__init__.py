@@ -283,10 +283,6 @@ class AbstractInputLoader(ABC):
         layers = model.layers
         output_matrices = []
 
-        if len(layers) > 10:
-            print("WARNING: More than 10 layers in model, only printing first 10")
-            layers = layers[:4] + layers[6:]
-
         for layer in layers:
             if isinstance(layer, FixConv2d):
                 print(layer)
