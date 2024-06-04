@@ -288,7 +288,7 @@ def convert_shares(task_config, output_prefix):
 
     if task_config.sleep_time > 0:
         print(f"Sleeping for {task_config.sleep_time} seconds to allow the MP-SPDZ process on all clients to finish.")
-        time.sleep(task_config.sleep_time)
+        time.sleep(task_config.sleep_time + task_config.post_spdz_sleep_time)
 
     if task_config.consistency_args is not None:
 
