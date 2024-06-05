@@ -119,6 +119,7 @@ def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
 def sync_servers(task_config: config_def.TaskConfig):
     # ensure all servers are at this point
     # the way we do this is by pinging the host server which will respond when all are ready
+    print("Syncing servers", flush=True)
     rendezvouz.sync(task_config.player_0_hostname, task_config.player_count, task_config.player_id)
 
 def prove_commitment_opening(task_config, output_prefix):
