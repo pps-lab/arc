@@ -45,7 +45,7 @@ def notify_rendezvous_server(server_host, port, retries=1000, delay=5):
                 print("Waiting for go-ahead")
                 data = s.recv(1024)
                 if data == b"GO":
-                    print("Received go-ahead. Proceeding with the script.")
+                    print("Received go-ahead. Proceeding with the script.", flush=True)
                     return True
                 return False
         except socket.error as e:
