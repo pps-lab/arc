@@ -6,7 +6,7 @@ import time
 RENDEZVOUZ_PORT=47683
 
 def client_thread(conn, addr, all_connections, expected_clients):
-    print(f"Connected by {addr}")
+    print(f"Connected by {addr}", flush=True)
     conn.recv(1024)  # Wait for a ready signal from the client
     all_connections.append(conn)
     while len(all_connections) < expected_clients:
@@ -19,7 +19,7 @@ def rendezvous_server(port, expected_clients):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('', port))
         s.listen()
-        print(f"Server listening on port {port}")
+        print(f"Server listening on port {port}", flush=True)
         threads = []
         while len(all_connections) < expected_clients:
             conn, addr = s.accept()
