@@ -10,10 +10,12 @@ def client_thread(conn, addr, all_connections, expected_clients):
     conn.recv(1024)  # Wait for a ready signal from the client
     all_connections.append(conn)
     while len(all_connections) < expected_clients:
+        time.sleep(1)
         pass  # Wait until all clients are connected
     conn.sendall(b"GO")  # Signal the client to proceed
     print("Sent GO signal", flush=True)
     conn.close()
+    print("Closed connection", flush=True)
 
 def rendezvous_server(port, expected_clients):
     all_connections = []
@@ -27,6 +29,7 @@ def rendezvous_server(port, expected_clients):
             thread = Thread(target=client_thread, args=(conn, addr, all_connections, expected_clients))
             thread.start()
             threads.append(thread)
+            print("Started thread", flush=True)
         print(f"All clients connected: {len(all_connections)}", flush=True)
         for thread in threads:
             thread.join() # ensure all clients have been notified
