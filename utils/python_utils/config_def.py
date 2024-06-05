@@ -136,7 +136,6 @@ class JsonConfigModel(pydantic.BaseModel,extra=pydantic.Extra.ignore):
     convert_chunk_size: int = 500000
     convert_debug: bool = False
     sleep_time: float = 5.0 # time to sleep between conversion and next steps in seconds
-    post_spdz_sleep_time: float = 5.0 #
     remove_input_files: bool = True
 
 def parse_json_config(config_path):
@@ -168,7 +167,6 @@ def build_task_config(json_config_obj: JsonConfigModel, player_number: int,
     conf_obj = TaskConfig(
         player_id=player_number,
         sleep_time=json_config_obj.sleep_time,
-        post_spdz_sleep_time=json_config_obj.post_spdz_sleep_time,
         player_count=json_config_obj.mpc.player_count,
         player_0_hostname=json_config_obj.mpc.player_0_hostname,
         abs_path_to_code_dir=json_config_obj.mpc.abs_path_to_code_dir,
@@ -218,7 +216,6 @@ class TaskConfig(pydantic.BaseModel):
     """
     player_id: int
     sleep_time: float
-    post_spdz_sleep_time: float
     player_count: int
     player_0_hostname: str
     abs_path_to_code_dir: str

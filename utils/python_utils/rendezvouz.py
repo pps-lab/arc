@@ -30,7 +30,6 @@ def rendezvous_server(port, expected_clients):
                 thread.start()
                 threads.append(thread)
             except socket.timeout:
-                print("No new connections, checking client count...", flush=True)
                 if len(all_connections) >= expected_clients:
                     break
         for thread in threads:
