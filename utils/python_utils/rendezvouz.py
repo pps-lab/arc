@@ -12,6 +12,7 @@ def client_thread(conn, addr, all_connections, expected_clients):
     while len(all_connections) < expected_clients:
         pass  # Wait until all clients are connected
     conn.sendall(b"GO")  # Signal the client to proceed
+    print("Sent GO signal", flush=True)
     conn.close()
 
 def rendezvous_server(port, expected_clients):
@@ -26,8 +27,10 @@ def rendezvous_server(port, expected_clients):
             thread = Thread(target=client_thread, args=(conn, addr, all_connections, expected_clients))
             thread.start()
             threads.append(thread)
+        print(f"All clients connected: {len(all_connections)}", flush=True)
         for thread in threads:
             thread.join() # ensure all clients have been notified
+        print("All clients have connected. Shutting down server.", flush=True)
         s.close()
 
 
@@ -54,7 +57,7 @@ def notify_rendezvous_server(server_host, port, retries=1000, delay=5):
 def sync(server_host, num_clients: int, client_id: int):
     if client_id == 0:
         print("Starting rendezvous server...", flush=True)
-        rendezvous_server(RENDEZVOUZ_PORT, num_clients - 1)
+        rendezvous_server(RENDEZVOUZ_PORT, num_clients - 1) # -1 because the server is also ready
     else:
         print("Connecting to rendezvous server...", flush=True)
         if not notify_rendezvous_server(server_host, RENDEZVOUZ_PORT):
