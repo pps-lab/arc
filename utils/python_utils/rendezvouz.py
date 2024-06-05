@@ -54,7 +54,7 @@ def notify_rendezvous_server(server_host, port, retries=1000, delay=5):
 def sync(server_host, num_clients: int, client_id: int):
     if client_id == 0:
         print("Starting rendezvous server...", flush=True)
-        rendezvous_server(RENDEZVOUZ_PORT, num_clients)
+        rendezvous_server(RENDEZVOUZ_PORT, num_clients - 1)
     else:
         print("Connecting to rendezvous server...", flush=True)
         if not notify_rendezvous_server(server_host, RENDEZVOUZ_PORT):
