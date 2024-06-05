@@ -45,6 +45,7 @@ import string
 import random
 import time
 
+from python_utils import rendezvouz
 from python_utils.consistency_cerebro import compile_cerebro_with_args, run_cerebro_with_args, compile_sha3_with_args, run_sha3_with_args
 
 DEFAULT_CONFIG_NAME="config.json"
@@ -114,6 +115,11 @@ def clean_workspace(task_config: config_def.TaskConfig, output_prefix: str):
                               output_prefix=output_prefix,
                               remove_input_files=task_config.remove_input_files)
     cleaner_obj.clean()
+
+def sync_servers(task_config: config_def.TaskConfig):
+    # ensure all servers are at this point
+    # the way we do this is by pinging the host server which will respond when all are ready
+    rendezvouz.sync(task_config.player_0_hostname, task_config.player_count, task_config.player_id)
 
 def prove_commitment_opening(task_config, output_prefix):
     if task_config.consistency_args is None:
@@ -287,7 +293,7 @@ def convert_shares(task_config, output_prefix):
     spdz_args_str = f"-p {task_config.player_id} -N {task_config.player_count} -h {task_config.player_0_hostname}"
 
     if task_config.sleep_time > 0:
-        print(f"Sleeping for {task_config.sleep_time} seconds to allow the MP-SPDZ process on all clients to finish.")
+        print(f"Sleeping for {task_config.sleep_time + task_config.post_spdz_sleep_time} seconds to allow the MP-SPDZ process on all clients to finish.")
         time.sleep(task_config.sleep_time + task_config.post_spdz_sleep_time)
 
     if task_config.consistency_args is not None:
@@ -591,6 +597,7 @@ def cli(player_number):
         output_prefix=generate_random_prefix()
         run_script_with_args(task_config=task_config,
             output_prefix=output_prefix)
+        sync_servers(task_config=task_config)
         convert_shares(task_config=task_config, output_prefix=output_prefix)
         prove_commitment_opening(task_config=task_config,
                                  output_prefix=output_prefix)
