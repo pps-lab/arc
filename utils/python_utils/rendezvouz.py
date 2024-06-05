@@ -1,6 +1,7 @@
 
 import socket
 from threading import Thread
+import time
 
 RENDEZVOUZ_PORT=47683
 
@@ -30,24 +31,32 @@ def rendezvous_server(port, expected_clients):
         s.close()
 
 
-def notify_rendezvous_server(server_host, port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((server_host, port))
-        print("Sending ready signal")
-        s.sendall(b"READY")
-        print("Waiting for go-ahead")
-        data = s.recv(1024)
-        if data == b"GO":
-            print("Received go-ahead. Proceeding with the script.")
-            return True
-        return False
+def notify_rendezvous_server(server_host, port, retries=1000, delay=5):
+    attempts = 0
+    while attempts < retries:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.connect((server_host, port))
+                print("Sending ready signal")
+                s.sendall(b"READY")
+                print("Waiting for go-ahead")
+                data = s.recv(1024)
+                if data == b"GO":
+                    print("Received go-ahead. Proceeding with the script.")
+                    return True
+                return False
+        except socket.error as e:
+            print(f"Connection attempt {attempts + 1} failed: {e}")
+            time.sleep(delay)  # Wait before retrying
+            attempts += 1
+    return False
 
 def sync(server_host, num_clients: int, client_id: int):
     if client_id == 0:
-        print("Starting rendezvous server...")
+        print("Starting rendezvous server...", flush=True)
         rendezvous_server(RENDEZVOUZ_PORT, num_clients)
     else:
-        print("Connecting to rendezvous server...")
+        print("Connecting to rendezvous server...", flush=True)
         if not notify_rendezvous_server(server_host, RENDEZVOUZ_PORT):
             print("Failed to sync with server!")
     print("Done with sync")
