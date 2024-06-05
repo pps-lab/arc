@@ -13,24 +13,26 @@ def client_thread(conn, addr, all_connections, expected_clients):
         time.sleep(1)
         pass  # Wait until all clients are connected
     conn.sendall(b"GO")  # Signal the client to proceed
-    print("Sent GO signal", flush=True)
     conn.close()
-    print("Closed connection", flush=True)
 
 def rendezvous_server(port, expected_clients):
     all_connections = []
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(('', port))
         s.listen()
+        s.settimeout(1)
         print(f"Server listening on port {port}", flush=True)
         threads = []
         while len(all_connections) < expected_clients:
-            conn, addr = s.accept()
-            thread = Thread(target=client_thread, args=(conn, addr, all_connections, expected_clients))
-            thread.start()
-            threads.append(thread)
-            print("Started thread", flush=True)
-        print(f"All clients connected: {len(all_connections)}", flush=True)
+            try:
+                conn, addr = s.accept()
+                thread = Thread(target=client_thread, args=(conn, addr, all_connections, expected_clients))
+                thread.start()
+                threads.append(thread)
+            except socket.timeout:
+                print("No new connections, checking client count...", flush=True)
+                if len(all_connections) >= expected_clients:
+                    break
         for thread in threads:
             thread.join() # ensure all clients have been notified
         print("All clients have connected. Shutting down server.", flush=True)
@@ -43,7 +45,6 @@ def notify_rendezvous_server(server_host, port, retries=1000, delay=5):
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                 s.connect((server_host, port))
-                print("Sending ready signal")
                 s.sendall(b"READY")
                 print("Waiting for go-ahead")
                 data = s.recv(1024)
