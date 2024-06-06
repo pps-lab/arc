@@ -449,7 +449,7 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
         @lib.for_range_opt_multithread(config.n_threads, total_scores_l2.sizes[0])
         def f(j):
             total_scores_l2[:] = total_scores_l2[:] + (score[j] * thetas[checkpoint_id]) # TODO: I think?
-            all_multipliers[checkpoint_id][j] = aTa[j] * bTb
+            all_multipliers[checkpoint_id][j] = 0 # aTa[j] * bTb
 
         print_ln("Done score transpose after")
     print_ln("Done score for range checkpoints")
@@ -469,8 +469,9 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
     print_ln("Prescoring l2 done")
 
     # sort by total_scores and select k
-    @lib.for_range_opt(len(audit_trigger_samples))
-    def sort(audit_trigger_idx):
+    # @lib.for_range_opt(len(audit_trigger_samples))
+    # def sort(audit_trigger_idx):
+    for audit_trigger_idx in range(len(audit_trigger_samples)):
         print_ln("  audit_trigger_idx=%s", audit_trigger_idx)
 
         print("L2")
@@ -497,12 +498,12 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
         # data = data.transpose().concat(matrix_sample_by_latent.transpose()).transpose()
         print("DATA SHAPE", data.sizes)
 
-        lib.start_timer(timer_id=104)
+        lib.start_timer(timer_id=106)
         if config.debug:
             print_ln("Before sort: %s", data.get_part(0, 10).reveal_nested())
         data.sort()
 
-        lib.stop_timer(timer_id=104)
+        lib.stop_timer(timer_id=106)
 
         print_ln("Sort done")
 
@@ -511,9 +512,9 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
         print("scores_top_pre_k", scores_top_pre_k.sizes, scores_top_pre_k[2 + 1])
 
-        lib.start_timer(timer_id=106)
+        lib.start_timer(timer_id=107)
 
-        @lib.for_range_opt(config.pre_score_select_k)
+        @lib.for_range_opt_multithread(config.n_threads, config.pre_score_select_k)
         def f(j):
             # @lib.map_sum_opt(config.n_threads, n_checkpoints, [sfix])
             # def summer(i):
@@ -528,7 +529,7 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
             total_scores[audit_trigger_idx][j] = sum
             presort_idx[audit_trigger_idx][j] = scores_top_pre_k[j][1]
 
-        lib.stop_timer(timer_id=106)
+        lib.stop_timer(timer_id=107)
 
     # Somehow this reveal here causes non-determinism in compilation
     # print(total_scores)
