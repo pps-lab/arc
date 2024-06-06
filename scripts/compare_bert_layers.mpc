@@ -111,30 +111,7 @@ def get_predictions(model, tokenized_dataset):
 
     return predictions
 
-activation_list = []
-def get_activation(name):
-    def hook(model, input, output):
-        activation_list.append((name, output[0].detach()))
-    return hook
 
-if compare_forward:
-    relevant_pt_layers = model.bert.encoder.layer
-else:
-    relevant_pt_layers = model.bert.encoder.layer + [model.bert.pooler] + [model.classifier]
-
-for layer_id, bert_layer in enumerate(relevant_pt_layers):
-    if compare_forward:
-        bert_layer.register_forward_hook(get_activation(f'bert.encoder.layer.{layer_id}'))
-    else:
-        bert_layer.register_full_backward_hook(get_activation(f'bert.encoder.layer.{layer_id}'))
-
-pt_predictions = get_predictions(model, tokenized_validation_matched_pt)
-pt_predictions_top = torch.argmax(torch.cat(pt_predictions), dim=-1)
-print_ln("PT Predictions %s", str(pt_predictions))
-print_ln("PT Predictions Top %s", str(pt_predictions_top))
-print("Running n_samples_to_run", n_samples_to_run)
-
-print("Bert activations ", activation_list)
 def build_sfix_tensor(dataset):
     with dataset.formatted_as("torch", ["embedding", "label"]):
         tensor_embedding = torch.concat(list(map(lambda x: x['embedding'], dataset.iter(batch_size=1))))
@@ -148,18 +125,64 @@ def build_sfix_tensor(dataset):
 
         return tensor_embedding_sfix, tensor_label_sfix
 
+
+test_x, test_y = build_sfix_tensor(tokenized_validation)
+model_shape = test_x.shape
+print("model shape", model_shape)
+layers = ml.layers_from_torch(model, model_shape, input_via=0, batch_size=spdz_batch_size) # set batch size bigger?
+optimizer = ml.SGD(layers)
+
+
+def layers_for_bertlayer(bert_layer, bert_layer_pt):
+    return [
+        (bert_layer, bert_layer_pt),
+        # (bert_layer.multi_head_attention, bert_layer_pt.attention),
+        #
+        # (bert_layer.intermediate, bert_layer_pt.intermediate),
+        # (bert_layer.output, bert_layer_pt.output)
+    ]
+
+layers_to_compare = [layers_for_bertlayer(l1, l2) for l1, l2 in zip(optimizer.layers[:-4], model.bert.encoder.layer)]
+layers_to_compare = [x for xs in layers_to_compare for x in xs]
+layers_to_compare.append((optimizer.layers[-4], model.bert.pooler))
+# dropout
+layers_to_compare.append((optimizer.layers[-2], model.classifier))
+
+activation_list = []
+def get_activation(name):
+    def hook(model, input, output):
+        activation_list.append((name, output[0].detach()))
+    return hook
+
+if compare_forward:
+    relevant_pt_layers = model.bert.encoder.layer
+else:
+    relevant_pt_layers = model.bert.encoder.layer + [model.bert.pooler] + [model.classifier]
+
+print(layers_to_compare)
+for layer_id, (_, bert_layer) in enumerate(layers_to_compare):
+    if compare_forward:
+        bert_layer.register_forward_hook(get_activation(f'{layer_id}.{type(bert_layer)}'))
+    else:
+        bert_layer.register_full_backward_hook(get_activation(f'{layer_id}.{type(bert_layer)}'))
+
+pt_predictions = get_predictions(model, tokenized_validation_matched_pt)
+pt_predictions_top = torch.argmax(torch.cat(pt_predictions), dim=-1)
+print_ln("PT Predictions %s", str(pt_predictions))
+print_ln("PT Predictions Top %s", str(pt_predictions_top))
+print("Running n_samples_to_run", n_samples_to_run)
+
+print("Bert activations ", activation_list)
+
+
+
 import numpy
-def get_predictions(model, test_x, test_y):
+def get_predictions(test_x, test_y):
 
     # print_ln("Embeddings %s", test_x.reveal_nested())
 
-    model_shape = test_x.shape
     # model_shape = [2] + test_x.shape[1:]
-    print_ln("model shape %s", model_shape)
 
-
-    layers = ml.layers_from_torch(model, model_shape, input_via=0, batch_size=spdz_batch_size) # set batch size bigger?
-    optimizer = ml.SGD(layers)
     optimizer.layers[-1].debug = True
     # optimizer.reset()
     # optimizer.print_random_update = True
@@ -177,36 +200,23 @@ def get_predictions(model, test_x, test_y):
     print_ln("PRED %s", pred)
     #
     # compare the values in activation_list with the values in the layers
-    relevant_model_layers = optimizer.layers[:-4]
-    if not compare_forward:
-        relevant_model_layers = optimizer.layers[:-4] + [optimizer.layers[2]] + [optimizer.layers[4]]
-    print("all layers", optimizer.layers, "relevant_model_layers", relevant_model_layers)
-    print_ln("all layers %s", str(optimizer.layers))
 
     # repeat to print all
-    repeated_layers = itertools.repeat(relevant_model_layers, n_samples_to_run)
-    repeated_layers_flat = itertools.chain(*repeated_layers)
-
-    def repeat_numbers(rng, times):
-        return [x for x in rng for _ in range(times)]
-    n_batches = int(n_samples_to_run / spdz_batch_size)
-    layed_idx = repeat_numbers(list(range(int(n_samples_to_run // n_batches))) * n_batches, len(relevant_model_layers))
-    if n_samples_to_run == 1:
-        layed_idx = [0] * (len(relevant_model_layers) * n_samples_to_run)
-    print(layed_idx, "idx")
+    # repeated_layers = itertools.repeat(relevant_model_layers, n_samples_to_run)
+    # repeated_layers_flat = itertools.chain(*repeated_layers)
 
     # reverse
     activ_list = activation_list
     if not compare_forward:
         activ_list = list(reversed(activ_list))
 
-    for pt_values, (relevant_model_layer, idx) in zip(activ_list, zip(repeated_layers_flat, layed_idx)):
+    for pt_values, (relevant_model_layer, _) in zip(activ_list, layers_to_compare):
         # compute diff
         pt_at_runtime = sfix.input_tensor_via(0, pt_values[1].numpy()).get_vector().reveal()
         if compare_forward:
-            layer_output = relevant_model_layer.Y[idx].get_vector().reveal()
+            layer_output = relevant_model_layer.Y[0].get_vector().reveal()
         else:
-            layer_output = relevant_model_layer.nabla_Y[idx].get_vector().reveal()
+            layer_output = relevant_model_layer.nabla_Y[0].get_vector().reveal()
 
         # display first 3 of both
         print_ln("pt_at_runtime %s (%s)", pt_at_runtime[:8], pt_values[0])
@@ -219,9 +229,6 @@ def get_predictions(model, test_x, test_y):
 # last layer contains 0 in some dimensions, should match pretty closely since we only have dense
 
 
-def run(dataset):
-    test_x, test_y = build_sfix_tensor(dataset)
-    get_predictions(model, test_x, test_y)
 
 sfix.round_nearest = True
 program.use_trunc_pr = False
@@ -233,7 +240,7 @@ sfix.set_precision(f=32, k=62)
 # sfix.set_precision(f=14, k=31)
 
 print("Running tokenized_validation_matched")
-run(tokenized_validation)
+get_predictions(test_x, test_y)
 
 # print("Running tokenized_validation_mismatched")
 # run(tokenized_validation_mismatched)
