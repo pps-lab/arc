@@ -31,8 +31,12 @@ $SUITE_ID$:
   audit_knnshapley_bert_wan: 1717156384
   audit_knnshapley_bert_wan_others: 1717172572
 
-  audit_knnshapley_bert_mal: 1717165278
-  audit_knnshapley_bert_mal_ours: 1717182305
+  audit_knnshapley_bert_mal: 1717593653
+
+#  audit_knnshapley_bert_mal: 1717165278
+#  audit_knnshapley_bert_mal_ours: 1717182305
+
+
 #  audit_knnshapley_bert_mal_ours_
 
 #    audit_sample_knnshapley_wan: 1717156384
@@ -64,7 +68,6 @@ $ETL$:
       audit_knnshapley_bert: "*"
       audit_knnshapley_bert_wan: "*"
       audit_knnshapley_bert_mal: "*"
-      audit_knnshapley_bert_mal_ours: "*"
       audit_knnshapley_bert_wan_others: "*"
 
     extractors:
