@@ -131,7 +131,7 @@ def compute_magnitudes(A: MultiArray, n_threads):
 
     print("Compute Magnitudes")
     aTa = Array(len(A) , A.value_type)
-    @lib.for_range_opt(1, len(A))
+    @lib.for_range_opt_multithread(n_threads, 1, len(A))
     def f(i):
         # aTa[i] = A[i].dot(A[i])
         aTa[i] = A.value_type.dot_product(A[i], A[i])
