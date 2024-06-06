@@ -69,13 +69,13 @@ def audit(input_loader, config, debug: bool):
     # Model.eval seems to take a really long time
     model.layers[-1].compute_loss = False
 
-    if config.batch_size == 2 and config.n_batches == 1:
-        # dont do the forward pass so we can properly extrapolate
-        print("Skipping second forward pass")
-        train_samples_latent_space = MultiArray([len(train_samples), expected_latent_space_size], sfix)
-    else:
-        train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
-        assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size), f"{train_samples_latent_space.sizes} != {(len(train_samples), expected_latent_space_size)}"
+    # if config.batch_size == 2 and config.n_batches == 1:
+    #     # dont do the forward pass so we can properly extrapolate
+    #     print("Skipping second forward pass")
+    #     train_samples_latent_space = MultiArray([len(train_samples), expected_latent_space_size], sfix)
+    # else:
+    train_samples_latent_space = model.eval(train_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
+    assert train_samples_latent_space.sizes == (len(train_samples), expected_latent_space_size), f"{train_samples_latent_space.sizes} != {(len(train_samples), expected_latent_space_size)}"
 
     print_ln("Computing Latent Space for Audit Trigger...")
     audit_trigger_samples_latent_space = model.eval(audit_trigger_samples, batch_size=config.batch_size, latent_space_layer=latent_space_layer)
