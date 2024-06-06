@@ -449,7 +449,7 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
         @lib.for_range_opt_multithread(config.n_threads, total_scores_l2.sizes[0])
         def f(j):
             total_scores_l2[:] = total_scores_l2[:] + (score[j] * thetas[checkpoint_id]) # TODO: I think?
-            all_multipliers[checkpoint_id][j] = 0 # aTa[j] * bTb
+            all_multipliers[checkpoint_id][j] = aTa[j] * bTb
 
         print_ln("Done score transpose after")
     print_ln("Done score for range checkpoints")
