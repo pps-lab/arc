@@ -35,9 +35,12 @@ def cosine_distance(A: MultiArray, B: MultiArray, n_threads):
     # print("bTb", bTb)
     print("L2", L2)
 
+    lib.start_timer(109)
     @lib.for_range_opt_multithread(n_threads, len(A))
     def f(i):
         L2[i] = L2[i] / (aTa[i] * bTb)
+
+    lib.stop_timer(109)
 
     return L2
 
