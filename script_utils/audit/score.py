@@ -88,7 +88,7 @@ def euclidean_distance(A: MultiArray, B: MultiArray, n_threads):
 
     return L2, aTa, bTb
 
-def euclidean_distance_naive(A: MultiArray, B: MultiArray, n_threads):
+def euclidean_distance_naive(A: MultiArray, B: MultiArray, n_threads, skip_reduce=True):
     """
     Computes the square of the euclidean distance
 
@@ -103,21 +103,23 @@ def euclidean_distance_naive(A: MultiArray, B: MultiArray, n_threads):
         (MultiArray) P x R
     """
 
-    L2 = MultiArray([len(B), len(A)], A.value_type)
+    lib.start_timer(110)
+    L2 = MultiArray([len(B), len(A)], A.value_type if not skip_reduce else sint)
     # @lib.for_range_opt(len(B))
     # def f(j):
     for j in range(len(B)):
-        B_mat = Matrix(len(B[j]), 1, B.value_type)
+        B_mat = Matrix(len(B[j]), 1, B.value_type if not skip_reduce else sint)
         B_mat[:] = B[j][:]
 
         res = A.dot(B_mat, n_threads=n_threads)
-        print(res.shape, L2[j].shape)
+        print(A.shape, res.shape, L2[j].shape)
         L2[j] = res
 
         # @lib.for_range_multithread(n_threads, 1, len(A))
         # def g(i):
         #     L2[i][j] = A.value_type.dot_product(A[i], B[j])
 
+    lib.stop_timer(110)
     return L2.transpose(), None, None
 
 
@@ -382,58 +384,13 @@ def compute_score_cosine(n_checkpoints, train_samples_latent_space, audit_trigge
             total_scores[i] = total_scores[i] + (score[i] * thetas[checkpoint_id])
     lib.stop_timer(timer_id=105)
 
-def compute_score_cosine_opt_defer_div(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
-    # TODO: Correctness?
-
-    all_scores = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
-    all_multipliers = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
-
-    @lib.for_range_opt(n_checkpoints)
-    def s(i):
-        score, aTa, bTb = euclidean_distance(A=train_samples_latent_space,
-                                             B=audit_trigger_samples_latent_space,
-                                             n_threads=config.n_threads)
-        score = score.transpose()
-        assert score.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {score.sizes}"
-
-        all_scores[i].assign(score)
-
-        @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes[0])
-        def f(j):
-            all_multipliers[i][j] = aTa[j] * bTb
-
-    cumulative_multiplier = MultiArray([len(audit_trigger_samples), len(train_samples)], sfix)
-    cumulative_multiplier.assign_all(sfix(1))
-    # now we look over the checkpoints and apply to each row i all multipliers from the other rows
-    @lib.for_range_opt(n_checkpoints)
-    def s(i):
-        @lib.for_range_opt_multithread(config.n_threads, all_multipliers[i].sizes[0])
-        def f(k):
-            cumulative_multiplier[k] = cumulative_multiplier[k] * all_multipliers[i][k]
-
-        for j in range(n_checkpoints):
-            # if i != j:
-            @lib.if_(i != j)
-            def f():
-                @lib.for_range_opt_multithread(config.n_threads, all_scores[i].sizes[0])
-                def f(k):
-                    all_scores[i][k] = all_scores[i][k] * all_multipliers[j][k]
-
-        # now we add all
-        @lib.for_range_opt_multithread(config.n_threads, all_scores[i].sizes[0])
-        def f(k):
-            total_scores[k] = total_scores[k] + (all_scores[i][k] * thetas[i])
-
-    # and now we divide all by cumulative multiplier
-    @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes)
-    def f(i, j):
-        print(total_scores[i], cumulative_multiplier[i])
-        total_scores[i][j] = total_scores[i][j] / cumulative_multiplier[i][j]
 
 
 
 def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
     # TODO: Correctness?
+
+    defer_truncate = False
 
     all_scores_l2 = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
     all_multipliers = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
@@ -548,6 +505,56 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
     return total_scores, presort_idx
 
+
+
+
+def compute_score_cosine_opt_defer_div(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
+    # TODO: Correctness?
+
+    all_scores = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
+    all_multipliers = MultiArray([n_checkpoints, len(audit_trigger_samples), len(train_samples)], sfix)
+
+    @lib.for_range_opt(n_checkpoints)
+    def s(i):
+        score, aTa, bTb = euclidean_distance(A=train_samples_latent_space,
+                                             B=audit_trigger_samples_latent_space,
+                                             n_threads=config.n_threads)
+        score = score.transpose()
+        assert score.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {score.sizes}"
+
+        all_scores[i].assign(score)
+
+        @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes[0])
+        def f(j):
+            all_multipliers[i][j] = aTa[j] * bTb
+
+    cumulative_multiplier = MultiArray([len(audit_trigger_samples), len(train_samples)], sfix)
+    cumulative_multiplier.assign_all(sfix(1))
+    # now we look over the checkpoints and apply to each row i all multipliers from the other rows
+    @lib.for_range_opt(n_checkpoints)
+    def s(i):
+        @lib.for_range_opt_multithread(config.n_threads, all_multipliers[i].sizes[0])
+        def f(k):
+            cumulative_multiplier[k] = cumulative_multiplier[k] * all_multipliers[i][k]
+
+        for j in range(n_checkpoints):
+            # if i != j:
+            @lib.if_(i != j)
+            def f():
+                @lib.for_range_opt_multithread(config.n_threads, all_scores[i].sizes[0])
+                def f(k):
+                    all_scores[i][k] = all_scores[i][k] * all_multipliers[j][k]
+
+        # now we add all
+        @lib.for_range_opt_multithread(config.n_threads, all_scores[i].sizes[0])
+        def f(k):
+            total_scores[k] = total_scores[k] + (all_scores[i][k] * thetas[i])
+
+    # and now we divide all by cumulative multiplier
+    @lib.for_range_opt_multithread(config.n_threads, total_scores.sizes)
+    def f(i, j):
+        print(total_scores[i], cumulative_multiplier[i])
+        total_scores[i][j] = total_scores[i][j] / cumulative_multiplier[i][j]
 
 def knn_naive(distance_array, idx_array, k):
     # O(nk * 3) swaps
