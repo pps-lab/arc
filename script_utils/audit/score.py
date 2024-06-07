@@ -353,8 +353,10 @@ def compute_score(score_method, n_checkpoints, train_samples_latent_space, audit
 def compute_score_euclid(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
 
     lib.start_timer(timer_id=105)
-    @lib.for_range_opt(n_checkpoints)
-    def s(checkpoint_id):
+    # TODO: Runtime loop
+    for checkpoint_id in range(n_checkpoints):
+    # @lib.for_range_opt(n_checkpoints)
+    # def s(checkpoint_id):
         score, aTa, bTb = euclidean_distance_naive(A=train_samples_latent_space[checkpoint_id],
                                                          B=audit_trigger_samples_latent_space[checkpoint_id],
                                                          n_threads=config.n_threads)
@@ -367,8 +369,10 @@ def compute_score_euclid(n_checkpoints, train_samples_latent_space, audit_trigge
 
 def compute_score_cosine(n_checkpoints, train_samples_latent_space, audit_trigger_samples_latent_space, audit_trigger_samples, train_samples, total_scores, thetas, config):
     lib.start_timer(timer_id=105)
-    @lib.for_range_opt(n_checkpoints)
-    def s(checkpoint_id):
+    # TODO: Runtime loop
+    for checkpoint_id in range(n_checkpoints):
+    # @lib.for_range_opt(n_checkpoints)
+    # def s(checkpoint_id):
         score = cosine_distance(A=train_samples_latent_space[checkpoint_id], B=audit_trigger_samples_latent_space[checkpoint_id], n_threads=config.n_threads)
         score = score.transpose()
         assert score.sizes == (len(audit_trigger_samples), len(train_samples)), f"L2 {score.sizes}"
