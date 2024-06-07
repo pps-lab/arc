@@ -104,10 +104,13 @@ def euclidean_distance_naive(A: MultiArray, B: MultiArray, n_threads):
     """
 
     L2 = MultiArray([len(B), len(A)], A.value_type)
-    @lib.for_range_opt(len(B))
-    def f(j):
+    # @lib.for_range_opt(len(B))
+    # def f(j):
+    for j in range(len(B)):
+        B_mat = Matrix(len(B[j]), 1, B.value_type)
+        B_mat[:] = B[j][:]
 
-        res = A.dot(B[j], n_threads=n_threads)
+        res = A.dot(B_mat, n_threads=n_threads)
         print(res.shape, L2[j].shape)
         L2[j] = res
 
@@ -436,8 +439,9 @@ def compute_score_cosine_opt_presort_l2(n_checkpoints, train_samples_latent_spac
 
     lib.start_timer(timer_id=105)
 
-    @lib.for_range_opt(n_checkpoints)
-    def s(checkpoint_id):
+    # @lib.for_range_opt(n_checkpoints)
+    # def s(checkpoint_id):
+    for checkpoint_id in range(n_checkpoints):
         score, _, _ = euclidean_distance_naive(A=train_samples_latent_space[checkpoint_id],
                                              B=audit_trigger_samples_latent_space[checkpoint_id],
                                              n_threads=config.n_threads)
