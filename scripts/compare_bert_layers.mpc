@@ -134,12 +134,13 @@ optimizer = ml.SGD(layers)
 
 
 def layers_for_bertlayer(bert_layer, bert_layer_pt):
+    # Warning: Take care here that the order is in the way the hook is called
     return [
+        (bert_layer.multi_head_attention, bert_layer_pt.attention),
+
+        (bert_layer.intermediate, bert_layer_pt.intermediate),
+        (bert_layer.output, bert_layer_pt.output),
         (bert_layer, bert_layer_pt),
-        # (bert_layer.multi_head_attention, bert_layer_pt.attention),
-        #
-        # (bert_layer.intermediate, bert_layer_pt.intermediate),
-        # (bert_layer.output, bert_layer_pt.output)
     ]
 
 layers_to_compare = [layers_for_bertlayer(l1, l2) for l1, l2 in zip(optimizer.layers[:-4], model.bert.encoder.layer)]
@@ -230,12 +231,12 @@ def get_predictions(test_x, test_y):
 
 
 
-sfix.round_nearest = True
+sfix.round_nearest = False
 program.use_trunc_pr = False
 # sfix.set_precision(18)
 # cfix.set_precision(18)
-cfix.set_precision(f=32, k=62)
-sfix.set_precision(f=32, k=62)
+# cfix.set_precision(f=32, k=62)
+# sfix.set_precision(f=32, k=62)
 # cfix.set_precision(f=14, k=31)
 # sfix.set_precision(f=14, k=31)
 
