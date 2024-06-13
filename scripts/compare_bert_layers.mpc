@@ -136,6 +136,8 @@ optimizer = ml.SGD(layers)
 def layers_for_bertlayer(bert_layer, bert_layer_pt):
     # Warning: Take care here that the order is in the way the hook is called in the forward pass
     return [
+        (bert_layer.multi_head_attention.dropout, bert_layer_pt.attention.self.dropout),
+        (bert_layer.multi_head_attention.output, bert_layer_pt.attention.output),
         (bert_layer.multi_head_attention, bert_layer_pt.attention),
 
         (bert_layer.intermediate.dense, bert_layer_pt.intermediate.dense),
@@ -238,11 +240,14 @@ def get_predictions(test_x, test_y):
         # display first 3 of both
         print_ln("pt_at_runtime %s %s", pt_at_runtime[:8], layer_id)
         print_ln("layer_output  %s", layer_output[:8])
-        print_ln("layer_output Y%s", relevant_model_layer.Y[0].get_vector().reveal()[:8])
+        # print_ln("pt_at_runtime %s %s", pt_at_runtime[-8:], layer_id)
+        # print_ln("layer_output  %s", layer_output[-8:])
+        # print_ln("layer_output Y%s", relevant_model_layer.Y[0].get_vector().reveal()[:8])
         print("layer sizes pt %s spdz %s", len(pt_at_runtime), len(layer_output))
         # print_ln("diff %s", [pt_at_runtime[i] - layer_output[i] for i in range(len(pt_at_runtime))])
         # compute diff
-        diff = sum((pt_at_runtime - layer_output) ** 2)
+        # diff = sum((pt_at_runtime - layer_output) ** 2)
+        diff = sum(abs(pt_at_runtime - layer_output))
         print_ln("diff %s", diff)
 
         # if len(pt_at_runtime) > 3000:

@@ -60,7 +60,9 @@ pt_attn.output.LayerNorm.bias.data = torch.zeros(hidden_size)
 pt_attn.eval()
 
 # Input tensor
-input_tensor = torch.randn(N, seq_len, hidden_size, requires_grad=True)
+pre_tensor = torch.randn(N, seq_len, hidden_size)
+pre_tensor /= 100
+input_tensor = torch.tensor(pre_tensor, requires_grad=True)
 # input_tensor = torch.zeros(N, seq_len, hidden_size, requires_grad=True)
 hidden_state = torch.randn(N, seq_len, hidden_size, requires_grad=True)
 secret_hidden_state = sfix.input_tensor_via(0, hidden_state.detach())
@@ -73,6 +75,23 @@ attention.X.address = flex_input.address
 
 inc_batch = regint.Array(N)
 inc_batch.assign(regint.inc(N))
+
+
+activation_map = {}
+def get_activation(name):
+    def hook(model, input, output):
+        print(f"{name} Activation Input", input[0].shape, "shape", output[0].shape)
+        # activation_list.append((name, output[0].detach()))
+        activation_map[name] = output[0].detach()
+    return hook
+
+pt_attn.self.dropout.register_full_backward_hook(get_activation('Self Dropout'))
+# pt_attn.self.value.register_full_backward_hook(get_activation('Self Value'))
+pt_attn.self.key.register_full_backward_hook(get_activation('wk.nabla_Y'))
+pt_attn.self.query.register_full_backward_hook(get_activation('wq.nabla_Y'))
+# pt_attn.self.value.register_full_backward_hook(get_activation('Self Output'))
+# pt_attn.self.register_full_backward_hook(get_activation('Self'))
+
 
 # Get outputs
 attention.forward(inc_batch, flex_input, training=True)
@@ -106,11 +125,16 @@ grad_y = torch.randn(N, seq_len, hidden_size)
 attention.nabla_Y = sfix.input_tensor_via(0, grad_y)
 attention.nabla_X.alloc()
 attention.backward(True, inc_batch)
+
+
+
+
 torch_output[0].backward(grad_y)
+
+print("activation map", activation_map)
 
 print_ln("Attention backward gradient: %s", attention.nabla_X.reveal_nested()[0][0][:16])
 print_ln("Torch backward gradient: %s", input_tensor.grad[0][0][:16])
 
-# print_ln("FlexDense W gradient: %s", attention.nabla_W.reveal_nested())
-# print_ln("Torch W gradient: %s", pt_attn.weight.grad)
+
 
