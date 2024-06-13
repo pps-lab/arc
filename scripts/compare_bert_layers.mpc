@@ -8,8 +8,8 @@ import torch
 
 # Load pre-trained BERT model and tokenizer
 # model_name = 'prajjwal1/bert-tiny-mnli'  # You can choose other versions of BERT like 'bert-large-uncased'
-# model_name = 'M-FAC/bert-tiny-finetuned-qnli'
-model_name = 'M-FAC/bert-mini-finetuned-qnli'
+model_name = 'M-FAC/bert-tiny-finetuned-qnli'
+# model_name = 'M-FAC/bert-mini-finetuned-qnli'
 # model_name = 'gchhablani/bert-base-cased-finetuned-qnli'
 
 # Load the tokenizer
@@ -31,7 +31,7 @@ validation = dataset['validation']
 spdz_batch_size = 1
 n_samples_to_run = 1
 n_samples_to_run_pt = n_samples_to_run
-compare_forward = True
+compare_forward = False
 
 # # # Load the MNLI dataset
 # mnli_dataset = load_dataset('multi_nli')
@@ -90,7 +90,7 @@ print(tokenized_validation, type(tokenized_validation))
 def get_predictions(model, tokenized_dataset):
     model.eval()
     predictions = []
-    criterion = torch.nn.BCEWithLogitsLoss()
+    criterion = torch.nn.CrossEntropyLoss()
     # with torch.no_grad():
     for i in range(n_samples_to_run_pt):
         example = tokenized_dataset[i]
@@ -118,10 +118,10 @@ def build_sfix_tensor(dataset):
         tensor_label = torch.concat(list(map(lambda x: x['label'], dataset.iter(batch_size=1))))
 
         # one-hot encode tensor_label
-        tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=-1)
+        tensor_label = torch.nn.functional.one_hot(tensor_label, num_classes=2)
 
         tensor_embedding_sfix = sfix.input_tensor_via(0, tensor_embedding.numpy())
-        tensor_label_sfix = sint.input_tensor_via(0, tensor_label.numpy())
+        tensor_label_sfix = sfix.input_tensor_via(0, tensor_label.numpy())
 
         return tensor_embedding_sfix, tensor_label_sfix
 
@@ -134,11 +134,17 @@ optimizer = ml.SGD(layers)
 
 
 def layers_for_bertlayer(bert_layer, bert_layer_pt):
-    # Warning: Take care here that the order is in the way the hook is called
+    # Warning: Take care here that the order is in the way the hook is called in the forward pass
     return [
         (bert_layer.multi_head_attention, bert_layer_pt.attention),
 
+        (bert_layer.intermediate.dense, bert_layer_pt.intermediate.dense),
+        (bert_layer.intermediate.activation, bert_layer_pt.intermediate.intermediate_act_fn),
         (bert_layer.intermediate, bert_layer_pt.intermediate),
+
+        (bert_layer.output.dense, bert_layer_pt.output.dense),
+        (bert_layer.output.dropout, bert_layer_pt.output.dropout),
+        (bert_layer.output.layer_norm, bert_layer_pt.output.LayerNorm),
         (bert_layer.output, bert_layer_pt.output),
         (bert_layer, bert_layer_pt),
     ]
@@ -149,16 +155,19 @@ layers_to_compare.append((optimizer.layers[-4], model.bert.pooler))
 # dropout
 layers_to_compare.append((optimizer.layers[-2], model.classifier))
 
-activation_list = []
+# activation_list = []
+activation_map = {}
 def get_activation(name):
     def hook(model, input, output):
-        activation_list.append((name, output[0].detach()))
+        print(f"{name} Activation Input", input[0].shape, "shape", output[0].shape)
+        # activation_list.append((name, output[0].detach()))
+        activation_map[name] = output[0].detach()
     return hook
 
 if compare_forward:
     relevant_pt_layers = model.bert.encoder.layer
 else:
-    relevant_pt_layers = model.bert.encoder.layer + [model.bert.pooler] + [model.classifier]
+    relevant_pt_layers = model.bert.encoder.layer #+ [model.bert.pooler] + [model.classifier]
 
 print(layers_to_compare)
 for layer_id, (_, bert_layer) in enumerate(layers_to_compare):
@@ -173,7 +182,7 @@ print_ln("PT Predictions %s", str(pt_predictions))
 print_ln("PT Predictions Top %s", str(pt_predictions_top))
 print("Running n_samples_to_run", n_samples_to_run)
 
-print("Bert activations ", activation_list)
+print("Bert activations ", activation_map)
 
 
 
@@ -190,15 +199,15 @@ def get_predictions(test_x, test_y):
     pt_predictions_tensor_spdz = sfix.input_tensor_via(0, numpy.array(numpy.concatenate(pt_predictions)))
     print_ln("PT Predictions %s %s", pt_predictions_tensor_spdz.reveal_nested(),  numpy.array(numpy.concatenate(pt_predictions)))
 
-    # optimizer.layers[-1].Y.address = test_y.address
-    # optimizer.layers[0].X.address = test_x.address
-    # optimizer.run(batch_size=spdz_batch_size)
+    if compare_forward:
+        pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, batch_size=spdz_batch_size)
+        print_ln("PRED %s", pred)
+    else:
+        print_ln("test y %s %s", test_y.reveal_nested(), pt_predictions_tensor_spdz.reveal_nested())
+        optimizer.layers[-1].Y.address = test_y.address
+        optimizer.layers[0].X.address = test_x.address
+        optimizer.run(batch_size=spdz_batch_size)
 
-    #
-    #
-    print_ln("Test_x %s", test_x.reveal_nested())
-    pred = optimizer.reveal_correctness(test_x, pt_predictions_tensor_spdz, batch_size=spdz_batch_size)
-    print_ln("PRED %s", pred)
     #
     # compare the values in activation_list with the values in the layers
 
@@ -207,25 +216,52 @@ def get_predictions(test_x, test_y):
     # repeated_layers_flat = itertools.chain(*repeated_layers)
 
     # reverse
-    activ_list = activation_list
+    # activ_list = activation_list
+    l_cmp = list(enumerate(layers_to_compare))
     if not compare_forward:
-        activ_list = list(reversed(activ_list))
+        # activ_list = list(reversed(activ_list))
+        l_cmp = list(reversed(l_cmp))
 
-    for pt_values, (relevant_model_layer, _) in zip(activ_list, layers_to_compare):
+    for idx, (relevant_model_layer, layer_class) in l_cmp:
+        layer_id = f"{idx}.{type(layer_class)}"
+        assert layer_id in activation_map, f"Layer {layer_id} not found in activation_map: {activation_map.keys()}"
+        pt_values = activation_map[layer_id]
         # compute diff
-        pt_at_runtime = sfix.input_tensor_via(0, pt_values[1].numpy()).get_vector().reveal()
+        pt_at_runtime = sfix.input_tensor_via(0, pt_values.numpy()).get_vector().reveal()
         if compare_forward:
             layer_output = relevant_model_layer.Y[0].get_vector().reveal()
         else:
             layer_output = relevant_model_layer.nabla_Y[0].get_vector().reveal()
 
+        print(relevant_model_layer, layer_id)
+
         # display first 3 of both
-        print_ln("pt_at_runtime %s (%s)", pt_at_runtime[:8], pt_values[0])
+        print_ln("pt_at_runtime %s %s", pt_at_runtime[:8], layer_id)
         print_ln("layer_output  %s", layer_output[:8])
+        print_ln("layer_output Y%s", relevant_model_layer.Y[0].get_vector().reveal()[:8])
+        print("layer sizes pt %s spdz %s", len(pt_at_runtime), len(layer_output))
         # print_ln("diff %s", [pt_at_runtime[i] - layer_output[i] for i in range(len(pt_at_runtime))])
         # compute diff
         diff = sum((pt_at_runtime - layer_output) ** 2)
         print_ln("diff %s", diff)
+
+        # if len(pt_at_runtime) > 3000:
+        #     print_ln("pt_at_runtime %s %s", pt_at_runtime[3027], pt_at_runtime[5075])
+        #     print_ln("layer_output  %s %s", layer_output[3027], layer_output[5075])
+
+        # find entries with largest diff
+        # if len(pt_at_runtime) > 5000:
+        #     print("Diff measure")
+        #     @if_(diff > cfix(1000))
+        #     def _():
+        #         # for idx, (one, two) in enumerate(zip(one_arr, two_arr)):
+        #         # if abs(one - two) > 0.01:
+        #         #     print(idx, one, two)
+        #         for i in range(0, len(pt_at_runtime)):
+        #         # def _(i):
+        #             @if_(abs(pt_at_runtime[i] - layer_output[i]) > cfix(0.01))
+        #             def _():
+        #                 print_ln("diff %s %s %s", i, pt_at_runtime[i], layer_output[i])
 
 # last layer contains 0 in some dimensions, should match pretty closely since we only have dense
 
