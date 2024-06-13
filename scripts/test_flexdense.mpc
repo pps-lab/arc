@@ -1,0 +1,57 @@
+
+import Compiler.ml as ml
+import torch
+import torch.nn as nn
+import numpy as np
+
+# Set random seed for reproducibility
+np.random.seed(0)
+torch.manual_seed(0)
+
+# Parameters
+N, d_in, d_out = 10, 5, 3
+
+weights = torch.randn(d_in, d_out)
+
+# Initialize both layers
+flex_dense = ml.FlexDense(N=N, d_in=d_in, d_out=d_out)
+flex_dense.W = sfix.input_tensor_via(0, weights)
+flex_dense.b.assign(0)
+
+linear = nn.Linear(d_in, d_out)
+linear.weight.data = weights.T
+linear.bias.data = torch.zeros(d_out)
+
+# Input tensor
+input_tensor = torch.randn(N, d_in, requires_grad=True)
+
+# Convert input for FlexDense using sfix
+flex_input = sfix.input_tensor_via(0, input_tensor.detach())
+
+flex_dense.X.address = flex_input.address
+
+# Get outputs
+flex_dense.forward(regint.inc(N))
+flex_output = flex_dense.Y
+torch_output = linear(input_tensor)
+
+# Compare outputs
+print_ln("FlexDense Output: %s", flex_output.reveal_nested())
+print_ln("Torch Linear Output: %s", torch_output)
+
+# Backward
+grad_y = torch.randn(N, d_out)
+
+inc_batch = regint.Array(N)
+inc_batch.assign(regint.inc(N))
+
+flex_dense.nabla_Y = sfix.input_tensor_via(0, grad_y)
+flex_dense.backward(True, inc_batch)
+torch_output.backward(grad_y)
+
+print_ln("FlexDense backward gradient: %s", flex_dense.nabla_X.reveal_nested())
+print_ln("Torch backward gradient: %s", input_tensor.grad)
+
+print_ln("FlexDense W gradient: %s", flex_dense.nabla_W.reveal_nested())
+print_ln("Torch W gradient: %s", linear.weight.grad)
+

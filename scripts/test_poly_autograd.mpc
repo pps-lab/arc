@@ -1,0 +1,105 @@
+
+
+def compute_gelu_approx(x):
+    poly_f_0_a = -0.5054031199708174
+    poly_f_0_b = -0.42226581151983866
+    poly_f_0_c = -0.11807612951181953
+    poly_f_0_d = -0.011034134030615728
+
+    poly_f_1_a = 0.008526321541038084
+    poly_f_1_b = 0.5
+    poly_f_1_c = 0.3603292692789629
+    poly_f_1_e = -0.037688200365904236
+    poly_f_1_g = 0.0018067462606141187
+
+    b0 = x < -4
+    b1 = x < -1.95
+    b2 = 3 < x
+
+    z0 = b0 ^ b1
+    z1 = b1 ^ b2 ^ 1
+    z2 = b2
+
+    x1 = x
+    x2 = x ** 2
+    x3 = x2 * x1
+    x4 = x2 ** 2
+    x6 = x3 ** 2
+
+    f_0 = poly_f_0_a + poly_f_0_b * x1 + poly_f_0_c * x2 + poly_f_0_d * x3
+    f_1 = poly_f_1_a + poly_f_1_b * x1 + poly_f_1_c * x2 + poly_f_1_e * x4 + poly_f_1_g * x6
+
+    return (z0 * f_0) + (z1 * f_1) + (z2 * x)
+
+
+def f_prime_part(x):
+    # what we compute here is all derivatives
+    # we need to compute the derivative of the function at the point
+    poly_f_0_a = -0.5054031199708174
+    poly_f_0_b = -0.42226581151983866
+    poly_f_0_c = -0.11807612951181953
+    poly_f_0_d = -0.011034134030615728
+
+    poly_f_1_a = 0.008526321541038084
+    poly_f_1_b = 0.5
+    poly_f_1_c = 0.3603292692789629
+    poly_f_1_e = -0.037688200365904236
+    poly_f_1_g = 0.0018067462606141187
+
+    poly_prime_f_0_0 = poly_f_0_b
+    poly_prime_f_0_1 = poly_f_0_c * 2
+    poly_prime_f_0_2 = poly_f_0_d * 3
+
+    poly_prime_f_1_0 = poly_f_1_b
+    poly_prime_f_1_1 = poly_f_1_c * 2
+    poly_prime_f_1_3 = poly_f_1_e * 4
+    poly_prime_f_1_5 = poly_f_1_g * 6
+
+    x1 = x
+    x2 = x ** 2
+    x3 = x2 * x1
+    x4 = x2 ** 2
+    x5 = x4 * x1
+
+    print("f_0_prime", poly_prime_f_0_0, poly_prime_f_0_1, poly_prime_f_0_2, x[:8], x2[:8], x3[:8])
+    f_0_prime = poly_prime_f_0_0 + poly_prime_f_0_1 * x1 + poly_prime_f_0_2 * x2
+    f_1_prime = poly_prime_f_1_0 + poly_prime_f_1_1 * x1 + poly_prime_f_1_3 * x3 + poly_prime_f_1_5 * x5
+
+    b0 = x < -4
+    b1 = x < -1.95
+    b2 = 3 < x
+
+    z0 = b0 ^ b1
+    z1 = b1 ^ b2 ^ 1
+    z2 = b2
+
+    # print(z0[:8], z1[:8], z2[:8])
+    # print(z0[:8] + z1[:8] + z2[:8])
+    # print("xs", (x5)[:8], (x4)[:8], x3[:8])
+    # print("ret", (f_0_prime)[:8], (f_1_prime)[:8], z2[:8])
+
+    return (z0 * f_0_prime) + (z1 * f_1_prime) + z2
+
+import torch
+
+torch.manual_seed(2)
+vals = torch.randn(128, requires_grad=True) * 10
+# input_tensor = torch.tensor(vals, requires_grad=True)
+input_tensor = torch.tensor([-0.60321, -0.453308, 1.298, 0.689423, 0.514557, -0.935013, 0.294769, -0.305618], requires_grad=True, dtype=torch.float64)
+# res [0.098053, 0.187332, 1.17297, 0.948242, 0.850388, -0.057373, 0.708572, 0.284058]
+
+
+eval = compute_gelu_approx(input_tensor)
+print("input", input_tensor[:8])
+print("eval", eval[:8])
+
+# grad_y = torch.randn(128)
+grad_y = torch.tensor([0.00369263, -0.000762939, 0.00257874, -0.00270081, -0.00642395, 0.00439453, -0.00112915, 0.00062561])
+eval.backward(grad_y)
+
+print("Torch grad", input_tensor.grad[:8])
+
+grad = f_prime_part(input_tensor) * grad_y
+print("Our f_prime", f_prime_part(input_tensor))
+print("Our grad", grad[:8])
+print("Diff", grad - input_tensor.grad)
