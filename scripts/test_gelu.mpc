@@ -13,10 +13,18 @@ n_output = 4
 n_threads = 1
 
 print("Precision", sfix.f, sfix.k)
-sfix.set_precision(32, 62)
+# sfix.set_precision(32, 62)
 
 x_pt = 3.9825
 x_second = 0.5
+
+x_pt = 36.1694
+x_second = -16.5158
+
+# x_pt = -1.89725
+
+# -10.763 7.23447
+# -16.5158 36.1694
 
 # x_pt = -0.471436
 
@@ -82,6 +90,7 @@ def compute_gelu_approx(x):
     return (z0 * f_0) + (z1 * f_1) + (z2 * x)
 
 print("Gelu pt", compute_gelu_pt(torch.tensor([x_pt, x_second])))
+print_ln("Gelu pt %s", compute_gelu_pt(torch.tensor([x_pt, x_second])))
 
 start_timer(timer_id=101)
 print_ln("Gelu spdz %s", compute_gelu_spdz(x).reveal())

@@ -1,0 +1,96 @@
+
+
+# we have to matrices
+
+program.use_trunc_pr = False
+
+A = Matrix(26000, 32, sfix)
+B = Matrix(1, 32, sfix)
+
+L2 = MultiArray([len(B), len(A)], A.value_type)
+
+n_threads = 36
+
+# we want the dotproducts
+
+start_timer(timer_id=100)
+
+skip_reduce = False
+for j in range(len(B)):
+    B_mat = Matrix(len(B[j]), 1, B.value_type if not skip_reduce else sint)
+    B_mat[:] = B[j][:]
+
+    res = A.dot(B_mat, n_threads=n_threads)
+    print(A.shape, res.shape, L2[j].shape)
+    L2[j] = res
+
+stop_timer(timer_id=100)
+
+
+
+start_timer(timer_id=101)
+
+skip_reduce = True
+for j in range(len(B)):
+    B_mat = Matrix(len(B[j]), 1, B.value_type if not skip_reduce else sint)
+    B_mat[:] = B[j][:]
+
+    res = A.dot(B_mat, n_threads=n_threads)
+    print(A.shape, res.shape, L2[j].shape)
+    L2[j] = res
+
+stop_timer(timer_id=101)
+
+
+
+start_timer(timer_id=102)
+
+for j in range(len(B)):
+    @for_range_multithread(n_threads, 1, len(A))
+    def _(i):
+        L2[j][i] = A.value_type.dot_product(A[i], B[j])
+
+stop_timer(timer_id=102)
+
+
+start_timer(timer_id=103)
+
+A = Matrix(len(A), 32, sint)
+B = Matrix(1, 32, sint)
+
+skip_reduce = False
+for j in range(len(B)):
+    B_mat = Matrix(len(B[j]), 1, B.value_type)
+    B_mat[:] = B[j][:]
+
+    res = A.dot(B_mat, n_threads=n_threads)
+    print(A.shape, res.shape, L2[j].shape)
+    L2[j] = res
+
+stop_timer(timer_id=103)
+
+start_timer(timer_id=104)
+
+for j in range(len(B)):
+    @for_range_multithread(n_threads, 1, len(A))
+    def _(i):
+        L2[j][i] = A.value_type.dot_product(A[i], B[j])
+
+stop_timer(timer_id=104)
+
+
+# start_timer(timer_id=105)
+#
+# A = Matrix(1, 32, unreduced_sfix)
+# B = Matrix(1, 32, unreduced_sfix)
+#
+# skip_reduce = False
+# for j in range(len(B)):
+#     B_mat = Matrix(len(B[j]), 1, B.value_type)
+#     B_mat[:] = B[j][:]
+#
+#     res = A.dot(B_mat, n_threads=n_threads)
+#     print(A.shape, res.shape, L2[j].shape)
+#     L2[j] = res
+#
+# stop_timer(timer_id=105)

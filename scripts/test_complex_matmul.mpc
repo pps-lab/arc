@@ -1,0 +1,120 @@
+
+
+n_threads = 1
+num_attention_heads = 2
+attention_head_size = 64
+all_head_size = num_attention_heads * attention_head_size
+
+N = 4
+seq_len = 5
+n_examples = N
+hidden_size = 128
+
+
+wq = sfix.Tensor([n_examples, seq_len, all_head_size])
+wk = sfix.Tensor([n_examples, seq_len, all_head_size])
+wv = sfix.Tensor([n_examples, seq_len, all_head_size])
+
+wq.randomize(-1, 1, n_threads)
+wk.randomize(-1, 1, n_threads)
+wv.randomize(-1, 1, n_threads)
+
+internal_shape = N
+
+
+start_timer(timer_id=100)
+
+attention_scores = MultiArray([internal_shape, num_attention_heads, seq_len, seq_len], sfix)
+
+@for_range_opt_multithread(n_threads, [N, num_attention_heads])
+def _(i, j):
+    # for j in range(num_attention_heads):
+    query_sub = sfix.Matrix(seq_len, attention_head_size)
+    key_sub = sfix.Matrix(seq_len, attention_head_size)
+    # print(wq.Y.shape, "wk Y shape", i, attention_head_size, j, wq.Y[i], wq.Y[i][:])
+
+    @for_range_opt(seq_len)
+    def _(k):
+        # for k in range(seq_len):
+        query_sub[k] = wq[i][k].get_part_vector(j * attention_head_size, attention_head_size)
+        key_sub[k] = wk[i][k].get_part_vector(j * attention_head_size, attention_head_size)
+
+    # print_ln("query_sub %s %s", i, j)
+    res = query_sub.direct_mul_trans(key_sub)
+    attention_scores[i].assign_part_vector(res, j)
+
+print_ln("attention_scores %s", attention_scores.reveal_nested())
+
+stop_timer(timer_id=100)
+
+# big_ten = sfix.Tensor([n_examples, seq_len, all_head_size])
+# for i in range(n_examples):
+#     big_ten[i].assign_all(i)
+#
+# big_mat = sfix.Matrix(n_examples * seq_len, all_head_size, address=big_ten.address)
+# print_ln("big_ten %s", big_ten.reveal_nested())
+# print_ln("big_mat %s", big_mat.reveal_nested())
+
+start_timer(timer_id=101)
+
+# optimize above so we dont have the weird memcopies
+
+attention_scores_2 = MultiArray([internal_shape, num_attention_heads, seq_len, seq_len], sfix)
+
+@for_range_opt_multithread(n_threads, [N, num_attention_heads])
+def _(i, j):
+    # for j in range(num_attention_heads):
+
+    wq_offset = wq.address + (i * seq_len * all_head_size) + (j * attention_head_size)
+    wk_offset = wk.address + (i * seq_len * all_head_size) + (j * attention_head_size)
+
+    query_sub = sfix.Matrix(seq_len, all_head_size, address=wq_offset)
+    key_sub = sfix.Matrix(seq_len, all_head_size, address=wk_offset)
+    # print(wq.Y.shape, "wk Y shape", i, attention_head_size, j, wq.Y[i], wq.Y[i][:])
+
+    base = i * seq_len
+    size = seq_len
+
+    d_in_base = j * attention_head_size
+    d_in_size = attention_head_size
+
+    d_out_base = i * seq_len
+    d_out_size = seq_len
+
+    # print_ln("query sub %s %s %s %s %s %s", base, size, d_in_base, d_in_size, d_out_base, d_out_size)
+    # print_ln("inc %s %s", regint.inc(d_in_size, d_in_base), regint.inc(d_in_size))
+
+    # res = query_sub.direct_mul_trans(key_sub, indices=(
+    #     regint.inc(size, base),
+    #     regint.inc(d_out_size, d_out_base),
+    #     regint.inc(d_out_size, d_out_base),
+    #     regint.inc(d_in_size, d_in_base),
+    # ))
+    # size: 5 * attention_head_size
+    # res = query_sub.direct_mul_trans(key_sub, indices=(
+    #     regint.inc(size, base),
+    #     regint.inc(d_in_size, d_in_base),
+    #     regint.inc(d_in_size, d_in_base),
+    #     regint.inc(d_out_size, d_out_base),
+    # ))
+    # TODO: It seems really hard to matmul parts of columns, even though d_in_size = 64, we are still doing 128 because it
+    # is taking the sizes from the Matrix. We need to be able to take a view instead somehow,
+    res = query_sub.direct_mul(key_sub.transpose(), indices=(
+        regint.inc(size, base),
+        regint.inc(d_in_size, d_in_base),
+        regint.inc(d_in_size, d_in_base),
+        regint.inc(d_out_size, d_out_base),
+    ))
+    attention_scores_2[i].assign_part_vector(res, j)
+
+    print("res size", res)
+    # print_ln("RES %s", res.reveal())
+    # attention_scores_2[i].assign_part_vector(res, j)
+
+
+print_ln("attention_scores_2 %s", attention_scores_2.reveal_nested())
+
+# diff
+print_ln("diff %s", (attention_scores - attention_scores_2).reveal_nested())
+
+stop_timer(timer_id=101)
