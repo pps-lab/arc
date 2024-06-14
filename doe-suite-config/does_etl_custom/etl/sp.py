@@ -130,11 +130,11 @@ class ComputationMultiplierTransformer(Transformer):
 
     timer_id_computation: str = "1102"
 
-    batches_per_epoch_bs_128: Dict[str, int] = {
+    batches_per_epoch_bs_128: Dict[str, float] = {
         "cifar_alexnet": 391,
         "mnist_full": 469,
         "adult": 204,
-        "glue_qnli_bert": 19.5, # TODO: Is this correct?
+        "glue_qnli_bert": 19.53, # for single epoch, 2500 / 128
     }
 
     n_epochs: Dict[str, int] = {}
@@ -468,7 +468,9 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
                 'font.size': 14,
                 'figure.figsize': fig_size,
                 'font.family': 'Times New Roman',
-                'lines.markersize': 8
+                'lines.markersize': 8,
+                'pdf.fonttype': 42,
+                'ps.fonttype': 42
             }
 
             plt.rcParams.update(plt_params)

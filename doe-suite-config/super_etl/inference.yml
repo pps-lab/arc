@@ -807,7 +807,7 @@ $ETL$:
             plot_cols_filter:
               network_type: [ 'wan' ] # I only want wan
 
-            y_lim_row: [ [0, 1000] ]
+            y_lim_row: [ [0, 260] ]
             n_y_ticks: 5
 
           #wan_bandwidth_low:
@@ -834,4 +834,5 @@ $ETL$:
 
             x_lim: [-0.5399999999999999, 2.54]
 
-            y_ticks: [1.0e+4, 1.0e+6, 1.0e+8, 1.0e+10, 1.0e+12]
+#            y_ticks: [1.0e+4, 1.0e+6, 1.0e+8, 1.0e+10, 1.0e+12]
+            y_ticks: [1.0e+3, 1.0e+5, 1.0e+7, 1.0e+9, 1.0e+11]

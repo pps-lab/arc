@@ -209,7 +209,9 @@ def get_bar_style(bar_styles: List[BarStyle], full_id):
 
 from matplotlib.ticker import FuncFormatter
 
-
+import matplotlib
+matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['ps.fonttype'] = 42
 
 
 # TODO [nku] make configurable

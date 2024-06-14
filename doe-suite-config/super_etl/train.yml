@@ -554,164 +554,165 @@ $ETL$:
             x_lim: [-0.5399999999999999, 2.54]
 
 
-#  mnist:
-#    experiments:
-#      train_3pc: "*"
-#      train_3pc_wan: "*"
-#
-#    extractors:
-#      $INCLUDE_STEPS$: [{config: train, pipeline: compare_relatedwork}]
-#    transformers:
-#      - $INCLUDE_STEPS$: {config: train, pipeline: compare_relatedwork}
-#
-#
-#    loaders:
-#      PickleSummaryLoader: { }
-#      BarPlotLoader:
-#
-#        subplots:
-#          rows: ["$metrics$", "network_type"]
-#          cols: ["mpc.script_args.dataset"]
-#
-#          share_y: none
-#
-#        cols_values_filter:
-#          mpc.script_name: [ 'training' ]
-#          suite_name: [ train_3pc, train_3pc_wan ]
-#          'consistency_args.type': ['pc' , 'sha3s', 'cerebro']
-#
-#          network_type: [ 'lan', 'wan' ]
-#          host_idx: [ 0 ] # only plot one party
-#          mpc_type: [ 'sh', 'mal' ]
-#          'mpc.script_args.dataset': [ mnist_full ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
-#          'mpc.domain': [ 'ring' ] #[ 'ring_split',  'custom_256'] # 'field_128'
-#
-#
-#        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'mpc.domain', 'network_type', 'mpc.script_args.dataset' ]
-#
-#        group_cols: [  'consistency_args.type' ]
-#
-#        bar_cols: [ 'mpc_type' ]
-#
-#
-#        group_labels:
-#          cols: ['consistency_args.type']
-#          format: "{}"
-#
-#        show_debug_info: False
-#
-#        figure_size: [2.5, 1.8]
-#        bar_width: 1 # 1.2
-#
-#
-#        legend_fig:
-#          format: "{} {}"
-#          cols: [ 'mpc_type', "$bar_part_col$" ]
-#          kwargs: {loc: "upper center", ncol: 2, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
-#
-#
-#        title:
-#          format: "{}"
-#          plot_cols: [ 'mpc.script_args.dataset' ]
-#
-#        bar_styles:
-#
-#          - style: {label: ~, edgecolor: black}
-#            filter: {"consistency_args.type": ["pc"]}
-#
-#
-#          - style: {color: "#D3D3D3", edgecolor: grey, label: ~}
-#            filter: { "$bar_part_col$": [storage_train] }
-#
-#          - style: {color: "#d5e1a3", edgecolor: grey}
-#            filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
-#
-#          - style: {color: "#e7eec9", edgecolor: grey}
-#            filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
-#
-#          - style: {color: "#4c72b0", edgecolor: grey}
-#            filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
-#
-#          - style: {color: "#a6b8d8", edgecolor: grey}
-#            filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
-#
-#
-#        labels:
-#          mpc_time_s: ""
-#          global_data_sent_bytes: ""
-#          auditing_overhead_s: "(Overhead)"
-#          auditing_overhead_bytes: "(Overhead)"
-#          n_rounds: ""
-#
-#          ring: "Ring"
-#          ring_split: "Ring"
-#          custom_256: "Field"
-#
-#          adult: "Adult"
-#          mnist_full: "MNIST"
-#          cifar_alexnet: "Cifar10"
-#
-#          pc: "$\\bf{Ours}$"
-#          cerebro: "PED"
-#          sha3: "SHA3"
-#          sha3s: "SHA3"
-#
-#
-#          sh: "SH"
-#          mal: "MAL"
-#
-#        metrics:
-#          lan_time_all:
-#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-#            y_unit_divider: 60.0 # switch to mins from secs
-#            y_label: "LAN Time [min]"
-#            y_label_pad: 14
-#            plot_cols_filter:
-#              network_type: [ 'lan' ]
-#
-#            y_lim_row: [ [0, 1600] ]
-#            n_y_ticks: 5
-#
-#          wan_time:
-#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-#            y_unit_divider: 3600.0 # switch to hours from secs
-#            y_label: "WAN Time [h]"
-#            y_label_pad: 14
-#
-#            plot_cols_filter:
-#              network_type: [ 'wan' ]
-#
-#            y_lim_row: [ [0, 10000] ]
-#            n_y_ticks: 5
-#
-#          wan_bandwidth:
-#            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
-#            y_label: "Bandwidth [TB]"
-#            y_label_pad: 11
-#            y_unit_multiplicator: 1.0e-12 #1.0e-9 # transform to GB
-#            plot_cols_filter:
-#              network_type: [ 'wan' ]
-#
-#            y_lim_row: [ [0, 140] ]
-#            n_y_ticks: 5
-#
-#
-#          storage:
-#            bar_part_cols: [ storage_train ]
-#            y_label: "Storage [Bytes]"
-#
-#            log_y: True
-#
-#            plot_cols_filter:
-#              network_type: [ 'wan' ]
-#
+  mnist:
+    experiments:
+      train_3pc: "*"
+      train_3pc_wan: "*"
+
+    extractors:
+      $INCLUDE_STEPS$: [{config: train, pipeline: compare_relatedwork_linear}]
+    transformers:
+      - $INCLUDE_STEPS$: {config: train, pipeline: compare_relatedwork_linear}
+
+
+    loaders:
+      PickleSummaryLoader: { }
+      BarPlotLoader:
+
+        subplots:
+          rows: ["$metrics$", "network_type"]
+          cols: ["mpc.script_args.dataset"]
+
+          share_y: none
+
+        cols_values_filter:
+          mpc.script_name: [ 'training' ]
+          suite_name: [ train_3pc, train_3pc_wan ]
+          'consistency_args.type': ['pc' , 'sha3s', 'cerebro']
+
+          network_type: [ 'lan', 'wan' ]
+          host_idx: [ 0 ] # only plot one party
+          mpc_type: [ 'sh', 'mal' ]
+          'mpc.script_args.dataset': [ mnist_full ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+          'mpc.domain': [ 'ring' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+
+
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'mpc.domain', 'network_type', 'mpc.script_args.dataset' ]
+
+        group_cols: [  'consistency_args.type' ]
+
+        bar_cols: [ 'mpc_type' ]
+
+
+        group_labels:
+          cols: ['consistency_args.type']
+          format: "{}"
+
+        show_debug_info: False
+
+        figure_size: [2.5, 1.8]
+        bar_width: 1 # 1.2
+
+
+        legend_fig:
+          format: "{} {}"
+          cols: [ 'mpc_type', "$bar_part_col$" ]
+          kwargs: {loc: "upper center", ncol: 2, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
+
+
+        title:
+          format: "{}"
+          plot_cols: [ 'mpc.script_args.dataset' ]
+
+        bar_styles:
+
+          - style: {label: ~, edgecolor: black}
+            filter: {"consistency_args.type": ["pc"]}
+
+
+          - style: {color: "#D3D3D3", edgecolor: grey, label: ~}
+            filter: { "$bar_part_col$": [storage_train] }
+
+          - style: {color: "#d5e1a3", edgecolor: grey}
+            filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+          - style: {color: "#e7eec9", edgecolor: grey}
+            filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+          - style: {color: "#4c72b0", edgecolor: grey}
+            filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+          - style: {color: "#a6b8d8", edgecolor: grey}
+            filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_bytes: ""
+          auditing_overhead_s: "(Overhead)"
+          auditing_overhead_bytes: "(Overhead)"
+          n_rounds: ""
+
+          ring: "Ring"
+          ring_split: "Ring"
+          custom_256: "Field"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "Cifar10"
+
+          pc: "$\\bf{Ours}$"
+          cerebro: "PED"
+          sha3: "SHA3"
+          sha3s: "SHA3"
+
+
+          sh: "SH"
+          mal: "MAL"
+
+        metrics:
+          lan_time_all:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 60.0 # switch to mins from secs
+            y_label: "LAN Time [min]"
+            y_label_pad: 14
+            plot_cols_filter:
+              network_type: [ 'lan' ]
+
+            y_lim_row: [ [0, 1600] ]
+            n_y_ticks: 5
+
+          wan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 3600.0 # switch to hours from secs
+            y_label: "WAN Time [h]"
+            y_label_pad: 14
+
+            plot_cols_filter:
+              network_type: [ 'wan' ]
+
+            y_lim_row: [ [0, 10000] ]
+            n_y_ticks: 5
+
+          wan_bandwidth:
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+            y_label: "Bandwidth [TB]"
+            y_label_pad: 11
+            y_unit_multiplicator: 1.0e-12 #1.0e-9 # transform to GB
+            plot_cols_filter:
+              network_type: [ 'wan' ]
+
+            y_lim_row: [ [0, 140] ]
+            n_y_ticks: 5
+
+
+          storage:
+            bar_part_cols: [ storage_train ]
+            y_label: "Storage [Bytes]"
+
+            log_y: True
+
+            plot_cols_filter:
+              network_type: [ 'wan' ]
+
 #            y_ticks: [1.0e+4, 1.0e+6, 1.0e+8, 1.0e+10, 1.0e+12]
-#
-#            bar_cols_filter:
-#              mpc_type: [ 'sh' ]
-#            bar_pos_bias: 0.5
-#
-#            x_lim: [-0.5399999999999999, 2.54]
+
+            y_ticks: [1.0e+3, 1.0e+5, 1.0e+7, 1.0e+9, 1.0e+11]
+            bar_cols_filter:
+              mpc_type: [ 'sh' ]
+            bar_pos_bias: 0.5
+
+            x_lim: [-0.5399999999999999, 2.54]
 #
   table:
     experiments:
