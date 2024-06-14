@@ -8,9 +8,17 @@ $SUITE_ID$:
 
 #  audit_score_1715022414
 #  audit_score_
-  audit_score:
-    audit_score_3pc: 1715611041 #1715183578 #1715068629 #1714741168
-    audit_score_3pc_wan: # TODO
+#  audit_score:
+#    audit_score_3pc: 1715611041 #1715183578 #1715068629 #1714741168
+#    audit_score_3pc_wan: # TODO
+
+# multi thread
+  audit_score: 1717759426
+
+# single thread
+#  audit_score: 1717749442 # single thread # 1717746239 # 1717665358
+
+#  audit_score_1717749442
 
 $ETL$:
   raw:
@@ -72,14 +80,14 @@ $ETL$:
 
           score_separate_time_s: [ "spdz_timer_102" ]
           sorting_time_s: [ "spdz_timer_103" ]
-          pre_sorting_time_s: [ "spdz_timer_104" ]
           pre_l2_time_s: [ "spdz_timer_105" ]
-          post_cosine_time_s: [ "spdz_timer_106" ]
+          pre_sorting_time_s: [ "spdz_timer_106" ]
+          post_cosine_time_s: [ "spdz_timer_107" ]
 
           inference_bw_bytes: [ "spdz_timer_bw_101" ]
           score_bw_bytes: [ "spdz_timer_bw_102", "spdz_timer_bw_103" ]
 #          sorting_bw_bytes: [  ]
-          pre_sorting_bw_bytes: [ "spdz_timer_bw_104" ]
+          pre_sorting_bw_bytes: [ "spdz_timer_bw_106" ]
           global_data_sent_bytes: [ "spdz_timer_bw_100" ]
 
           n_rounds: [ "spdz_timer_rounds_101" ]
@@ -137,7 +145,7 @@ $ETL$:
             filter: { "mpc_type": [ "sh", "mal" ], "$bar_part_col$": [ sorting_time_s ] }
 
         legend_fig:
-          format: "{}"
+          format: "Legend {}"
           cols: [ "mpc_type", "$bar_part_col$" ]
           kwargs: { loc: "upper center", ncol: 4, bbox_to_anchor: [ 0.51, 0.075 ], columnspacing: 3.5,  fancybox: True }
 
@@ -201,37 +209,37 @@ $ETL$:
           lan_time:
             bar_part_cols: [ inference_time_s, score_time_s ]
             y_unit_divider: 60.0 # switch to mins from secs
-            y_label: "LAN Time [min]"
+            y_label: "Time [min]"
 
 #            y_lim_row: [ [ 0, 1 ], [ 0, 1 ], [ 0, 4 ], [ 0, 32 ], [ 0, 32 ], [ 0, 20 ], [ 0, 320 ], [ 0, 1000 ] ]
 #            n_y_ticks: 5
 
-            plot_cols_filter:
-              network_type: [ 'lan' ] # I only want lan
+#            plot_cols_filter:
+#              network_type: [ 'lan' ] # I only want lan
 
 
 
 #          wan_time:
-#            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
-#            y_unit_divider: 3600.0 # switch to hours from secs
-#            y_label: "WAN Time [h]"
+#            bar_part_cols: [ inference_time_s, score_time_s ]
+#            y_unit_divider: 60.0 # switch to hours from secs
+#            y_label: "WAN Time [m]"
 #
 #
-#            n_y_ticks: 5
-#            y_lim_row: [ [ 0, 2.4 ], [ 0, 2.4 ], [ 0, 4.8 ], [ 0, 40 ], [ 0, 60 ], [ 0, 40 ], [ 0, 500 ], [ 0, 1600 ] ]
+##            n_y_ticks: 5
+##            y_lim_row: [ [ 0, 2.4 ], [ 0, 2.4 ], [ 0, 4.8 ], [ 0, 40 ], [ 0, 60 ], [ 0, 40 ], [ 0, 500 ], [ 0, 1600 ] ]
 #
 #
 #            plot_cols_filter:
 #              network_type: [ 'wan' ] # I only want wan
-#
+
 #
           wan_bandwidth:
             bar_part_cols: [ inference_bw_bytes, score_bw_bytes ]
             y_label: "LAN Bandwidth [MB]"
             y_unit_multiplicator: 1.0e-6 # transform to MB
 
-            plot_cols_filter:
-              network_type: [ 'lan' ] # I only want wan
+#            plot_cols_filter:
+#              network_type: [ 'lan' ] # I only want wan
 #            n_y_ticks: 5
 #
 #            y_lim_row: [ [ 0, 1.6 ], [ 0, 1.6 ], [ 0, 50 ], [ 0, 500 ], [ 0, 500 ], [ 0, 400 ], [ 0, 8000 ], [ 0, 20000 ] ]
@@ -241,14 +249,15 @@ $ETL$:
             y_label: "Rounds"
             y_unit_divider: 1.0 # transform to MB
 
-            plot_cols_filter:
-              network_type: [ 'lan' ] # I only want wan
+#            plot_cols_filter:
+#              network_type: [ 'lan' ] # I only want wan
 
           detailed_score:
             bar_part_cols: [ sorting_time_s, pre_sorting_time_s, pre_l2_time_s, post_cosine_time_s ]
+#            bar_part_cols: [ score_time_s ]
             y_unit_divider: 60.0 # switch to mins from secs
             y_label: "Detailed Time [min]"
 
-            plot_cols_filter:
-              network_type: [ 'lan' ]
+#            plot_cols_filter:
+#              network_type: [ 'lan' ]
 

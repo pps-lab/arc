@@ -6,7 +6,7 @@ $SUITE_ID$:
   inference_3pc: { sh: 1705933736, mal: 1705933736, wan_ring_field: 1705512500 }
   inference_3pc_wan: 1705947503
 
-  inference_3pc_bert: 1716825542 #1716741967
+  inference_3pc_bert: 1716825542
   inference_3pc_bert_wan: 1716810960
 
 $ETL$:

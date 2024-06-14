@@ -98,6 +98,11 @@ $ETL$:
       - name: TimerBandwidthAggregator
       - name: ComputationMultiplierTransformer
         timer_id_computation: 100
+#        batches_per_epoch_bs_128:
+#          cifar_alexnet: 391
+#          mnist_full: 469
+#          adult: 204
+#          glue_qnli_bert: 6.513
       - name: CerebroMultiplierTransformer
       - name: Sha3MultiplierTransformer
 
@@ -237,7 +242,7 @@ $ETL$:
             y_label: "LAN Time [min]"
 
 #            y_lim_row: [ [0, 1], [0, 1], [0, 4], [0, 32], [0, 32], [0, 20], [0, 320], [0, 1000]]
-            y_lim_row: [ [0, 1], [0, 1], [0, 32], [0, 32], [0, 20], [0, 1000], [0, 10000]]
+            y_lim_row: [ [0, 1], [0, 1], [0, 32], [0, 32], [0, 20], [0, 1000], [0, 12000]]
             n_y_ticks: 5
 
             plot_cols_filter:
