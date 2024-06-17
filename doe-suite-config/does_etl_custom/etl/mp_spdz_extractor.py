@@ -52,9 +52,6 @@ class MpSpdzStderrExtractor(Extractor):
         if filename != "stderr.log":
             output_prefix = "_".join(filename.split("_")[:-1]) + "_"
 
-        # print("Extracting path" ,path)
-        # print(content[:100])
-
         error_regex = r"^Traceback \(most recent call last\):$"
         if not self.ignore_errors and re.search(error_regex, content, re.MULTILINE):
             raise Exception("Found error in file", path)
