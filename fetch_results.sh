@@ -1,10 +1,10 @@
 
-SUITE_RUN="train_3pc_1705446689"
+SUITE_RUN="audit_knnshapley_bert_mal_1717669576"
 
-EXP_NAME="mal"
-SERVERS=("ec2-18-184-102-2.eu-central-1.compute.amazonaws.com" "ec2-18-184-240-77.eu-central-1.compute.amazonaws.com" "ec2-18-153-70-207.eu-central-1.compute.amazonaws.com")
+EXP_NAME="audit_sample_knnshapley"
+SERVERS=("ec2-35-158-3-104.eu-central-1.compute.amazonaws.com" "ec2-35-158-3-104.eu-central-1.compute.amazonaws.com" "ec2-35-158-3-104.eu-central-1.compute.amazonaws.com")
 
-RUN_ID=15
+RUN_ID=3
 
 for HOST in {0..2}
 do

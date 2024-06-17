@@ -40,8 +40,13 @@ compile-debug: simlink
 
 compile: simlink
 	cd MP-SPDZ && ./compile.py $(RING_64) $(script) --budget 10000 $(AUDITARGS) emulate__True debug__False
+compile-128: simlink
+	cd MP-SPDZ && ./compile.py -R 128 $(script) --budget 10000 $(AUDITARGS) emulate__True debug__False
 
 emulate: compile
+	cd MP-SPDZ && ./emulate.x $(script)-$(subst $e ,-,$(AUDITARGS))-emulate__True-debug__False
+
+emulate-128: compile-128
 	cd MP-SPDZ && ./emulate.x $(script)-$(subst $e ,-,$(AUDITARGS))-emulate__True-debug__False
 
 emulate-debug: compile-debug
@@ -64,6 +69,8 @@ train-debug: simlink
 
 ring: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False
+ring-128: simlink
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) -R 128 -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False
 
 ring-mal: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) --budget 1000 -C $(AUDITARGS) emulate__True debug__False
@@ -80,7 +87,7 @@ ring-l2: simlink
 ring-cos: simlink
 	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine
 ring-cosopt: simlink
-	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine_presort_l2
+	cd MP-SPDZ && ./Scripts/compile-run.py -E $(protocol) $(script) $(RING_64) -CD -Z 3 --budget 50000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine_presort_l2 n_threads__36 -- --batch-size 10
 ring-cosopt-c: simlink
 	cd MP-SPDZ && ./compile.py $(script) $(RING_64) -CD -Z 3 --budget 1000 -C $(AUDITARGS) emulate__True debug__False pre_score_select_k__25 score_method__cosine_presort_l2
 

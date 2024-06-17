@@ -17,7 +17,7 @@ class AuditConfig(config.BaseAuditModel):
 
     n_checkpoints: int = 10
 
-    skip_inference: bool = False
+    skip_inference: bool = True
 
     pre_score_select_k: int = None #
 

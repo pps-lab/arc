@@ -1,5 +1,6 @@
 import itertools
 
+import library
 import ml
 
 from datasets import load_dataset
@@ -18,6 +19,16 @@ tokenizer = BertTokenizer.from_pretrained(model_name)
 # Load the BERT model
 model = BertForSequenceClassification.from_pretrained(model_name)
 max_length = 5
+
+
+sfix.round_nearest = False
+program.use_trunc_pr = False
+# sfix.set_precision(18)
+# cfix.set_precision(18)
+cfix.set_precision(f=32, k=62)
+sfix.set_precision(f=32, k=62)
+# cfix.set_precision(f=14, k=31)
+# sfix.set_precision(f=14, k=31)
 
 # ml.set_n_threads(24)
 
@@ -216,6 +227,7 @@ def get_predictions(model, test_x, test_y):
         diff = sum((pt_at_runtime - layer_output) ** 2)
         print_ln("diff %s", diff)
 
+
 # last layer contains 0 in some dimensions, should match pretty closely since we only have dense
 
 
@@ -223,14 +235,6 @@ def run(dataset):
     test_x, test_y = build_sfix_tensor(dataset)
     get_predictions(model, test_x, test_y)
 
-sfix.round_nearest = True
-program.use_trunc_pr = False
-# sfix.set_precision(18)
-# cfix.set_precision(18)
-cfix.set_precision(f=32, k=62)
-sfix.set_precision(f=32, k=62)
-# cfix.set_precision(f=14, k=31)
-# sfix.set_precision(f=14, k=31)
 
 print("Running tokenized_validation_matched")
 run(tokenized_validation)

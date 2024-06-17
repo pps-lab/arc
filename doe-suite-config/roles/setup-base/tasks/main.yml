@@ -118,7 +118,7 @@
     path: "{{ mpspdz_dir }}/semi2k-party.x"
   register: mpspdz_compiled
 - name: "Compile MP-SPDZ (if some files dont exist)"
-#  when: mpspdz_compiled.stat.exists == False
+  when: mpspdz_compiled.stat.exists == False
   block:
 #    - name: "Make cmake 3.15" # TODO: Is this necessary?
 #      community.general.make:
@@ -170,6 +170,15 @@
 #    path: "{{git_repo_mpspdz_location}}/Player-Prep-Data"
 #    state: directory
 
+- name: "Ensure Player-SSL-Data exists"
+  ansible.builtin.file:
+    state: directory
+    path: "{{ mpspdz_dir }}/Player-SSL-Data"
+
+#- name: Check if P0 exists
+#  ansible.builtin.stat:
+#    path:
+#
 - name: "Check if SSL certificates are up to date (note: this checks validity on coordinator machine)"
   delegate_to: localhost
   openssl_certificate_info:
@@ -178,19 +187,25 @@
     valid_at:
       one_day: "+1d"
   register: result
+  when: lookup( 'file', does_project_dir + '/MP-SPDZ/Player-SSL-Data/P0.pem', errors='ignore' )
 
 - name: Generate SSL Certificates for 20 players locally if not exist yet # TODO: Does this expire? does this work in parallel?
   delegate_to: localhost
-#  when: result.valid_at.one_day == False
+  when: result is not defined or result.valid_at.one_day == False
   ansible.builtin.shell:
     chdir: "{{ does_project_dir }}"
     cmd: "bash {{ does_project_dir }}/MP-SPDZ/Scripts/setup-ssl.sh 20 MP-SPDZ/Player-SSL-Data/"
-    creates: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/P0.key"
 
 - name: Copy SSL Certificates
   ansible.builtin.copy:
     src: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/"
     dest: "{{ mpspdz_dir }}/Player-SSL-Data/"
+
+# For some reason the above copy command gives checksum errors in some cases
+#- name: Copy SSL Certificates with rsync
+#  ansible.posix.synchronize:
+#    src: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/"
+#    dest: "{{ mpspdz_dir }}/Player-SSL-Data/"
 
 #- name: Copy SSL Certificates
 #  ansible.builtin.copy:
