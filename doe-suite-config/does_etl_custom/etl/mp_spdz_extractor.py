@@ -14,6 +14,8 @@ class MpSpdzStderrExtractor(Extractor):
 
     ignore_errors = False
 
+    verbose: bool = False
+
     def default_file_regex():
         return ["^stderr\\.log$"]
 
@@ -22,7 +24,7 @@ class MpSpdzStderrExtractor(Extractor):
         input_results = re.findall(input_regex, content)
 
         n_input_cerebro = len(input_results)
-        if n_input_cerebro > 0:
+        if n_input_cerebro > 0 and self.verbose:
             print("Found n_input results", n_input_cerebro)
 
         output_regex = "CEREBRO_OUTPUT_SIZE=\((.*),(\d*)\)"
@@ -30,7 +32,7 @@ class MpSpdzStderrExtractor(Extractor):
 
         # add up second group
         n_output_cerebro = sum([int(x[1]) for x in output_results])
-        if n_output_cerebro > 0:
+        if n_output_cerebro > 0 and self.verbose:
             print("Found n_output results", n_output_cerebro)
 
         output_list = []
@@ -111,7 +113,6 @@ class MpSpdzStderrExtractor(Extractor):
 
             for label, value in additional_values.items():
                 dicts += [{'stat': f"{output_prefix}spdz_{label}", 'stat_value': value, 'player_number': player_num}]
-            # dicts += [dict(player_number=player_num, player_data_sent=party_data_sent, player_round_number=party_round_number, global_data_sent=global_data_sent)]
 
         lists = self.extract_cerebro_counts(content)
         dicts += lists
@@ -121,6 +122,9 @@ class MpSpdzStderrExtractor(Extractor):
 
 
 class MpSpdzResultExtractor(Extractor):
+
+    verbose: bool = False
+
     def default_file_regex():
         return ["^result-P[0-9]+-[0-9]+\\.txt$"]
     
@@ -138,7 +142,8 @@ class MpSpdzResultExtractor(Extractor):
             for line in the_file:
                 match_result = pattern_matcher.match(line)
                 if match_result:
-                    print(f"Processing line {line}")
+                    if self.verbose:
+                        print(f"Processing line {line}")
                     the_dict = self._process(path=path, options=options, line=match_result.group(1))
                 else:
                     the_dict = None

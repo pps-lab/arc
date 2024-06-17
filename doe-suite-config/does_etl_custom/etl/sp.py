@@ -46,6 +46,8 @@ class TimerBandwidthAggregator(Transformer):
 
     run_def_cols: List[str] = ['suite_name', 'exp_name', 'run']
 
+    verbose: bool = False
+
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
         stat_regex = r"(.*)(_?)spdz_timer_bw_(\d*)"
@@ -68,7 +70,8 @@ class TimerBandwidthAggregator(Transformer):
                 assert n_true == n_parties, f"Found {n_true} instead of {n_parties} that match the regex for {x} ({match})"
                 sum = x[match_this]['stat_value'].sum()
                 sum = sum * 1000 * 1000 # convert to bytes
-                print("SUM!", sum, match)
+                if self.verbose:
+                    print("SUM!", sum, match)
                 x.loc[match_this, 'stat_value'] = sum
 
             return x
@@ -139,6 +142,8 @@ class ComputationMultiplierTransformer(Transformer):
 
     n_epochs: Dict[str, int] = {}
 
+    verbose: bool = False
+
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
         if 'mpc.script_args.n_batches' not in df.columns:
@@ -162,15 +167,18 @@ class ComputationMultiplierTransformer(Transformer):
             n_epochs = self.n_epochs.get(dataset, 1)
 
             multiplier = (n_epochs * full_epoch / n_batches) / batch_size_rel
-            print(f"Multiplier: {multiplier} for dataset {dataset}, n_batches {n_batches} and {n_epochs}")
+            if self.verbose:
+                print(f"Multiplier: {multiplier} for dataset {dataset}, n_batches {n_batches} and {n_epochs}")
 
             for timer_value_type in self.timer_value_types:
                 timer_id = f"spdz_timer{timer_value_type}_{self.timer_id_computation}"
                 if timer_id not in x['stat'].unique():
-                    print(f"Skipping run because it does not contain timer {timer_id}")
+                    if self.verbose:
+                        print(f"Skipping run because it does not contain timer {timer_id}")
                     return x
                 timer_value = float(x[x['stat'] == timer_id]['stat_value'].values[0])
-                print("Original timer value: ", timer_value, " for timer ", timer_id, " after ", timer_value * multiplier)
+                if self.verbose:
+                    print("Original timer value: ", timer_value, " for timer ", timer_id, " after ", timer_value * multiplier)
                 timer_value *= multiplier
                 x.loc[x['stat'] == timer_id, 'stat_value'] = timer_value
 
@@ -182,6 +190,8 @@ class ComputationMultiplierTransformer(Transformer):
 class Sha3MultiplierTransformer(Transformer):
 
     timer_hash_prefix: str = "sha3_"
+
+    verbose: bool = False
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
@@ -213,7 +223,8 @@ class Sha3MultiplierTransformer(Transformer):
                     if x[x['stat'] == timer_id].empty:
                         # print("Timer ID is empty ", timer_id)
                         continue
-                    print("Running for timer_value_type: ", timer_value_type)
+                    if self.verbose:
+                        print("Running for timer_value_type: ", timer_value_type)
                     total_time_fixed_old = x[x['stat'] == timer_id]['stat_value'].values[0]
                     total_time_fixed = total_time_fixed_old
                     # print("Total time fixed: ", total_time_fixed)
@@ -237,13 +248,12 @@ class Sha3MultiplierTransformer(Transformer):
                     total_time_fixed += total_time_var * multiplier
                     # now set the value for x
                     x.loc[x['stat'] == timer_id, 'stat_value'] = total_time_fixed
-                    print(f"Set from {total_time_fixed_old} to {total_time_fixed} with {multiplier} for timer_name: {timer_id} and dataset {dataset} {run}")
+                    if self.verbose:
+                        print(f"Set from {total_time_fixed_old} to {total_time_fixed} with {multiplier} for timer_name: {timer_id} and dataset {dataset} {run}")
             # print(x)
             return x
 
-        # print(df.columns)
         df = df.groupby(['suite_name', 'exp_name', 'run']).apply(tran).reset_index(drop=True)
-        # print(df)
 
         return df
 
@@ -258,44 +268,15 @@ class StatTransformer(Transformer):
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
         # print rows of df where stat == spdz_timer_1102
-        print(df[(df['stat'] == 'spdz_timer_1102') & (df['mpc.script_args.dataset'] == 'adult')])
 
         assert 'stat_value' in df.columns, f"stat_value not in df.columns: {df.columns}. This might not be the right transformer class for this dataframe."
         df.loc[:, 'stat_value'] = pd.to_numeric(df['stat_value'], errors='coerce')
-
-
-        ################################Start Hack
-        # TODO [Hidde] The field `consistency_prove_verify_bytes_sent` is currently only avaialble as a per-host output.
-        #              However, it should be aggregated over all hosts. This is a hack to do that and to make it appear as if this is already done
-        # key_cols = ["suite_name", "suite_id", "exp_name", "run", "rep"]
-        # df1 = df[df["stat"] == "consistency_prove_verify_bytes_sent"]
-        # df_additional = df1.groupby(key_cols).agg({"stat_value": ["sum", "count"]}).reset_index()
-        # df_additional["stat"] = "consistency_prove_verify_bytes_sent_global_bytes"
-        # df_additional.columns = ["_".join(v) if v[1] else v[0] for v in df_additional.columns.values]
-        # df_additional.reset_index(inplace=True, drop=True)  # Resetting the index
-        # player_count = df_additional["stat_value_count"].unique()
-        #
-        # if len(player_count) != 1:
-        #     warnings.warn(f"UNEXPECTED WARNING: More than one player count found: {player_count}")
-        #
-        # df_additional["stat_value"] = df_additional["stat_value_sum"]
-        # df_additional.drop(columns=["stat_value_sum", "stat_value_count"], inplace=True)
-        # df2 = df1.drop(columns=["host_idx", "stat", "stat_value", "player_number"]).drop_duplicates(subset=key_cols)
-        # df2.reset_index(inplace=True, drop=True)
-        # df_additional.set_index(key_cols, inplace=True)
-        # df2.set_index(key_cols, inplace=True)
-        #
-        # df_additional = pd.merge(df_additional, df2, on=key_cols, left_index=False, right_index=False).reset_index()
-        #
-        # df = pd.concat([df, df_additional], ignore_index=True)
 
         # not sure where this gets interpreted as a float
         df["host_idx"] = df["host_idx"].fillna(0)
         df['host_idx'] = df['host_idx'].astype(int)
 
         ###############################End Hack
-
-
 
 
 
@@ -310,9 +291,6 @@ class StatTransformer(Transformer):
                 if stat_value not in df['stat'].unique():
                     raise ValueError(f"Stat value {stat_value} for stat {stat_label} not found in df['stat'].unique()"
                                      f"df['stat'].unique()={df['stat'].unique()}")
-
-
-
 
 
         # Iterate through each key-value pair in self.stats
@@ -386,8 +364,6 @@ class AddTransformer(Transformer):
     divisors: List[int]
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
-
-        print(df)
 
         if len(self.divisors) == 0:
             self.divisors = [1] * len(self.add_cols)
@@ -479,7 +455,6 @@ class TwoDimensionalScatterPlotLoader(PlotLoader):
             fig, ax = plt.subplots(1, 1, figsize=(10, 6))
 
             for index, row in df_plot.iterrows():
-                print(row)
                 marker = None
                 symbol_index = 0
                 if len(self.symbol_cols) > 0:
@@ -562,6 +537,8 @@ class CerebroSpecificMultiplierTransformer(Transformer):
 
     timer_thread_help: int = 36 # we assume cerebro can be perfectly parallelized over 36 threads
 
+    verbose: bool = False
+
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
         def t_wrap(type):
@@ -590,7 +567,8 @@ class CerebroSpecificMultiplierTransformer(Transformer):
                     x.loc[x['stat'] == timer_id, 'stat_value'] = timer_value
 
                     run_id = x['run'].unique()
-                    print("Multiplied cerebro timer value by ", n_amount_needed_id_value, " for timer ", timer_id, run_id)
+                    if self.verbose:
+                        print("Multiplied cerebro timer value by ", n_amount_needed_id_value, " for timer ", timer_id, run_id)
 
                 return x
             return t
@@ -612,6 +590,8 @@ class ComputationSpecificMultiplierTransformer(Transformer):
         "adult": 0.003,
     }
 
+    verbose: bool = False
+
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
         # if 'mpc.script_args.n_batches' not in df.columns:
@@ -629,7 +609,8 @@ class ComputationSpecificMultiplierTransformer(Transformer):
             percentage = self.percentage_model_size_training_data_size[dataset]
 
             multiplier = (1 - percentage)
-            print(f"[SPECIFIC] Multiplier: {multiplier} for dataset {dataset}")
+            if self.verbose:
+                print(f"[SPECIFIC] Multiplier: {multiplier} for dataset {dataset}")
 
             # consistency_convert_shares_share_switch_input_mus
 
@@ -641,11 +622,8 @@ class ComputationSpecificMultiplierTransformer(Transformer):
                 timer_values = x[x['stat'] == timer_id]['stat_value'].values
                 # Multiply all times_values (float) with the multiplier
                 timer_values_upd = [float(timer_value) * multiplier for timer_value in timer_values]
-                # if len(x[x['stat'] == timer_id]['stat_value'].values) != 1:
-                #     print(x)
-                #     print("Not all")
-                #     exit(1)
-                print("[SPECIFIC] Original timer value: ", timer_values, " for timer ", timer_id, " after ", timer_values_upd)
+                if self.verbose:
+                    print("[SPECIFIC] Original timer value: ", timer_values, " for timer ", timer_id, " after ", timer_values_upd)
                 # timer_value *= multiplier
                 x.loc[x['stat'] == timer_id, 'stat_value'] = timer_values_upd
 
@@ -692,31 +670,11 @@ class FilteredTableLoader(Loader):
             'auditing_overhead_cerebro': first_non_nan,
             'auditing_overhead_pc': first_non_nan
         }).reset_index()
-        print("DF pivot", df_merged)
+        # print("DF pivot", df_merged)
 
         latex = self.dataframe_to_latex(df_merged)
         print("LATEX")
         print(latex)
-
-        # for metric_name, metric_cfg in self.metrics.items():
-        #     df_aggregated = self.aggregate_data(df_filtered, metric_cfg)
-        #
-        #
-        #     # Set the index to group_cols and bar_cols
-        #     # df_aggregated.set_index(self.group_cols + self.bar_cols, inplace=True)
-        #     # print("agg", df_aggregated)
-        #     #
-        #     # # Create a new DataFrame with multi-level columns
-        #     # new_df = df[metric_cfg.bar_part_cols].unstack(level=self.bar_cols)
-        #     pivot_df = df_aggregated.pivot_table(index=self.group_cols, columns=self.bar_cols, values=metric_cfg.bar_part_cols)
-        #     print(f"Aggregated data for metric {metric_name}", pivot_df)
-        #
-        #     # idx_plot = (idx_plot, ) if not isinstance(idx_plot, tuple) else idx_plot
-        #     # plot_id = {k: v for k, v in zip(self.plot_cols, list(idx_plot))}
-        #
-        #     out = os.path.join(output_dir, metric_name)
-        #     os.makedirs(out, exist_ok=True)
-        #     self.save_data(df_filtered, filename=filename, output_dir=out)
 
     def dataframe_to_latex(self, df):
         latex_code = r"\begin{table*}[h!]\centering" + "\n"
