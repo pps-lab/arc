@@ -187,7 +187,7 @@ class ComputationMultiplierTransformer(Transformer):
 
             return x
 
-        df = df.groupby(self.run_def_cols).apply(t).reset_index(drop=True)
+        df = df.groupby(self.run_def_cols, group_keys=False).apply(t).reset_index(drop=True)
         return df
 
 class Sha3MultiplierTransformer(Transformer):

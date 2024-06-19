@@ -6,41 +6,33 @@
 
 $SUITE_ID$:
 
-  audit_robustness:
-    audit_robustness_3pc: 1705955178
-    audit_robustness_3pc_wan: 1705960388
+  audit_robustness: 1705955178
+  audit_robustness_wan: 1705960388
 
-  audit_knnshapley:
-    audit_sample_knnshapley: 1705957720
-  audit_knnshapley_wan:
-    audit_sample_knnshapley_wan: 1705958533
+  audit_knnshapley: 1705957720
+  audit_knnshapley_wan: 1705958533
 
-  audit_fairness:
-    audit_fairness_3pc: 1705954360
-    audit_fairness_3pc_wan: 1705955928
+  audit_fairness: 1705954360
+  audit_fairness_wan: 1705955928
 
-  audit_shap:
-    audit_shap: 1705957649
+  audit_shap: 1705957649
+  audit_shap_wan: 1705959794
 
-  audit_shap_wan:
-    audit_shap_wan: 1705959794
-
-  audit_knnshapley_bert:
-    audit_sample_knnshapley: 1717158669
-
-  audit_knnshapley_bert_wan: 1717156384
-  audit_knnshapley_bert_wan_others: 1717172572
-
+  audit_knnshapley_bert: 1717158669
   audit_knnshapley_bert_mal: 1717593653
+  audit_knnshapley_bert_wan: 1717156384
+
 
 
 $ETL$:
   raw:
     experiments:
       audit_robustness: "*"
+      audit_robustness_wan: "*"
       audit_knnshapley: "*"
       audit_knnshapley_wan: "*"
       audit_fairness: "*"
+      audit_fairness_wan": "*"
       audit_shap: "*"
       audit_shap_wan: "*"
     extractors:
@@ -53,15 +45,16 @@ $ETL$:
   compare_relatedwork:
     experiments:
       audit_robustness: "*"
+      audit_robustness_wan: "*"
       audit_knnshapley: "*"
       audit_knnshapley_wan: "*"
       audit_fairness: "*"
+      audit_fairness_wan: "*"
       audit_shap: "*"
       audit_shap_wan: "*"
       audit_knnshapley_bert: "*"
       audit_knnshapley_bert_wan: "*"
       audit_knnshapley_bert_mal: "*"
-      audit_knnshapley_bert_wan_others: "*"
 
     extractors:
 #      MpSpdzResultExtractor: { } # this parses results from the audit
@@ -642,6 +635,7 @@ $ETL$:
   mnist:
     experiments:
       audit_robustness: "*"
+      audit_robustness_wan: "*"
       audit_knnshapley: "*"
       audit_knnshapley_wan: "*"
 #      audit_fairness: "*"

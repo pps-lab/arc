@@ -697,7 +697,7 @@ class BarPlotLoader(PlotLoader):
                 zoom_infos.append({"bar_group_ids": [x for x, _ in temp], "bar_group_heights": [x for _, x in temp]})
         else:
             for idx_bar_group, v in df_group_height.iterrows():
-                 if v["factor_group_plot"]  < zoom_threshold:
+                 if v["factor_group_plot"] < zoom_threshold and v["group_height"] > 0.0:
                     idx_bar_group = (idx_bar_group, ) if not isinstance(idx_bar_group, tuple) else idx_bar_group
                     bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group))}
 
