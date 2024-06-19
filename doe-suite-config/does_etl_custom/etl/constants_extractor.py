@@ -20,11 +20,15 @@ class ConstantsExtractor(Extractor):
     def extract(self, path: str, options: Dict) -> List[Dict]:
 
 
-        df = pd.read_csv(os.path.join(get_results_dir(), self.path))
+        try:
+            df = pd.read_csv(os.path.join(get_results_dir(), self.path))
+        except:
+            raise ValueError(f"Could not read csv file at {os.path.join(get_results_dir(), self.path)}."
+                             f"Did you forget to generate `storage.csv` in `doe-suite-results`? Generate it using the notebook at `notebooks/storage.ipynb`.")
 
-        print(df)
-        print("DICT")
-        print(df.to_dict(orient="records"))
+        # print(df)
+        # print("DICT")
+        # print(df.to_dict(orient="records"))
         # return df where each row is dict with column values
         return df.to_dict(orient="records")
 

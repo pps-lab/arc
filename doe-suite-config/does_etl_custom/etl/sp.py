@@ -905,7 +905,7 @@ class ActualDurationLoader(Loader):
         end_cost_constant = 1 * 60 # 1 minute to shut down servers
         constant_cost = startup_cost_constant + end_cost_constant
         per_run_provision_cost = 30 * 2 # 30 seconds per run to load results and set new, times two cause compilation
-        per_run_compile_time = 30 # 45 seconds on average?
+        per_run_compile_time = 150 # 45 seconds on average?
         per_run_cost = per_run_provision_cost + per_run_compile_time
         df_sum['estim_time'] = df_sum \
             .apply(lambda x: self.format_duration(x[('total_time_s', 'sum')] +

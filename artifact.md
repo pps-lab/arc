@@ -124,7 +124,7 @@ Now run the first cell,
 ```
 and check that it prints `Environment loaded successfully`.
 
-### Basic Test (AWS, XX minutes)
+### Basic Test (AWS, 30 minutes)
 To test that your local machine is configured properly and that you have access to the AWS resources, you can run the following command:
 ```shell
 make run suite=audit_fairness id=new
@@ -203,7 +203,15 @@ In any case, while running a benchmark in a cell or a terminal, keep the Jupyter
 Both claims are proven by the experiments in Section 6 **Training** (E1, Fig. 4), **Inference** (E2, Fig. 5) and **Auditing** (E3, Fig. 6).
 
 ### Experiments
-For each of training, infernce and auditing, we provide a list of suites that belong to this cate
+For each of training, inference and auditing, we provide a list of suites that belong to this setting.
+Each suite contains a rough estimate of the duration of running the suite.
+This estimate is based on the raw runtimes in the benchmark logs, but the estimation of the overhead of creating and provisioning the machines may not be completely accurate.
+> Note: The experiments in the WAN setting are particularly time-consuming. As the only difference between the LAN and WAN settings is the network latency (configured using `tc`), 
+we recommend running the LAN version of the suites if the goal is to verify the framework's functionality.
+
+
+### Storage Overhead
+We compute the storage costs in [storage.ipynb](notebooks/storage.ipynb). 
 
 ### Training
 The training experiments use the MP-SPDZ training script defined in [training.mpc](scripts/training.mpc) which loads the input, trains the model and then outputs it
@@ -214,10 +222,10 @@ while ensuring the correct metadata is output for the consistency scripts.
 
 | Suite              | Description                                  | Est. Duration |
 |--------------------|----------------------------------------------|---------------|
-| train_3pc          | Training for Adult, MNIST and CIFAR-10 (LAN) |               |
-| train_3pc_wan      | Training for Adult, MNIST and CIFAR-10 (WAN) |               |
-| train_3pc_bert     | Training for QNLI (LAN)                      |               |
-| train_3pc_bert_wan | Training for QNLI (WAN)                      |               |
+| train_3pc          | Training for Adult, MNIST and CIFAR-10 (LAN) | 2h            |
+| train_3pc_wan      | Training for Adult, MNIST and CIFAR-10 (WAN) | 12h           |
+| train_3pc_bert     | Training for QNLI (LAN)                      | ??            |
+| train_3pc_bert_wan | Training for QNLI (WAN)                      | ??            |
 
 </details>
 
@@ -229,10 +237,10 @@ The following experiments are available:
 
 | Suite                     | Description                                                        | Est. Duration |
 |---------------------------|--------------------------------------------------------------------|---------------|
-| inference_3pc             | Inference for Adult, MNIST and CIFAR-10 (LAN)                      |               |
-| inference_3pc_wan         | Inference for Adult, MNIST and CIFAR-10 (WAN)                      |               |
+| inference_3pc             | Inference for Adult, MNIST and CIFAR-10 (LAN)                      | 1h            |
+| inference_3pc_wan         | Inference for Adult, MNIST and CIFAR-10 (WAN)                      | 5h30m         |
 | inference_3pc_bert        | Inference for QNLI (LAN)                                           | 1h40m         |
-| inference_3pc_bert_wan    | Inference for QNLI (WAN)                                           |               |
+| inference_3pc_bert_wan    | Inference for QNLI (WAN)                                           | 6h            |
 
 </details>
 
@@ -248,17 +256,17 @@ The following experiments are available to run:
 
 | Suite                     | Description                                                        | Est. Duration |
 |---------------------------|--------------------------------------------------------------------|---------------|
-| audit_robustness          | Robustness function (Sec. 5.1) for Adult, MNIST and CIFAR-10 (LAN) |               |
-| audit_robustness_wan      | Robustness function (Sec. 5.1) for Adult, MNIST and CIFAR-10 (WAN) |               |
-| audit_knnshapley          | KNNShapley function (Sec. 5.2) for Adult, MNIST and CIFAR-10 (LAN) |               |
-| audit_knnshapley_wan      | KNNShapley function (Sec. 5.2) for Adult, MNIST and CIFAR-10 (WAN) |               |
-| audit_fairness            | Fairness function (Sec 5.1) for Adult, MNIST, and CIFAR-10 (LAN)   |               |
+| audit_robustness          | Robustness function (Sec. 5.1) for Adult, MNIST and CIFAR-10 (LAN) | 1h            |
+| audit_robustness_wan      | Robustness function (Sec. 5.1) for Adult, MNIST and CIFAR-10 (WAN) | 6h            |
+| audit_knnshapley          | KNNShapley function (Sec. 5.2) for Adult, MNIST and CIFAR-10 (LAN) | 6h            |
+| audit_knnshapley_wan      | KNNShapley function (Sec. 5.2) for Adult, MNIST and CIFAR-10 (WAN) | 17h           |
+| audit_fairness            | Fairness function (Sec 5.1) for Adult, MNIST, and CIFAR-10 (LAN)   | 30m           |
 | audit_fairness_wan        | Fairness function (Sec 5.1) for Adult, MNIST, and CIFAR-10 (WAN)   | 2h40m         |
-| audit_shap                | SHAP function (Sec. 5.3) for Adult, MNIST, and CIFAR-10 (LAN)      |               |
-| audit_shap_wan            | SHAP function (Sec. 5.3) for Adult, MNIST, and CIFAR-10 (WAN)      |               |
-| audit_knnshapley_bert     | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, LAN)         |               |
-| audit_knnshapley_bert_mal | KNNShapley function (Sec. 5.2) for QNLI (Malicious, WAN)           |               |
-| audit_knnshapley_bert_wan | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, WAN)         |               |
+| audit_shap                | SHAP function (Sec. 5.3) for Adult, MNIST, and CIFAR-10 (LAN)      | 1h            |
+| audit_shap_wan            | SHAP function (Sec. 5.3) for Adult, MNIST, and CIFAR-10 (WAN)      | 8h            |
+| audit_knnshapley_bert     | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, LAN)         | 1h ??         |
+| audit_knnshapley_bert_mal | KNNShapley function (Sec. 5.2) for QNLI (Malicious, LAN)           | 4h ??         |
+| audit_knnshapley_bert_wan | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, WAN)         | 1.5h ??       |
 
 </details>
 
