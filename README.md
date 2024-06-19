@@ -1,20 +1,7 @@
-# Cryptographic Auditing MPC
+# Arc
 
-> An evaluation framework to evaluate arbitrary auditing functions.
-
-This repository contains the evaluation framework and the auditing function prototype
-developed by Alexander Mandt as part of his Bachelor Thesis *Cryptographic Auditing in ML*.
-
-
-
-
-After setting up MP-SPDZ (with emulator), we can use the following commands to compile and emulate:
-```
-make emulate
-
-make emulate-debug
-```
-
+This repository contains the code for Arc, introduced in the paper
+"Holding Secrets Accountable: Auditing Privacy-Preserving Machine Learning".
 
 
 ## Background

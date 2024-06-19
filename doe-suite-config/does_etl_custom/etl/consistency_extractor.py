@@ -11,6 +11,8 @@ import re
 
 class ConsistencyExtractor(Extractor):
 
+    verbose: bool = False
+
     # transformer specific parameters with default values (see pydantic)
     # arg: str = None
 
@@ -36,8 +38,9 @@ class ConsistencyExtractor(Extractor):
         for d in stats_data:
             d["stat"] = f"{filename}_{d['stat']}"
 
-        print(timer_data)
-        print(stats_data)
+        if self.verbose:
+            print(timer_data)
+            print(stats_data)
         return timer_data + stats_data
 
     def extract_timers(self, content) -> List[Dict]:

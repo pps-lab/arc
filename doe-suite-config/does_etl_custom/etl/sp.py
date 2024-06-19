@@ -78,7 +78,7 @@ class TimerBandwidthAggregator(Transformer):
 
 
 
-        df = df.groupby(self.run_def_cols).apply(t).reset_index(drop=True)
+        df = df.groupby(self.run_def_cols, group_keys=False).apply(t).reset_index(drop=True)
 
         return df
 
@@ -90,6 +90,8 @@ class CerebroMultiplierTransformer(Transformer):
     timer_id_cerebro: str = "95"
 
     timer_thread_help: int = 36 # we assume cerebro can be perfectly parallelized over 36 threads
+
+    verbose: bool = False
 
     def transform(self, df: pd.DataFrame, options: Dict) -> pd.DataFrame:
 
@@ -117,13 +119,14 @@ class CerebroMultiplierTransformer(Transformer):
                     x.loc[x['stat'] == timer_id, 'stat_value'] = timer_value
 
                     run_id = x['run'].unique()
-                    print("Multiplied cerebro timer value by ", n_amount_needed_id_value, " for timer ", timer_id, run_id)
+                    if self.verbose:
+                        print("Multiplied cerebro timer value by ", n_amount_needed_id_value, " for timer ", timer_id, run_id)
 
                 return x
             return t
 
-        df = df.groupby(self.run_def_cols).apply(t_wrap("input")).reset_index(drop=True)
-        df = df.groupby(self.run_def_cols).apply(t_wrap("output")).reset_index(drop=True)
+        df = df.groupby(self.run_def_cols, group_keys=False).apply(t_wrap("input")).reset_index(drop=True)
+        df = df.groupby(self.run_def_cols, group_keys=False).apply(t_wrap("output")).reset_index(drop=True)
         return df
 
 class ComputationMultiplierTransformer(Transformer):
@@ -253,7 +256,7 @@ class Sha3MultiplierTransformer(Transformer):
             # print(x)
             return x
 
-        df = df.groupby(['suite_name', 'exp_name', 'run']).apply(tran).reset_index(drop=True)
+        df = df.groupby(['suite_name', 'exp_name', 'run'], group_keys=False).apply(tran).reset_index(drop=True)
 
         return df
 

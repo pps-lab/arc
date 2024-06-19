@@ -3,7 +3,7 @@ from math import ceil
 from enum import Enum
 import warnings
 import itertools
-
+import logging
 
 import math
 import pandas as pd
@@ -18,13 +18,11 @@ from doespy.etl.steps.loaders import Loader, PlotLoader
 from does_etl_custom.etl.config import setup_plt
 
 import matplotlib.pyplot as plt
-import matplotlib.lines as mlines
-import matplotlib.patches as mpatches
-from matplotlib import colors as mcolors
-import matplotlib.container as mcontainer
 import numpy as np
 
 from typing import Tuple, Literal, Any
+
+logger = logging.getLogger(__name__)
 
 class MetricConfig(MyETLBaseModel):
 
@@ -298,12 +296,13 @@ class BarPlotLoader(PlotLoader):
 
     show_debug_info: bool = False
 
+    verbose: bool = False
 
     def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> None:
         if df.empty:
             return
 
-        plt.set_loglevel("debug")
+        plt.set_loglevel("warning")
 
         plt.close('all')
 
@@ -319,14 +318,14 @@ class BarPlotLoader(PlotLoader):
 
         for metric_name, metric_cfg in self.metrics.items():
 
-            print(f"Creating metric {metric_name} plot...")
+            logger.info(f"Creating metric {metric_name} plot...")
 
             for idx_plot, df_plot in df_filtered.groupby(self.plot_cols):
 
                 idx_plot = (idx_plot, ) if not isinstance(idx_plot, tuple) else idx_plot
                 plot_id = {k: v for k, v in zip(self.plot_cols, list(idx_plot))}
 
-                print(f"  Creating {plot_id} plot...")
+                logger.info(f"  Creating {plot_id} plot...")
 
                 if self.subplots is None:
                     setup_plt(width=self.figure_size[0], height=self.figure_size[1])
@@ -342,8 +341,7 @@ class BarPlotLoader(PlotLoader):
                     if subplot_idx is None:
                         continue
 
-                    # print axs sizes
-                    print(f"axs.shape = {axs.shape}, subplot_idx = {subplot_idx}")
+                    # logger.info axs sizes
                     if len(axs.shape) == 2:
                         ax = axs[subplot_idx[0], subplot_idx[1]]
                     else:
@@ -371,13 +369,14 @@ class BarPlotLoader(PlotLoader):
 
                 filename = f"bar_{metric_name}_{escape_tuple_str(idx_plot)}"
 
-                out = os.path.join(output_dir, metric_name)
-                os.makedirs(out, exist_ok=True)
+                if output_dir is not None:
+                    out = os.path.join(output_dir, metric_name)
+                    os.makedirs(out, exist_ok=True)
 
-                self.save_data(df1, filename=filename, output_dir=out)
+                    self.save_data(df1, filename=filename, output_dir=out)
 
-                if self.subplots is None:
-                    self.save_plot(fig, filename=filename, output_dir=out, use_tight_layout=True, output_filetypes=["pdf"])
+                    if self.subplots is None:
+                        self.save_plot(fig, filename=filename, output_dir=out, use_tight_layout=True, output_filetypes=["pdf"])
 
 
         if self.legend_fig is not None and self.subplots is not None:
@@ -387,7 +386,7 @@ class BarPlotLoader(PlotLoader):
         fig.subplots_adjust(wspace=0.28) # 0.3 # You can adjust the value based on your preference
 
 
-        if self.subplots is not None:
+        if self.subplots is not None and output_dir is not None:
             filename =  f"{etl_info['pipeline']}_debug" if self.show_debug_info else etl_info['pipeline']
             self.save_plot(fig, filename=filename, output_dir=output_dir, use_tight_layout=True, output_filetypes=["pdf"])
 
@@ -423,14 +422,14 @@ class BarPlotLoader(PlotLoader):
             except KeyError:
                 raise KeyError(f"col={col} not in df.columns={df.columns}")
 
-            print(f"Filtering {col} to {allowed}    all={df[col].unique()}")
+            logger.info(f"Filtering {col} to {allowed}    all={df[col].unique()}")
             # filter out non-relevant results
             df_filtered = df_filtered[df_filtered[col].isin(allowed)]
             # convert to categorical
             df_filtered[col] = pd.Categorical(df_filtered[col], ordered=True, categories=allowed)
         df_filtered.sort_values(by=self.plot_cols + self.group_cols + self.bar_cols, inplace=True)
 
-        print(f"Filtered out {n_rows_intial - len(df_filtered)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df_filtered)}")
+        logger.info(f"Filtered out {n_rows_intial - len(df_filtered)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df_filtered)}")
 
         return df_filtered
 
@@ -444,12 +443,12 @@ class BarPlotLoader(PlotLoader):
         # if so, output warning
         # create a bar for each bar_cols group in each group_cols group
         grouped_over_reps = df_plot.groupby(by = self.group_cols + self.bar_cols)
-        # print first group rows
+        # logger.info first group rows
         for group in grouped_over_reps.groups:
             if len(grouped_over_reps.get_group(group)) > 1:
                 # TODO [SOMETHING IS HARDCODED HERE?]
-                print(f"Group rows: {grouped_over_reps.get_group(group)}")
-                print(f"Const args: {grouped_over_reps.get_group(group)['consistency_args.type']}")
+                logger.info(f"Group rows: {grouped_over_reps.get_group(group)}")
+                logger.info(f"Const args: {grouped_over_reps.get_group(group)['consistency_args.type']}")
 
 
         combined = grouped_over_reps[metric_cfg.bar_part_cols].agg(['mean', 'std'])
@@ -504,8 +503,6 @@ class BarPlotLoader(PlotLoader):
             assert self.subplots is not None, "y_lim_row only supported for subplots"
 
             col = subplot_idx[1]
-
-            print(f"ticks ={metric_cfg.y_ticks_row[col]}")
 
             ax.set_yticks(metric_cfg.y_ticks_row[col])
 
@@ -585,7 +582,7 @@ class BarPlotLoader(PlotLoader):
         if metric_cfg.x_lim is not None:
             ax.set_xlim(*metric_cfg.x_lim)
 
-        #print(f"  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!x_lim: {ax.get_xlim()}")
+        #logger.info(f"  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!x_lim: {ax.get_xlim()}")
 
 
 #    def style_fig_legend(self, fig, axs):
@@ -677,7 +674,7 @@ class BarPlotLoader(PlotLoader):
 
         df_group_height["factor_group_plot"] = df_group_height['group_height'] / df_plot_height
 
-        #print(f"df_group_height: {df_group_height}")
+        #logger.info(f"df_group_height: {df_group_height}")
 
         zoom_infos = []
         connect_adjacent = False # TODO [nku] MAKE configurable
@@ -685,14 +682,12 @@ class BarPlotLoader(PlotLoader):
             temp = []
             for idx_bar_group, v in df_group_height.iterrows():
 
-                print(f"v = {v}")
-
                 if v["factor_group_plot"]  < zoom_threshold:
                     idx_bar_group = (idx_bar_group, ) if not isinstance(idx_bar_group, tuple) else idx_bar_group
                     bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group))}
                     temp.append((bar_group_id, v["group_height"]))
                 else:
-                    print(f"no zoom: {idx_bar_group}     -> {v}")
+                    logger.info(f"no zoom: {idx_bar_group}     -> {v}")
                     if temp:
                         zoom_infos.append({"bar_group_ids": [x for x, _ in temp], "bar_group_heights": [x for _, x in temp]})
                         temp = []
@@ -707,7 +702,6 @@ class BarPlotLoader(PlotLoader):
                     bar_group_id = {k: v for k, v in zip(self.group_cols, list(idx_bar_group))}
 
                     zoom_infos.append({"bar_group_ids": [bar_group_id], "bar_group_heights": [v["group_height"]]})
-        print(f"\n\nzoom_infos: {zoom_infos}")
 
 
         return zoom_infos
@@ -722,8 +716,6 @@ class BarPlotLoader(PlotLoader):
         zoom_infos = self.get_zoom_info(metric_cfg=metric_cfg, df_plot=df1, zoom_threshold=zoom_threshold)
 
         n_bars_per_group, n_bar_groups = self.get_bars_info(df1)
-
-        print("subplot idx", subplot_idx)
 
         w = self.bar_width / n_bar_groups # divide by number of rows
 
@@ -758,7 +750,6 @@ class BarPlotLoader(PlotLoader):
                 for zinfo in zoom_infos:
                     if bar_group_id == zinfo["bar_group_ids"][0]:
                         # start new zoom
-                        print(f"Starting new zoom: {bar_group_id}")
 
                         zoom_span_n_groups = len(zinfo["bar_group_ids"])
 
@@ -769,7 +760,6 @@ class BarPlotLoader(PlotLoader):
                         x_bias = 0.2 * w
                         xlim = (group_pos_left-x_bias, zoom_pos_right+x_bias)
 
-                        print(f"group_pos_left={group_pos_left}")
                         ylim = (0, 1.2 * max(zinfo["bar_group_heights"]))
 
 
@@ -829,8 +819,8 @@ class BarPlotLoader(PlotLoader):
                     for col, allowed in metric_cfg.bar_cols_filter.items():
                         if bar_id[col] not in allowed:
                             skip = True
-                    if skip:
-                        print(f"    Skipping bar because {bar_id} does not match metric filter: {metric_cfg.bar_cols_filter}")
+                    if skip and self.verbose:
+                        logger.info(f"    Skipping bar because {bar_id} does not match metric filter: {metric_cfg.bar_cols_filter}")
                         continue
 
                 if subplot_idx[1] == metric_cfg.bar_cols_filter_last_row_num and metric_cfg.bar_cols_filter_last_row is not None:
@@ -839,8 +829,8 @@ class BarPlotLoader(PlotLoader):
                     for col, allowed in metric_cfg.bar_cols_filter_last_row.items():
                         if bar_id[col] not in allowed:
                             skip = True
-                    if skip:
-                        print(f"    Skipping bar because {bar_id} does not match metric filter: {metric_cfg.bar_cols_filter_last_row}")
+                    if skip and self.verbose:
+                        logger.info(f"    Skipping bar because {bar_id} does not match metric filter: {metric_cfg.bar_cols_filter_last_row}")
                         continue
 
                 # increment for each column + center
@@ -923,10 +913,8 @@ class BarPlotLoader(PlotLoader):
 
 
                             zoom["axins"] = axins
-                        print("PRINTING AXINS!!!!!!!!!!!!!!!!")
-                        axins.bar(bar_pos, df_bar[bar_part_col]["mean"], width=w, label=label, yerr=yerr,  bottom=bottom, **style_config)
 
-                        print(df_bar["$total_bar_height$"])
+                        axins.bar(bar_pos, df_bar[bar_part_col]["mean"], width=w, label=label, yerr=yerr,  bottom=bottom, **style_config)
 
                         v = df_bar["$total_bar_height$"].values[0]
 
@@ -942,7 +930,7 @@ class BarPlotLoader(PlotLoader):
                     bottom += df_bar[bar_part_col]["mean"]
 
         for zinfo in zoom_infos:
-            #print(f"zinfo={zinfo['y_ticks']}")
+            #logger.info(f"zinfo={zinfo['y_ticks']}")
             if "axins" in zinfo:
                 zinfo["axins"].set_yticks(list(zinfo["y_ticks"]))
             if "axins" in zinfo:
@@ -1007,7 +995,6 @@ class Subplots:
 
         for metric_name, metric_cfg in loader.metrics.items():
             for idx_plot, _ in df.groupby(loader.plot_cols):
-                print(loader.plot_cols, idx_plot)
                 plot_id = {k: v for k, v in zip(loader.plot_cols, list(idx_plot))}
 
                 # skipping plots that are not in the filter
@@ -1017,7 +1004,7 @@ class Subplots:
                         if plot_id[col] not in allowed:
                             skip = True
                     if skip:
-                        print(f"    Skipping plot because {idx_plot} does not match metric filter: {metric_cfg.plot_cols_filter}")
+                        logger.info(f"    Skipping plot because {idx_plot} does not match metric filter: {metric_cfg.plot_cols_filter}")
                         continue
 
                 row_keys.add(self._lookup_key(plot_id, metric_name, relevant_columns=loader.subplots.rows))
@@ -1048,7 +1035,7 @@ class Subplots:
 
 
         if row_key not in self._row_lookup or col_key not in self._col_lookup:
-            print(f"Skipping plot because {row_key} or {col_key} not in {self._row_lookup} or {self._col_lookup}")
+            logger.info(f"Skipping plot because {row_key} or {col_key} not in {self._row_lookup} or {self._col_lookup}")
             return None
         else:
             return (self._row_lookup[row_key], self._col_lookup[col_key])
