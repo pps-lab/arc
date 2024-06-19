@@ -101,7 +101,7 @@ To get a local copy up and running follow these simple steps.
    For more details refer to the [doe-suite documentation](https://nicolas-kuechler.github.io/doe-suite/installation.html#base-installation).
 
 #### Benchmarking files
-1Download and store the benchmarking output files from the camera ready submission:
+Download and store the benchmarking output files from the camera ready submission:
 ```shell
 wget https://pps-mpspdz-data.s3.amazonaws.com/doe-suite-results-cameraready.zip
 unzip doe-suite-results-cameraready.zip -d doe-suite-results-cameraready
@@ -118,21 +118,17 @@ To launch the Jupyter notebook in the environment with the correct dependencies,
 cd doe-suite
 make jupyter
 ```
-Now run the first cell,
-```python
-
-```
-and check that it prints `Environment loaded successfully`.
+Run the first cell to check that it prints `Environment loaded successfully`.
 
 ### Basic Test (AWS, 30 minutes)
-To test that your local machine is configured properly and that you have access to the AWS resources, you can run the following command:
+To test that your local machine is configured properly and that you have access to the AWS resources, you can run the following command (with `doe-suite` as working directory):
 ```shell
 make run suite=audit_fairness id=new
 ```
 which will launch two sets of servers on AWS to reproduce the fairness experiments (Fig. 6, column 1).
 
-### Basic Test (Local)
-We also provide a `Makefile` to run scripts locally.
+### Basic Test (Local, 15 minutes)
+We also provide a `Makefile` in the project's root directory to run scripts locally.
 First install the framework's dependencies in the project directory:
 ```shell
 make install
@@ -142,8 +138,9 @@ Note: On MacOS, if you encounter `ld: library not found for -lomp` from the link
 MY_CFLAGS += -I/usr/local/opt/openssl/include -I/opt/homebrew/opt/openssl/include -I/opt/homebrew/include -I/usr/local/opt/libomp/include
 MY_LDLIBS += -L/usr/local/opt/openssl/lib -L/opt/homebrew/lib -L/opt/homebrew/opt/openssl/lib -L/usr/local/opt/libomp/lib
 ```
-You must store the relevant datasets that have been preprocessed to work with MP-SPDZ in the `MP-SPDZ/Player-Data` directory.
-The datasets are available in a public s3 bucket at `http://pps-mpspdz-data.s3.amazonaws.com/{DATASET_NAME}.zip`.
+**Datasets** You must store the relevant datasets in the `MP-SPDZ/Player-Data` directory.
+We provide the datasets from the paper, preprocessed to work with MP-SPDZ,
+in a public s3 bucket at `http://pps-mpspdz-data.s3.amazonaws.com/{DATASET_NAME}.zip`.
 Available datasets are: `adult_3p`, `mnist_full_3party`, `cifar_alexnet_3party`.
 For the QNLI dataset, the identifier is `glue_qnli_bert` but the data will be loaded by the compilation script so there is no need to download it.
 ```shell
@@ -179,9 +176,9 @@ We assume that the following steps are followed within the JupyterLab environmen
 This artifact relies on the [DoE-Suite](https://github.com/nicolas-kuechler/doe-suite) to manage experiment configurations,
 orchestrate the execution of experiments, collect the results and post-process them into tables and plots.
 
-The doe-suite can be run using a set of commands defined in a [Makefile](doe-suite/Makefile) that invoke Ansible.
-Use `make run` to run experiments (suites) that are defined in the `doe-suite-config/designs` directory.
-Results of these experiments are then combined together into plots that are defined in the `doe-suite-config/super_etl` directory.
+The doe-suite can be run using a set of commands defined in a [Makefile](doe-suite/Makefile) in the `doe-suite` directory that invoke Ansible.
+Use `make run` to run experiments, from now on referred to as _suites_, that are defined in the [doe-suite-config/designs](doe-suite-config/designs) directory.
+Results of these experiments are then combined together into plots that are defined in the [doe-suite-config/super_etl](doe-suite-config/super_etl) directory.
 
 For each result shown in the paper, we have a separate section that contains:
 
@@ -190,19 +187,21 @@ For each result shown in the paper, we have a separate section that contains:
 2. The command to reproduce the results on AWS. You can uncomment the command and run the cell with Ctrl + Enter. 
 Due to the large amount of output and long running time, we recommend to run these commands in a separate terminal window.
 
-Note that for improved readability, the code for creating the table and the plot is initially collapsed but can be openend by clicking on the three dots. To collapse the code again, select the cell by clicking on it and then go to View/Collapse Selected Code.
+Note that for improved readability, some code for loading the required doe-suite libraries is collapsed but can be openend by clicking on the three dots. To collapse the code again, select the cell by clicking on it and then go to View/Collapse Selected Code.
 
 JupyterLab code cells are blocking which means that when executing a cell (e.g., run a benchmark), we cannot run another cell until the previous cell finished. As a result, it might be to better for long running commands to copy the shell command (excluding the comment and !) and execute it in a Jupyter terminal.
 
-In any case, while running a benchmark in a cell or a terminal, keep the JupyterLab session open and ensure that the internet connection is stable (for AWS).
+Finally, while running a benchmark in a cell or a terminal, keep the JupyterLab session open and ensure that the internet connection is stable (for AWS).
 
 ### Major Claims
 - **(C1)**: Arc instantiated with our consistency protocol is up to 10^4x faster and 10^6x more concise than hashing-based (SHA3) and homomorphic commitment-based (PED) approaches.
 - **(C2)**: Across all settings, Arc significantly outperforms related approaches in terms of runtime, with a storage overhead comparable to the hash-based approach
 
-Both claims are proven by the experiments in Section 6 **Training** (E1, Fig. 4), **Inference** (E2, Fig. 5) and **Auditing** (E3, Fig. 6).
+Both claims are proven by the experiments in Section 6: **Training** (E1, Fig. 4), **Inference** (E2, Fig. 5) and **Auditing** (E3, Fig. 6).
 
 ### Experiments
+
+**Running Experiments/Suites.**
 For each of training, inference and auditing, we provide a list of suites that belong to this setting.
 Each suite contains a rough estimate of the duration of running the suite.
 This estimate is based on the raw runtimes in the benchmark logs, but the estimation of the overhead of creating and provisioning the machines may not be completely accurate.
