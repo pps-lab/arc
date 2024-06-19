@@ -876,3 +876,145 @@ class FilteredTableLoader(Loader):
                     file.write(html_table)
             else:
                 raise ValueError(f"PlotLoader: Unknown file type {ext}")
+
+
+class ActualDurationLoader(Loader):
+
+    metrics: Dict[str, MetricConfig]
+
+    plot_cols: List[str]
+    group_cols: List[str] # for each combination of these clumns, will have a top-level column
+
+    bar_cols: List[str] # for each value of these columns, will have a bar in each group
+    cols_values_filter: Dict[str, List[str]]
+
+    def load(self, df: pd.DataFrame, options: Dict, etl_info: Dict) -> pd.DataFrame:
+        df_filtered = self.filter_df(df)
+
+        output_dir = self.get_output_dir(etl_info)
+        filename = f"table_filtered"
+
+        # df_filtered = df_filtered[['mpc.script_args.dataset', 'network_type', 'mpc_type', 'total_time_s', 'consistency_args.type']]
+
+        # sum over suite_name
+        df_sum = df_filtered.groupby(['suite_name'], group_keys=False).agg({ 'total_time_s': ['sum', 'count'] }).reset_index()
+
+        df_sum['time'] = df_sum['total_time_s']['sum'].apply(lambda x: self.format_duration(x))
+
+        startup_cost_constant = 10 * 60 # 5 minutes to provision and install servers
+        end_cost_constant = 1 * 60 # 1 minute to shut down servers
+        constant_cost = startup_cost_constant + end_cost_constant
+        per_run_provision_cost = 30 * 2 # 30 seconds per run to load results and set new, times two cause compilation
+        per_run_compile_time = 30 # 45 seconds on average?
+        per_run_cost = per_run_provision_cost + per_run_compile_time
+        df_sum['estim_time'] = df_sum \
+            .apply(lambda x: self.format_duration(x[('total_time_s', 'sum')] +
+                                                  x[('total_time_s', 'count')] * per_run_cost +
+                                                  constant_cost), axis=1)
+
+        total_time = df_sum['total_time_s']['sum'].sum()
+        total_price = total_time * 3 * 1.746 * 0.93 / 3600
+        print("Total price", total_price, "euro")
+
+        # output as markdown
+        print(df_sum.to_markdown())
+
+    def format_duration(self, seconds):
+        def format(value):
+
+            if abs(value) < 0.001:
+                formatted_number = f'{value:.4f}'
+            elif abs(value) < 0.01:
+                formatted_number = f'{value:.3f}'
+            elif abs(value) < 0.1:
+                formatted_number = f'{value:.2f}'
+            else:
+                formatted_number = f'{value:.1f}'
+
+            # remove trailing zero
+            if "." in formatted_number:
+                formatted_number = formatted_number.rstrip('0').rstrip('.')
+
+            return formatted_number
+
+        intervals = (
+            ('w', 604800),  # 60 * 60 * 24 * 7
+            ('d', 86400),    # 60 * 60 * 24
+            ('h', 3600),    # 60 * 60
+            ('m', 60),
+            ('s', 1),
+        )
+
+        for name, count in intervals:
+            value = seconds / count
+            if value >= 1:
+                return format(value) + name
+
+    def filter_df(self, df: pd.DataFrame) -> pd.DataFrame:
+
+        n_rows_intial = len(df)
+        df_filtered = df.copy()
+
+        plot_cols = [(col, self.cols_values_filter[col]) for col in self.plot_cols]
+        group_cols = [(col, self.cols_values_filter[col]) for col in self.group_cols]
+        bar_cols = [(col, self.cols_values_filter[col]) for col in self.bar_cols]
+        # filter out non-relevant results
+        for col, allowed in plot_cols + group_cols + bar_cols:
+
+            # convert column to string for filtering
+            try:
+                df_filtered[col] = df_filtered[col].astype(str)
+            except KeyError:
+                raise KeyError(f"col={col} not in df.columns={df.columns}")
+
+            print(f"Filtering {col} to {allowed}    all={df[col].unique()}")
+            # filter out non-relevant results
+            df_filtered = df_filtered[df_filtered[col].isin(allowed)]
+            # convert to categorical
+            df_filtered[col] = pd.Categorical(df_filtered[col], ordered=True, categories=allowed)
+        df_filtered.sort_values(by=self.plot_cols + self.group_cols + self.bar_cols, inplace=True)
+
+        print(f"Filtered out {n_rows_intial - len(df_filtered)} rows (based on plot_cols, row_cols, col_cols)  remaining: {len(df_filtered)}")
+
+        return df_filtered
+
+    def aggregate_data(self, df_plot, metric_cfg: MetricConfig):
+
+        # allow changing the unit of the metric before calculating the mean / std
+        df_plot[metric_cfg.bar_part_cols] = df_plot[metric_cfg.bar_part_cols] * metric_cfg.y_unit_multiplicator / metric_cfg.y_unit_divider
+
+        # check if multiple rows exist for self.group_cols + self.bar_cols
+        # if so, output warning
+        # create a bar for each bar_cols group in each group_cols group
+        grouped_over_reps = df_plot.groupby(by = self.group_cols + self.bar_cols)
+        # print first group rows
+        for group in grouped_over_reps.groups:
+            if len(grouped_over_reps.get_group(group)) > 1:
+                # TODO [SOMETHING IS HARDCODED HERE?]
+                print(f"Group rows: {grouped_over_reps.get_group(group)}")
+                print(f"Const args: {grouped_over_reps.get_group(group)['consistency_args.type']}")
+
+
+        combined = grouped_over_reps[metric_cfg.bar_part_cols].agg(['mean', 'std'])
+
+        combined[("$total$", "mean")] = combined.loc[:, pd.IndexSlice[metric_cfg.bar_part_cols, "mean"]].sum(axis=1)
+        for col in metric_cfg.bar_part_cols:
+            combined[(f"$total_share_{col}$", "mean")] = combined[col]["mean"] / combined["$total$"]["mean"]
+            combined[(f"$total_factor_{col}$", "mean")] = combined["$total$"]["mean"] / combined[col]["mean"]
+
+
+        return combined.reset_index()
+
+    def save_data(self, df: pd.DataFrame, filename: str, output_dir: str, output_filetypes: List[str] = ["html"]):
+        """:meta private:"""
+        os.makedirs(output_dir, exist_ok=True)
+
+        for ext in output_filetypes:
+            if ext == "html":
+                html_table = df.to_html()
+                path = os.path.join(output_dir, f"{filename}.html")
+
+                with open(path, 'w') as file:
+                    file.write(html_table)
+            else:
+                raise ValueError(f"PlotLoader: Unknown file type {ext}")

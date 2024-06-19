@@ -2,8 +2,7 @@
 
 $SUITE_ID$:
 
-  inference_2pc: 1705775791
-  inference_3pc: { sh: 1705933736, mal: 1705933736 }
+  inference_3pc: 1705933736
   inference_3pc_wan: 1705947503
 
   inference_3pc_bert: 1716825542 # 1718652418
@@ -13,7 +12,6 @@ $ETL$:
 
   raw: # outputs the raw df from the extractor stage as a pickle file (can be used)
     experiments:
-#      inference_2pc: "*"
       inference_3pc: "*"
     extractors:
       $INCLUDE_STEPS$: [{config: inference, pipeline: compare_relatedwork}]

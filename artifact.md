@@ -185,13 +185,9 @@ Results of these experiments are then combined together into plots that are defi
 
 For each result shown in the paper, we have a separate section that contains:
 
-1. Code to create the plot shown in the paper and corresponding dataframe based on the output files from the benchmarks (stored in `doe-suite-results-cameraready`)
+1. Code to create and display the plot shown in the paper and corresponding dataframe based on the output files from the benchmarks (stored in `doe-suite-results-cameraready`)
 
-2. Code to create the plot shown in the paper from the results table
-
-3. Code that displays both the results and the figure and allows you to switch between the results from the paper and the reproduced results
-
-4. The command to reproduce the results on AWS. You can uncomment the command and run the cell with Ctrl + Enter. 
+2. The command to reproduce the results on AWS. You can uncomment the command and run the cell with Ctrl + Enter. 
 Due to the large amount of output and long running time, we recommend to run these commands in a separate terminal window.
 
 Note that for improved readability, the code for creating the table and the plot is initially collapsed but can be openend by clicking on the three dots. To collapse the code again, select the cell by clicking on it and then go to View/Collapse Selected Code.
@@ -207,8 +203,12 @@ In any case, while running a benchmark in a cell or a terminal, keep the Jupyter
 Both claims are proven by the experiments in Section 6 **Training** (E1, Fig. 4), **Inference** (E2, Fig. 5) and **Auditing** (E3, Fig. 6).
 
 ### Experiments
+For each of training, infernce and auditing, we provide a list of suites that belong to this cate
 
 ### Training
+The training experiments use the MP-SPDZ training script defined in [training.mpc](scripts/training.mpc) which loads the input, trains the model and then outputs it
+while ensuring the correct metadata is output for the consistency scripts.
+
 <details>
 <summary>Available Suites</summary>
 
@@ -239,6 +239,8 @@ The following experiments are available:
 
 
 ### Auditing
+
+15:04 start
 
 The following experiments are available to run:
 <details>

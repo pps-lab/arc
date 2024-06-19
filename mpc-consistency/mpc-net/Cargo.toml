@@ -1,0 +1,20 @@
+[package]
+name = "mpc-net"
+version = "0.1.0"
+authors = ["Alex Ozdemir <aozdemir@hmc.edu>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+lazy_static = "1"
+log = {version = "0.4"}
+#ark-std = { path = "../utils", default-features = false }
+ark-std = { version = "0.4.0", features=["print-trace"]}
+derivative = { version = "2.0", features = ["use_core"]}
+#crossbeam = "0.8"
+rayon = "1.5.1"
+[dev-dependencies]
+structopt = { version = "0.3" }
+env_logger = "0.8"
+

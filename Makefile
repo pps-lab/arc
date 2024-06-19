@@ -2,7 +2,7 @@
 
 script?=audit_owner_unlearn
 dataset?=mnist_6k_4party
-protocol?=rep4-ring
+protocol?=ring
 
 RING_64=-R 64
 
@@ -33,7 +33,11 @@ simlink:
 	[ -L $(LINK_UTILS) ] && [ -e $(LINK_UTILS) ] || ln -s  $(PWD)/script_utils $(LINK_UTILS)
 	[ -L $(LINK) ] && [ -e $(LINK) ] || ln -s  $(PWD)/scripts/$(script).mpc $(LINK)
 
-
+install:
+	poetry install && \
+	(cd MP-SPDZ && $(MAKE) -j8 libff) && \
+	(cd MP-SPDZ && make -j8 emulate.x && make -j8 replicated-ring-party.x) && \
+	(cd MP-SPDZ && Scripts/setup-ssl.sh)
 
 compile-debug: simlink
 	cd MP-SPDZ && ./compile.py $(RING_64) $(script) $(AUDITARGS) emulate__True debug__True
