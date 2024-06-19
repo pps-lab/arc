@@ -13,9 +13,6 @@ ec2_volume_snapshot: snap-0cdbc6abc38f4a630
 
 instance_role: EC2WithS3Role
 
-# does this override work?
-#exp_code_dir: "{{ remote.dir }}/collaborative-zksnark/mpc-snarks"
-#exp_hosts_file: "{{ exp_code_dir }}/data/vpc"
 
 euler_job_minutes: 120 # individual job time
 euler_cpu_cores: 4
