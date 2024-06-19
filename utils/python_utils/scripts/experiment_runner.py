@@ -153,9 +153,7 @@ def prove_commitment_opening(task_config, output_prefix):
             stderr=consistency_gen_pp_output_file,
         )
 
-    if task_config.sleep_time > 0:
-        print(f"Sleeping for {task_config.sleep_time} seconds to allow gen commitment process on all clients to finish.")
-        time.sleep(task_config.sleep_time)
+    sync_servers(task_config)
 
     # GEN COMMITMENTS
     executable = f"target/release/gen_commitments_{task_config.consistency_args.pc}"
@@ -191,6 +189,8 @@ def prove_commitment_opening(task_config, output_prefix):
     if not os.path.exists(result_file_path):
         print(f"Error: Could not find mpspdz output file! Expected to find {result_file_path}")
         return
+
+    sync_servers(task_config)
 
     # PROVE_VERIFY
     executable = f"target/release/prove_verify_{task_config.consistency_args.pc}"
