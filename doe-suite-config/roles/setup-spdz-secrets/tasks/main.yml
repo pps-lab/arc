@@ -1,0 +1,10 @@
+
+
+- name: Download secrets from S3
+  ansible.builtin.shell:
+    cmd: "aws s3 sync s3://{{ input_bucket_name }} {{ exp_code_dir }}/MP-SPDZ/Player-Data"
+
+- name: Download kzg public params from S3
+  ansible.builtin.shell:
+    cmd: "aws s3 cp s3://{{ input_bucket_name }}/srs {{ exp_consistency_dir }}/commitments/srs"
+

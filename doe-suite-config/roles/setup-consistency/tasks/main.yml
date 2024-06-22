@@ -1,0 +1,94 @@
+---
+
+# THIS ASSUMES SPECIFIC AMI, SO IT DOES NOT DO THE FULL SETUP
+
+- debug:
+    msg: "-> consistency only"
+  tags: [print_action]
+
+#- debug:
+#    msg: "{{ hostvars['localhost']['suite_hosts_lst'] }}"
+#
+#- debug:
+#    msg: "{{ hostvars['localhost']['ec2_instance_info'] }}"
+#
+#- debug:
+#    var: not exist
+
+- name: Delete hosts file
+  file:
+    path: "{{ exp_consistency_hosts_file }}"
+    state: absent
+
+#- name: Debug hosts file
+#  debug:
+#    msg: "{{ hostvars['localhost']['suite_hosts_lst'] }}"
+#
+#- name: Debug hosts file filter
+#  debug:
+#      msg: "{{ hostvars['localhost'].suite_hosts_lst | collect_items2dict(key_name='exp_name', multiset=True) }}"
+#
+#- name: Debug exp_name
+#  debug:
+#      msg: "EXP {{ exp_name }}"
+
+- name: Filter host list for exp
+  set_fact:
+    exp_hosts_lst_exp: "{{ hostvars['localhost'].suite_hosts_lst | collect_items2dict(key_name='exp_name', multiset=True) }}"
+
+- name: Setup hosts file
+  lineinfile:
+    path: "{{ exp_consistency_hosts_file }}"  # Specify the path to your output file
+    line: "{{ private_ip_lookup[item.private_dns_name] }}:8000"
+    create: yes
+  loop: "{{ exp_hosts_lst_exp[exp_name] }}"
+  vars:
+    private_ip_lookup: "{{ hostvars['localhost']['ec2_instance_info'] | json_query('instances[*].{key: private_dns_name, value: private_ip_address}') | items2dict }}"
+  when: "'ec2_instance_info' in hostvars['localhost']"
+
+- name: remove existing rust version
+  become: true
+  apt:
+    pkg:
+      - rustc
+    state: absent
+    update_cache: yes
+
+- name: check if cargo is installed
+  shell: command -v cargo
+  register: cargo_exists
+  ignore_errors: yes
+
+- name: Download Installer
+  when: cargo_exists is failed
+  get_url:
+    url: https://sh.rustup.rs
+    dest: /tmp/sh.rustup.rs
+    mode: '0755'
+    force: 'yes'
+  tags:
+    - rust
+
+- name: install rust/cargo
+  when: cargo_exists is failed
+  shell: |
+    source ~/.bashrc
+    /tmp/sh.rustup.rs -y
+  args:
+    executable: /bin/bash
+  tags:
+    - rust
+
+# TODO: enable parallel here
+- name: Compile project
+  ansible.builtin.shell: |
+    source ~/.bashrc
+    . "$HOME/.cargo/env"
+    rustup install 1.76.0
+    rustup default nightly-2024-02-04
+    cargo build --release --features parallel
+  args:
+    chdir: "{{ exp_consistency_dir }}"
+    executable: /bin/bash
+
+# compile:

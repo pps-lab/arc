@@ -1,0 +1,77 @@
+[package]
+name = "mpc-consistency"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+ark-bls12-377 = "0.4.0"
+ark-crypto-primitives = "0.4.0"
+ark-ec = { version = "0.4.2", features=["parallel"] }
+ark-ff = "0.4.2"
+ark-poly = "0.4.2"
+ark-poly-commit = { version = "0.4.0", features=["parallel"] }
+ark-serialize = { version = "0.4.2", features=["derive"]}
+ark-std = { version = "0.4.0", features=["print-trace", "parallel"]}
+clap = { version = "4.4.6", features=["derive"]}
+env_logger = "0.10.0"
+log = "0.4.20"
+rayon = "1.8.0"
+structopt = "0.3.26"
+
+mpc-net = { path = "./mpc-net" }
+rand = "0.8.5"
+ark-ed-on-bls12-381 = "0.4.0"
+blake2 = "0.10.6"
+byteorder = "1.5.0"
+num-bigint = "0.4.4"
+num-traits = "0.2.17"
+regex = "1.10.2"
+derivative = "2.2.0"
+serde = { version = "1.0.193", features=["derive"] }
+serde_yaml = "0.9.27"
+ark-secp256k1 = "0.4.0"
+ark-bn254 = "0.4.0"
+
+[features]
+parallel = ["ark-std/parallel", "ark-poly-commit/parallel", "ark-ec/parallel", "ark-ff/parallel", "ark-crypto-primitives/parallel"]
+
+
+[[bin]]
+name = "gen_commitments_kzg"
+path = "src/gen_commitments_kzg.rs"
+
+[[bin]]
+name = "gen_commitments_ipa"
+path = "src/gen_commitments_ipa.rs"
+
+[[bin]]
+name = "gen_commitments_ped"
+path = "src/gen_commitments_ped.rs"
+
+[[bin]]
+name = "prove_verify_kzg"
+path = "src/prove_verify_kzg.rs"
+
+[[bin]]
+name = "prove_verify_ipa"
+path = "src/prove_verify_ipa.rs"
+
+[[bin]]
+name = "prove_verify_ped"
+path = "src/prove_verify_ped.rs"
+
+[[bin]]
+name = "gen_pp_kzg"
+path = "src/gen_pp_kzg.rs"
+[[bin]]
+name = "gen_pp_ipa"
+path = "src/gen_pp_ipa.rs"
+[[bin]]
+name = "gen_pp_ped"
+path = "src/gen_pp_ped.rs"
+
+[[bin]]
+name = "exponentiate_cerebro"
+path = "src/exponentiate_cerebro.rs"

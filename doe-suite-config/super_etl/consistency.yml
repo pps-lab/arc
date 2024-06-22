@@ -1,0 +1,180 @@
+---
+
+
+$SUITE_ID$:
+  bench_consistency: {
+    compare_pvc_lan: 1700164581,
+                       compare_pvc_wan: 1700150553,
+#                       compare_pvc_lan_sizes: 1701000867
+#                        compare_pvc_lan_sizes: 1701002468
+                        compare_pvc_lan_sizes: 1701004020
+  }
+  consistency: { compare_pvc_lan_sizes: 1702421985 }
+
+$ETL$:
+  twod:
+    experiments:
+      bench_consistency: [ compare_pvc_wan, compare_pvc_lan ]
+
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor: { }
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+    transformers:
+      - name: StatTransformer
+        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'consistency_args.pc', ]
+        stats:
+          verification_time_s: [ "consistency_prove_verify_Prove Verify", "spdz_timer_300" ]
+          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
+          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
+          global_data_sent_mb: [ "spdz_global_data_sent" ]
+          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+
+      - df.assign: { com_type: com }
+
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': pvc, verification_time_s: 39.14, commitment_size_bytes: 1090000 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': sha3, verification_time_s: 2200.0, commitment_size_bytes: 32 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: hash, 'consistency_args.pc': lowmc, verification_time_s: 1100.0, commitment_size_bytes: 32 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan, 'mpc.script_name': test_sz, com_type: com, 'consistency_args.pc': cerebro, verification_time_s: 6255.0, commitment_size_bytes: 67108864 }, ignore_index: True }
+
+    loaders:
+      CsvSummaryLoader: { }
+      TwoDimensionalScatterPlotLoader:
+        plot_cols: [ 'mpc.script_name', 'host_idx' ]
+        plot_cols_values:
+          mpc.script_name: [ 'test_sz' ]
+          host_idx: [ 0 ] # only plot one party
+
+        x_col: commitment_size_bytes
+        y_col: verification_time_s
+        annotation_col: consistency_args.pc
+
+        symbol_cols: [ 'exp_name' ]
+        symbol_cols_values: { 'exp_name': [ 'compare_pvc_lan', 'compare_pvc_wan' ] }
+        symbol_cols_title: 'Network'
+        symbol_cols_labels: { exp_name: [ 'LAN', 'WAN' ] }
+        color_cols: [ 'com_type' ]
+        color_cols_values: { com_type: [ com, hash ] }
+        color_cols_title: 'Commitment Type'
+        color_cols_labels: { com_type: [ 'Cryptographic Commitment', 'Collision-resistant Hash' ] }
+
+        annotation_labels:
+          pvc: 'PVC'
+          sha3: 'SHA3'
+          lowmc: 'LowMCHash'
+          cerebro: 'Cerebro'
+          kzg: 'Ours (KZG)'
+          ped: 'Pedersen'
+          ipa: 'Ours (IPA)'
+
+  input_sizes:
+    experiments:
+      consistency: [ compare_pvc_lan_sizes ]
+
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor: { }
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+    transformers:
+      - name: StatTransformer
+        groupby_columns: [ run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'n_samples' ]
+        stats:
+          verification_time_s: [ "consistency_prove_verify_Prove Verify_mus", "consistency_poly_eval_poly_eval_mus" ]
+          verification_bandwidth_bytes: [ "consistency_prove_verify_global_bytes", "consistency_poly_eval_poly_eval_global_bytes" ]
+          player_bw_sent_bytes: [ "consistency_prove_verify_bytes_sent" ]
+          player_bw_recv_bytes: [ "consistency_prove_verify_bytes_recv" ]
+          global_data_sent_mb: [ "spdz_global_data_sent" ]
+          commitment_size_bytes: [ "consistency_gen_commitments_bytes_sent" ]
+
+      - name: GroupByAppendTransformer
+        groupby_columns: [ run, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'n_samples' ]
+        metrics:
+          player_bw_sent_bytes: [ 'sum' ]
+
+      - name: AddTransformer
+        result_col: verification_bandwidth_mb
+        add_cols: [ verification_bandwidth_bytes, [player_bw_sent_bytes, sum] ]
+        divisors: [ 1000000, 1000000 ]
+
+      - df.assign: { com_type: com }
+
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: pvc, 'n_samples': 512, verification_time_s: 0.07, verification_bandwidth_mb: 2.51 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: pvc, 'n_samples': 8192, verification_time_s: 0.22, verification_bandwidth_mb: 10.9 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: pvc, 'n_samples': 131072, verification_time_s: 2.67, verification_bandwidth_mb: 141.25 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: pvc, 'n_samples': 2097152, verification_time_s: 39.14, verification_bandwidth_mb: 2169.02 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: pvc, 'n_samples': 33554432, verification_time_s: 590.70, verification_bandwidth_mb: 34022.77 }, ignore_index: True }
+
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: sha3, 'n_samples': 512, verification_time_s: 0.57, verification_bandwidth_mb: 19.93 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: sha3, 'n_samples': 8192, verification_time_s: 8.16, verification_bandwidth_mb: 300.34 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: sha3, 'n_samples': 131072, verification_time_s: 133.23, verification_bandwidth_mb: 4805.39 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: sha3, 'n_samples': 2097152, verification_time_s: 2200.0, verification_bandwidth_mb: 76900 }, ignore_index: True }
+      - df.append: { other: { host_idx: 0, exp_name: compare_pvc_lan_sizes, 'mpc.script_name': test_sz, com_type: sha3, 'n_samples': 33554432, verification_time_s: 35500.0, verification_bandwidth_mb: 1230200 }, ignore_index: True }
+
+    loaders:
+      PickleSummaryLoader: {}
+      CsvSummaryLoader: {}
+      BarPlotLoader:
+
+        figure_size: [5.0, 2.5]
+
+        cols_values_filter:
+          mpc.script_name: [ 'test_sz' ]
+          host_idx: [ 0 ] # only plot one party
+
+          'com_type': [ com, pvc, sha3 ]
+
+          'n_samples': [ 512, 8192, 131072, 2097152, 33554432 ]
+
+
+        plot_cols: [ 'mpc.script_name', 'host_idx' ]
+        group_cols: [ n_samples ]
+        bar_cols: [ 'com_type' ]
+
+        title:
+          format: "Verification"
+          plot_cols: []
+
+        labels:
+          512: "$2^{9}$"
+          8192: "$2^{13}$"
+          131072: "$2^{17}$"
+          2097152: "$2^{21}$"
+          33554432: "$2^{25}$"
+
+          com: COM (Ours)
+          pvc: PVC
+          sha3: SHA-3
+
+        x_axis_label: Input Size
+        legend:
+          format: "{}"
+          cols: ["com_type"]
+
+        colors: ["#a6b8d8", "#4c72b0", "#1B4965"]
+
+
+        metrics:
+          time:
+            bar_part_cols: [ verification_time_s]
+            #y_unit_multiplicator: 1 # keep seconds
+            y_label: "Time [min]"
+            log_y: True
+            y_unit_divider: 60 # to minutes
+            legend_ncol: 3
+            #y_max: 18
+            #legend_type: "inline"
+            #legend_order: [0, 2, 1, 3]
+
+
+          bandwidth:
+            bar_part_cols: [verification_bandwidth_mb]
+            y_label: "Bandwidth [MB]"
+            #y_unit_multiplicator:  1.0e-6 # transform to MB
+            log_y: True
+            legend_ncol: 3

@@ -1,0 +1,26 @@
+---
+
+
+- debug:
+    msg: "-> large primes"
+  tags: [print_action]
+
+- name: Remove old CONFIG.mine
+  ansible.builtin.file:
+    path: "{{ mpspdz_dir }}/CONFIG.mine"
+    state: absent
+
+- name: Add large prime szp (5 limbs)
+  ansible.builtin.shell: echo 'MOD = -DGFP_MOD_SZ=6 -DMAX_MOD_SZ=13' >> CONFIG.mine
+  args:
+    chdir: "{{ mpspdz_dir }}"
+
+#MAX_MOD_SZ
+
+- name: "(re-)Compile MP-SPDZ (if some files dont exist)"
+  block:
+    - name: "Compile MP-SPDZ all"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "36"
+        target: "all"

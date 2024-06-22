@@ -1,0 +1,148 @@
+---
+
+# TODO [nku] could add default skeleton for super etl
+
+# Checkout the example from the demo_project: demo_project/doe-suite-config/super_etl/demo_plots.yml
+
+$SUITE_ID$:
+
+  audit_robustness: 1705955178
+  audit_robustness_wan: 1705960388
+
+  audit_knnshapley: 1705957720
+  audit_knnshapley_wan: 1705958533
+
+  audit_fairness: 1705954360
+  audit_fairness_wan: 1705955928
+
+  audit_shap: 1705957649
+  audit_shap_wan: 1705959794
+
+  audit_knnshapley_bert: 1717158669
+  audit_knnshapley_bert_mal: 1717593653
+  audit_knnshapley_bert_wan: 1717156384
+
+  inference_3pc: 1705933736
+  inference_3pc_wan: 1705947503
+
+  inference_3pc_bert: 1716825542 # 1718652418
+  inference_3pc_bert_wan: 1716810960
+
+  train_3pc: 1705937567
+  train_3pc_wan: 1705939961
+
+  train_3pc_bert: 1717166233
+  train_3pc_bert_wan: 1717160273
+
+
+$ETL$:
+
+  compare_relatedwork:
+    experiments:
+      audit_robustness: "*"
+      audit_robustness_wan: "*"
+      audit_knnshapley: "*"
+      audit_knnshapley_wan: "*"
+      audit_fairness: "*"
+      audit_fairness_wan: "*"
+      audit_shap: "*"
+      audit_shap_wan: "*"
+      audit_knnshapley_bert: "*"
+      audit_knnshapley_bert_wan: "*"
+      audit_knnshapley_bert_mal: "*"
+
+      train_3pc: "*"
+      train_3pc_wan: "*"
+      train_3pc_bert: "*"
+      train_3pc_bert_wan: "*"
+
+      inference_3pc: "*"
+      inference_3pc_wan: "*"
+      inference_3pc_bert: "*"
+      inference_3pc_bert_wan: "*"
+
+
+    extractors:
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
+        ignore_errors: no
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^result-P[0-9]+-[0-9]+\.txt$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
+    transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+      - df.replace: { to_replace: "^glue-qnli", value: "glue_qnli_bert", regex: True }
+
+      - name: TimerBandwidthAggregator
+
+      - name: StatTransformer
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc_type', 'network_type', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'consistency_args.type' ]
+        stats:
+          total_time_s: [ "spdz_timer_99", "spdz_timer_100",
+                          "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+
+                                 "cerebro_input_spdz_timer_95",
+                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "sha3_input_spdz_timer_98",
+          ]
+
+          total_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98",
+
+                                     "cerebro_input_spdz_timer_bw_95",
+
+                                     "sha3_input_spdz_timer_bw_98",
+                         "spdz_timer_bw_99", "spdz_timer_bw_100" ]
+
+          n_rounds: [ "spdz_player_round_number" ]
+
+    loaders:
+      CsvSummaryLoader: { }
+      ActualDurationLoader:
+
+        plot_cols: [ 'suite_name', 'host_idx', 'mpc.domain', 'network_type', 'mpc.script_args.dataset' ]
+
+        group_cols: [ 'consistency_args.type' ]
+
+        bar_cols: [ 'mpc_type' ]
+
+        cols_values_filter:
+          suite_name: [
+            audit_robustness, audit_robustness_wan, audit_knnshapley, audit_knnshapley_wan, audit_fairness, audit_fairness_wan, audit_shap, audit_shap_wan, audit_knnshapley_bert, audit_knnshapley_bert_wan, audit_knnshapley_bert_mal,
+            train_3pc, train_3pc_wan, train_3pc_bert, train_3pc_bert_wan,
+            inference_3pc, inference_3pc_wan, inference_3pc_bert, inference_3pc_bert_wan ]
+          'consistency_args.type': [ 'pc' , 'sha3s', 'cerebro' ]
+
+          network_type: [ 'lan', 'wan' ]
+          host_idx: [ 0 ] # only plot one party
+          mpc_type: [ 'sh', 'mal' ]
+          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet, glue_qnli_bert ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+          'mpc.domain': [ 'ring', 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+
+        metrics:
+          lan_time_all:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 1.0 # switch to mins from secs
+            y_label: "LAN Time [s]"
+

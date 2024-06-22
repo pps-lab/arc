@@ -1,0 +1,47 @@
+# syntax=docker/dockerfile:experimental
+
+FROM ubuntu:20.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt update && apt install -y openssh-server sudo rsync python3 openssh-client git curl
+RUN sed -i 's/PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config
+
+RUN useradd -m -s /bin/bash ubuntu
+RUN echo "ubuntu:test" | chpasswd && adduser ubuntu sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> \
+/etc/sudoers
+
+# compile and clone-mp-spdz
+# in the future we could make these depend on suite vars?
+RUN apt update && apt install -y automake build-essential clang git libboost-filesystem-dev libboost-thread-dev libboost-iostreams-dev libntl-dev libgmp-dev libsodium-dev libssl-dev libtool m4 python3 texinfo cmake yasm pkg-config
+
+USER ubuntu
+
+RUN mkdir /home/ubuntu/.ssh
+COPY docker_public_key.pub /home/ubuntu/.ssh/authorized_keys
+RUN mkdir -p -m 0700 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+RUN --mount=type=ssh,mode=0666 git clone --recurse-submodules git@github.com:pps-lab/cryptographic-auditing-mpc.git /home/ubuntu/code
+
+RUN sed -i 's/-DSSL_DIR="Player-Data\/"/-DSSL_DIR="Player-SSL-Data\/"/' /home/ubuntu/code/MP-SPDZ/CONFIG
+RUN sed -i 's/-DPREP_DIR="Player-Prep-Data\/"/-DPREP_DIR="Player-Data\/"/' /home/ubuntu/code/MP-SPDZ/CONFIG
+
+RUN cd /home/ubuntu/code/MP-SPDZ && make -j8 libff
+RUN cd /home/ubuntu/code/MP-SPDZ && make -j8 replicated-ring-party.x rep-ring-switch-party.x semi2k-party.x
+
+# Cargo
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+RUN echo 'source $HOME/.cargo/env' >> $HOME/.bashrc
+
+
+RUN --mount=type=ssh,mode=0666 git clone git@github.com:hiddely/mpc-consistency.git /home/ubuntu/mpc-consistency
+RUN cat $HOME/.cargo/env
+RUN . $HOME/.cargo/env && rustup install 1.76.0
+RUN . $HOME/.cargo/env && rustup default nightly-2024-02-04
+RUN . $HOME/.cargo/env && cd /home/ubuntu/mpc-consistency && cargo build --release --features parallel
+
+USER root
+EXPOSE 22
+
+RUN mkdir /var/run/sshd
+CMD ["/usr/sbin/sshd", "-D"]

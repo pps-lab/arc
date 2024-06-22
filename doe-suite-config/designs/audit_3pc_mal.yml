@@ -1,0 +1,159 @@
+$SUITE_VARS$:
+  sleep_time: 2.0 # TODO [hly] can remove (also from experiment runner) as it does not have any effect
+
+  _python_pre: "export PYTHONPATH={{ exp_code_dir }}/utils && . {{ exp_code_dir }}/.venv/bin/activate"
+  _python_path: "[% my_run._python_pre %] && {{ exp_code_dir }}/.venv/bin/python"
+  cmd_mpspdz: "[% my_run._python_path %] -m  python_utils.scripts.experiment_runner --player-number <PLAYER-ID> --sleep-time [% my_run.sleep_time %]"
+
+  n_parties: 3
+
+  $INCLUDE_VARS$: dataset.yml
+
+  commit_output: False
+  convert_ring_bits: 64
+
+  consistency_args:
+    abs_path_to_code_dir: "{{ exp_consistency_dir }}"
+    hosts_file: "{{ exp_consistency_hosts_file }}"
+    pc: kzg
+    pp_args: "[% my_run.dataset_info[my_run.mpc.script_args.dataset].max_input_size %]"
+
+  mpc:
+    player_0_hostname: "[% exp_host_lst | json_query('[?host_type==`consistency`].private_dns_name') | default(['<UNDEFINED-DNS>'], true) | first %]"
+    abs_path_to_code_dir: "{{ exp_code_dir }}"
+    player_count: "[% my_run.n_parties %]"
+
+    protocol_setup: "sy-rep-ring-party"
+    domain: ring
+    compiler_args: [ '-R', '64', '-C', '--budget', '10000', '-D', '-Z', '3' ]
+    custom_prime: null
+
+
+    #    script_name: $FACTOR$
+
+    script_args:
+
+      n_samples: 1
+      n_input_parties: "[% my_run.n_parties %]"
+
+      dataset:
+        $FACTOR$: [ adult_3p, mnist_full_3party, cifar_alexnet_3party ]
+
+      debug: False  # for a final benchmarking run, can also use `debug: False`, this should then only release no secret info
+      emulate: False
+
+      # in a network with latency, a high batch size for ml.py is key to a good performance (60k raised insufficient memory error)
+      batch_size: 128 #1024 #256 # was 128 before   # 60000 -> insufficient memory
+      n_threads: 36 #128 #64 # TODO before was 32 -> see if this helps (128 raises too many files runtime error)
+
+      audit_trigger_idx: 0 # select single audit trigger (from all)
+      trunc_pr: False
+
+      round_nearest: False
+
+    stage: # "compile" in run and then in next run "run"
+      $FACTOR$: [ compile, run ] # ensure that this is last factor
+
+
+audit_sample_knnshapley:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+    mpc:
+      script_name: audit_sample_knnshapley
+
+
+audit_owner_unlearn:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+    mpc:
+      script_name: audit_owner_unlearn
+#
+#
+#audit_prediction_shap:
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+#    mpc:
+#      script_name: audit_prediction_shap
+#      script_args:
+#        $FACTOR$: [ adult_3p ]
+##
+##
+#audit_fairness:
+#  n_repetitions: 1
+#  host_types:
+#    consistency:
+#      n: 3
+#      check_status: True
+#      init_roles:
+#        - setup-base
+#        - setup-consistency
+#      $CMD$:
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+#        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+#
+#  base_experiment:
+#    mpc:
+#      script_name: audit_fairness
+#      script_args:
+#        dataset:
+#          $FACTOR$: [ adult_3p ]
+
+
+
+audit_robustness:
+  n_repetitions: 1
+  host_types:
+    consistency:
+      n: 3
+      check_status: True
+      init_roles:
+        - setup-base
+        - setup-consistency
+      $CMD$:
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
+        - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 2) %]"
+
+  base_experiment:
+    mpc:
+      script_name: audit_robustness
+
+
+$ETL$: {}

@@ -1,0 +1,95 @@
+
+
+
+---
+
+_runtime_info:
+  budget: 50000
+  budget_wan: 100000
+
+dataset_info:
+  adult_3p:
+    # we could also differentiate between train data + model if the audit function only needs the model
+    max_input_size: 805000 # 804632
+    model_input_size: 3000
+    # edabits in the semi-honest setting can support a smaller batch size which can reduce the number of rounds singificantly
+    edabit_batch_size_inference:
+      sh: 50
+      mal: 10000
+
+    sha3_approx_factor: 1
+    sha3_approx_factor_full: 1000
+
+
+  mnist_full_3party:
+    max_input_size: 16521393 # 15925258
+    model_input_size: 440080
+    edabit_batch_size_inference:
+      sh: 50
+      mal: 10000
+    sha3_approx_factor: 100
+    sha3_approx_factor_full: 5000
+
+
+  cifar_alexnet_3party:
+    max_input_size: 55402973 # 51500211
+    model_input_size: 4000000
+
+    edabit_batch_size_inference:
+      sh: 50
+      mal: 10000
+    sha3_approx_factor: 1000
+    sha3_approx_factor_full: 10000
+
+#  ember_3party:
+#    max_input_size: 488267184 # 471263184
+#    edabit_batch_size_inference:
+#      sh: 50
+#      mal: 10000
+
+  adult_2p:
+    # we could also differentiate between train data + model if the audit function only needs the model
+    max_input_size: 805000 # 804632
+    model_input_size: 3000
+    edabit_batch_size_inference:
+      sh: 50
+      mal: 10000
+
+    sha3_approx_factor: 1
+
+  mnist_full_2party:
+    max_input_size: 16521393 # 15925258
+    model_input_size: 440080
+
+    edabit_batch_size_inference:
+      sh: 50
+      mal: 10000
+
+    sha3_approx_factor: 100
+
+  cifar_alexnet_2party:
+    max_input_size: 55402973 # 51500211
+    model_input_size: 4000000
+
+    edabit_batch_size_inference:
+      sh: 50
+      mal: 10000
+
+    sha3_approx_factor: 1000
+
+  glue-qnli:
+    max_input_size: 153558054
+    model_input_size: 85647000
+    edabit_batch_size_inference:
+      sh: 50
+      mal: 10000
+
+    sha3_approx_factor: 1000
+    sha3_approx_factor_full: 10000
+
+#  ember_2party:
+#    max_input_size: 488267184 # 471263184
+#    edabit_batch_size_inference:
+#      sh: 50
+#      mal: 10000
+

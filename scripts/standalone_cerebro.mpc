@@ -1,0 +1,68 @@
+from Compiler.script_utils import output_utils
+
+from Compiler.script_utils.data import data
+
+
+from Compiler import ml
+from Compiler import library
+
+from Compiler.script_utils.audit import rand_smoothing
+
+from Compiler.script_utils import config, timers, input_consistency
+
+from Compiler.script_utils.consistency_cerebro import compute_commitment
+
+
+class CerebroConfig(config.BaseAuditModel):
+
+    pass
+
+program.options_from_args()
+cfg = config.from_program_args(program.args, CerebroConfig)
+
+def compute_sz(input_flat):
+    random_point = 34821
+    rho = cint(random_point)
+
+    output_sum = input_flat[0]
+    output_sum_r = sint(0)
+
+    # main loop
+    # @for_range_multithread(n_threads, 1, inputs.length)
+    @for_range_opt(1, input_flat.length)
+    def _(i):
+        output_sum.update(output_sum + (input_flat[i] * rho))
+        output_sum_r.update(output_sum_r + (sint(3) * rho)) # assume r = 3 everywhere
+        rho.update(rho * random_point)
+
+    return output_sum, output_sum_r
+
+program.use_trunc_pr = cfg.trunc_pr
+sfix.round_nearest = cfg.round_nearest
+ml.set_n_threads(cfg.n_threads)
+
+train_dataset, _, _ = data._load_dataset_args(cfg.dataset)
+n_players = len(train_dataset)
+
+library.start_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_CHECK)
+
+for player_id in range(0, n_players):
+    objects = input_consistency.read_input_format_from_file(player_id)
+    print("Player", player_id, "has", len(objects), "objects")
+    for object in objects:
+        len_items = sum([item["length"] for item in object["items"]])
+        print("Computing commitment of length ", len_items)
+        print_ln("Computing commitment for player %s with size %s", player_id, len_items)
+        input_comm = Array(len_items, sint)
+
+        # Should load input from secret shares for correctness,
+        # we dont to make it faster (since we would have already loaded the data).
+        input_comm.assign_all(2)
+
+        output_sum, output_sum_r = compute_sz(input_comm)
+
+        compute_commitment(output_sum, output_sum_r)
+
+library.stop_timer(timer_id=timers.TIMER_INPUT_CONSISTENCY_CHECK)
+
+print_ln("Done computing commitments!")

@@ -1,0 +1,459 @@
+---
+
+$SUITE_ID$:
+
+  inference_3pc: 1705933736
+  inference_3pc_wan: 1705947503
+
+  inference_3pc_bert: 1716825542 # 1718652418
+  inference_3pc_bert_wan: 1716810960
+
+$ETL$:
+
+  raw: # outputs the raw df from the extractor stage as a pickle file (can be used)
+    experiments:
+      inference_3pc: "*"
+    extractors:
+      $INCLUDE_STEPS$: [{config: inference, pipeline: compare_relatedwork_linear}]
+    transformers: []
+    loaders:
+      PickleSummaryLoader: {}
+
+
+  compare_relatedwork_linear:
+    experiments:
+      inference_3pc: [ sh, mal ]
+      inference_3pc_wan: [ wan ]
+
+      inference_3pc_bert: [ sh, mal ]
+      inference_3pc_bert_wan: [ wan ]
+
+    extractors:
+      MpSpdzResultExtractor: { }
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
+    transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+      - df.replace: { to_replace: "^glue-qnli", value: "glue_qnli_bert", regex: True }
+
+      - name: TimerBandwidthAggregator
+      - name: ComputationMultiplierTransformer
+      - name: CerebroMultiplierTransformer
+      - name: Sha3MultiplierTransformer
+
+      - name: StatTransformer
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'network_type', 'mpc_type', 'consistency_args.type' ]
+        stats:
+          mpc_time_s: [ "spdz_timer_99", "spdz_timer_101" ]
+
+          auditing_overhead_s: [ "consistency_convert_shares_share_switch_output_mus",
+                                 "consistency_poly_commit_commit_mus",
+                                 "consistency_poly_commit_sign_mus",
+                                 "consistency_poly_commit_sign_sk_mus",
+                                 "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+                                 "cerebro_input_spdz_timer_95",
+                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "cerebro_output_spdz_timer_95", # output timers
+            #                                 "spdz_timer_97", # output timers
+
+                                 "sha3_input_spdz_timer_98",
+                                 "sha3_output_spdz_timer_97",
+
+                                 "spdz_timer_97",
+          ]
+
+          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes",
+                                     "consistency_poly_commit_commit_global_bytes",
+                                     "consistency_poly_commit_sign_global_bytes",
+                                     "consistency_poly_commit_sign_sk_global_bytes",
+                                     "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98",
+                                     "spdz_timer_bw_97",
+
+                                     "cerebro_input_spdz_timer_bw_95", # output timers
+                                     "cerebro_output_spdz_timer_bw_95", # output timers
+
+                                     "sha3_input_spdz_timer_bw_98",
+                                     "sha3_output_spdz_timer_bw_97",
+          ]
+
+          global_data_sent_bytes: [ "spdz_timer_bw_99", "spdz_timer_bw_101" ]
+
+          n_rounds: [ "spdz_player_round_number" ]
+
+          share_convert_time_s: [ "consistency_convert_shares_share_switch_output_mus" ]
+          share_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
+
+          share_input_convert_time_s: [ "consistency_convert_shares_share_switch_input_mus" ]
+          share_input_convert_global_bytes: [ "consistency_convert_shares_share_switch_output_global_bytes" ]
+
+          share_input_local_time_s: [
+            "consistency_poly_eval_poly_eval_mus",
+            "consistency_prove_verify_Prove Verify_mus" ]
+
+          poly_commit_time_s: [ "consistency_poly_commit_commit_mus" ]
+          poly_commit_global_bytes: [ "consistency_poly_commit_commit_global_bytes" ]
+
+          sign_time_s: [ "consistency_poly_commit_sign_mus" ]
+          sign_global_bytes: [ "consistency_poly_commit_sign_global_bytes" ]
+
+          sign_sk_time_s: [ "consistency_poly_commit_sign_sk_mus" ]
+          sign_sk_global_bytes: [ "consistency_poly_commit_sign_sk_global_bytes" ]
+
+      # correct naming consistency problems
+      - df.replace: { to_replace: "sy", value: { exp_name: "mal" } } # rename sy experiment to mal
+      - df.replace: { to_replace: "field_256", value: "custom_256" }
+
+      - name: JoinWithCsvTransformer
+        csv_path: storage.csv # join csv numbers
+        on: [ consistency_args.type, mpc.script_args.dataset ]
+
+    loaders:
+      BarPlotLoader:
+
+        subplots:
+          rows: ["$metrics$", "network_type"]
+          cols: ["mpc.script_args.dataset"]
+          share_y: none
+
+        cols_values_filter:
+          mpc.script_name: [ 'inference' ]
+          suite_name: [ inference_3pc, inference_3pc_wan, inference_3pc_bert, inference_3pc_bert_wan ]
+
+          host_idx: [ 0 ] # only plot one party
+          mpc_type: [ 'sh', 'mal' ]
+          network_type: [ 'lan', 'wan' ]
+          'consistency_args.type': [ 'pc' , 'sha3s', 'cerebro' ]
+          'mpc.script_args.dataset': [ adult, cifar_alexnet, glue_qnli_bert ]
+#          'mpc.domain': [ 'ring_split', 'field_128' ] # 'field_128'
+
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
+
+        group_cols: [ 'consistency_args.type' ]
+
+        bar_cols: [ 'mpc_type' ]
+
+
+        legend_fig:
+          format: "{} {}"
+          cols: [ 'mpc_type', "$bar_part_col$" ]
+          kwargs: {loc: "upper center", ncol: 4, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
+
+        bar_styles:
+
+        - style: {label: ~, edgecolor: black}
+          filter: {"consistency_args.type": ["pc"]}
+
+        - style: {color: "#D3D3D3", edgecolor: grey, label: ~}
+          filter: { "$bar_part_col$": [storage_inference] }
+
+        - style: {color: "#d5e1a3", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#e7eec9", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+        - style: {color: "#4c72b0", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#a6b8d8", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+
+        group_labels:
+          cols: ['consistency_args.type']
+          format: "{}"
+
+
+        title:
+          format: "{}"
+          plot_cols: [ 'mpc.script_args.dataset' ]
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_bytes: ""
+          auditing_overhead_s: "(Overhead)"
+          auditing_overhead_bytes: "(Overhead)"
+          n_rounds: ""
+
+          ring_split: "Ring"
+          field_128: "Field-S"
+          custom_256: "Field-L"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "Cifar10"
+          glue_qnli_bert: "QNLI"
+
+          pc: "$\\bf{Ours}$"
+          cerebro: "PED"
+          sha3: "SHA3"
+          sha3s: "SHA3"
+
+          sh: "SH"
+          mal: "MAL"
+
+          storage_inference: storage
+
+
+        figure_size: [2.5, 1.8]
+        bar_width: 1 # 1.2
+
+        show_debug_info: False
+        metrics:
+
+
+          lan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_label: "LAN Time [sec]"
+            y_label_pad: 13.4
+            #y_lim: [300, 1400]
+            plot_cols_filter:
+              network_type: [ 'lan' ]
+            y_lim_row: [  [0, 48], [0, 1400], [0, 28000]]
+            y_lim_dict: [
+              { 'selector': { 'suite_name': 'inference_3pc', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'lan', 'mpc.script_args.dataset': 'adult' }, 'value': [0.0, 48.0] },
+              { 'selector': { 'suite_name': 'inference_3pc', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'lan', 'mpc.script_args.dataset': 'cifar_alexnet' }, 'value': [0.0, 1400.0] },
+              { 'selector': { 'suite_name': 'inference_3pc_bert', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'lan', 'mpc.script_args.dataset': 'glue_qnli_bert' }, 'value': [0.0, 28000.0] }
+            ]
+            n_y_ticks: 5
+
+          wan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_label: "WAN Time [min]"
+            y_label_pad: 8
+            y_unit_divider: 60 # transform to min
+            plot_cols_filter:
+              network_type: [ 'wan' ]
+            y_lim_row: [  [0, 300], [0, 4000], [0, 120000] ]
+            y_lim_dict: [
+              { 'selector': { 'suite_name': 'inference_3pc_wan', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'wan', 'mpc.script_args.dataset': 'adult' }, 'value': [0.0, 300.0] },
+              { 'selector': { 'suite_name': 'inference_3pc_wan', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'wan', 'mpc.script_args.dataset': 'cifar_alexnet' }, 'value': [0.0, 4000.0] },
+              { 'selector': { 'suite_name': 'inference_3pc_bert_wan', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'wan', 'mpc.script_args.dataset': 'glue_qnli_bert' }, 'value': [0.0, 120000.0] },
+            ]
+            n_y_ticks: 5
+            #y_lim: [100000, 150000]
+
+          wan_bandwidth:
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+            y_label: "Bandwidth [GB]"
+            y_label_pad: 13.4
+            y_unit_multiplicator: 1.0e-9 # transform to MB
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+
+            y_lim_row: [  [0, 28], [0, 1000], [0, 32000]]
+            y_lim_dict: [
+              { 'selector': { 'suite_name': 'inference_3pc_wan', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'wan', 'mpc.script_args.dataset': 'adult' }, 'value': [0.0, 28.0] },
+              { 'selector': { 'suite_name': 'inference_3pc_wan', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'wan', 'mpc.script_args.dataset': 'cifar_alexnet' }, 'value': [0.0, 1000.0] },
+              { 'selector': { 'suite_name': 'inference_3pc_bert_wan', 'mpc.script_name': 'inference', 'host_idx': '0', 'network_type': 'wan', 'mpc.script_args.dataset': 'glue_qnli_bert' }, 'value': [0.0, 32000.0] },
+            ]
+            n_y_ticks: 5
+
+          storage:
+            bar_part_cols: [ storage_inference ]
+            y_label: "Storage [Bytes]"
+
+            plot_cols_filter:
+              network_type: [ 'lan' ]
+
+            log_y: True
+
+            bar_cols_filter:
+              mpc_type: [ 'sh' ]
+            bar_pos_bias: 0.5
+
+            x_lim: [-0.5399999999999999, 2.54]
+
+#            y_ticks: [1.0e+4, 1.0e+6, 1.0e+8, 1.0e+10, 1.0e+12]
+            y_ticks: [1.0e+3, 1.0e+5, 1.0e+7, 1.0e+9, 1.0e+11]
+
+
+  mnist:
+    experiments:
+      inference_3pc: [ sh, mal ]
+      inference_3pc_wan: [ wan ]
+
+    extractors:
+      $INCLUDE_STEPS$: [{config: inference, pipeline: compare_relatedwork_linear}]
+    transformers:
+      - $INCLUDE_STEPS$: {config: inference, pipeline: compare_relatedwork_linear}  # include all steps in transformers
+
+
+    loaders:
+      BarPlotLoader:
+
+        subplots:
+          rows: ["$metrics$", "network_type"]
+          cols: ["mpc.script_args.dataset"]
+          share_y: none
+
+        cols_values_filter:
+          mpc.script_name: [ 'inference' ]
+          suite_name: [ inference_3pc, inference_3pc_wan, inference_3pc_bert ]
+
+          host_idx: [ 0 ] # only plot one party
+          mpc_type: [ 'sh', 'mal' ]
+          network_type: [ 'lan', 'wan' ]
+          'consistency_args.type': [ 'pc' , 'sha3s', 'cerebro' ]
+          'mpc.script_args.dataset': [ mnist_full ]
+        #          'mpc.domain': [ 'ring_split', 'field_128' ] # 'field_128'
+
+        plot_cols: [ 'suite_name', 'mpc.script_name', 'host_idx', 'network_type', 'mpc.script_args.dataset' ] #
+
+        group_cols: [ 'consistency_args.type' ]
+
+        bar_cols: [ 'mpc_type' ]
+
+
+#        legend_fig:
+#          format: "{} {}"
+#          cols: [ 'mpc_type', "$bar_part_col$" ]
+#          kwargs: {loc: "upper center", ncol: 2, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
+
+        bar_styles:
+
+          - style: {label: ~, edgecolor: black}
+            filter: {"consistency_args.type": ["pc"]}
+
+          - style: {color: "#D3D3D3", edgecolor: grey, label: ~}
+            filter: { "$bar_part_col$": [storage_inference] }
+
+          - style: {color: "#d5e1a3", edgecolor: grey}
+            filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+          - style: {color: "#e7eec9", edgecolor: grey}
+            filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+          - style: {color: "#4c72b0", edgecolor: grey}
+            filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+          - style: {color: "#a6b8d8", edgecolor: grey}
+            filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+
+        group_labels:
+          cols: ['consistency_args.type']
+          format: "{}"
+
+
+        title:
+          format: "{}"
+          plot_cols: [ 'mpc.script_args.dataset' ]
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_bytes: ""
+          auditing_overhead_s: "(Overhead)"
+          auditing_overhead_bytes: "(Overhead)"
+          n_rounds: ""
+
+          ring_split: "Ring"
+          field_128: "Field-S"
+          custom_256: "Field-L"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "Cifar10"
+          glue_qnli_bert: "StanfordQA"
+
+          pc: "$\\bf{Ours}$"
+          cerebro: "PED"
+          sha3: "SHA3"
+          sha3s: "SHA3"
+
+          sh: "SH"
+          mal: "MAL"
+
+          storage_inference: storage
+
+
+        figure_size: [2.5, 1.8]
+        bar_width: 1 # 1.2
+
+        show_debug_info: False
+        metrics:
+
+
+          lan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_label: "LAN Time [sec]"
+            y_label_pad: 13.4
+            #y_lim: [300, 1400]
+            plot_cols_filter:
+              network_type: [ 'lan' ]
+            y_lim_row: [  [0, 200] ]
+            n_y_ticks: 5
+
+          #lan_time_low:
+          #  bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+          #  y_label: "Z: LAN Time [sec]"
+          #  plot_cols_filter:
+          #    network_type: [ 'lan' ]
+          #
+          #  #y_lim_row: [
+          #  #  [0, 2.5], [0, 7.5], [0, 30]
+          #  #]
+
+          wan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_label: "WAN Time [min]"
+            y_label_pad: 8
+            y_unit_divider: 60 # transform to min
+            plot_cols_filter:
+              network_type: [ 'wan' ]
+            y_lim_row: [ [0, 1200] ]
+            n_y_ticks: 5
+            #y_lim: [100000, 150000]
+
+          wan_bandwidth:
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+            y_label: "Bandwidth [GB]"
+            y_label_pad: 13.4
+            y_unit_multiplicator: 1.0e-9 # transform to MB
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+
+            y_lim_row: [ [0, 260] ]
+            n_y_ticks: 5
+
+          storage:
+            bar_part_cols: [ storage_inference ]
+            y_label: "Storage [Bytes]"
+
+            plot_cols_filter:
+              network_type: [ 'wan' ]
+
+            log_y: True
+
+            bar_cols_filter:
+              mpc_type: [ 'sh' ]
+            bar_pos_bias: 0.5
+
+            x_lim: [-0.5399999999999999, 2.54]
+
+#            y_ticks: [1.0e+4, 1.0e+6, 1.0e+8, 1.0e+10, 1.0e+12]
+            y_ticks: [1.0e+3, 1.0e+5, 1.0e+7, 1.0e+9, 1.0e+11]

@@ -1,0 +1,487 @@
+---
+
+# TODO [nku] could add default skeleton for super etl
+
+# Checkout the example from the demo_project: demo_project/doe-suite-config/super_etl/demo_plots.yml
+
+$SUITE_ID$:
+
+  audit_robustness: 1705955178
+  audit_robustness_wan: 1705960388
+
+  audit_knnshapley: 1705957720
+  audit_knnshapley_wan: 1705958533
+
+  audit_fairness: 1705954360
+  audit_fairness_wan: 1705955928
+
+  audit_shap: 1705957649
+  audit_shap_wan: 1705959794
+
+  audit_knnshapley_bert: 1717158669
+  audit_knnshapley_bert_mal: 1717593653
+  audit_knnshapley_bert_wan: 1717156384
+
+
+
+$ETL$:
+  compare_relatedwork:
+    experiments:
+      audit_robustness: "*"
+      audit_robustness_wan: "*"
+      audit_knnshapley: "*"
+      audit_knnshapley_wan: "*"
+      audit_fairness: "*"
+      audit_fairness_wan: "*"
+      audit_shap: "*"
+      audit_shap_wan: "*"
+      audit_knnshapley_bert: "*"
+      audit_knnshapley_bert_wan: "*"
+      audit_knnshapley_bert_mal: "*"
+
+    extractors:
+#      MpSpdzResultExtractor: { } # this parses results from the audit
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
+        ignore_errors: no
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^result-P[0-9]+-[0-9]+\.txt$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
+    transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+      - df.replace: { to_replace: "^glue-qnli", value: "glue_qnli_bert", regex: True }
+
+      - name: TimerBandwidthAggregator
+      - name: ComputationMultiplierTransformer
+        timer_id_computation: 100
+#        batches_per_epoch_bs_128:
+#          cifar_alexnet: 391
+#          mnist_full: 469
+#          adult: 204
+#          glue_qnli_bert: 6.513
+      - name: CerebroMultiplierTransformer
+      - name: Sha3MultiplierTransformer
+
+      - name: StatTransformer
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc_type', 'network_type', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'consistency_args.type' ]
+        stats:
+          mpc_time_s: [ "spdz_timer_99", "spdz_timer_100" ]
+
+          auditing_overhead_s: [ "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+
+                                 "cerebro_input_spdz_timer_95",
+                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "sha3_input_spdz_timer_98",
+          ]
+
+          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98",
+
+                                     "cerebro_input_spdz_timer_bw_95",
+
+                                     "sha3_input_spdz_timer_bw_98",
+          ]
+
+          global_data_sent_bytes: [  "spdz_timer_bw_99", "spdz_timer_bw_100" ]
+
+          n_rounds: [ "spdz_player_round_number" ]
+
+    loaders:
+      CsvSummaryLoader: { }
+      BarPlotLoader:
+
+        subplots:
+          rows: ["$metrics$", "network_type"]
+          cols: ["mpc.script_name", "mpc.script_args.dataset"]
+
+          share_y: none
+
+        cols_values_filter:
+          mpc.script_name: ['audit_fairness', 'audit_robustness', 'audit_prediction_shap', 'audit_sample_knnshapley' ]
+          'consistency_args.type': [ 'pc', 'sha3s', 'cerebro'] #, ,
+
+          mpc_type: [ 'sh', 'mal' ]
+
+          host_idx: [ 0 ] # only plot one party
+          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
+          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
+#          'mpc.script_args.dataset': [ adult, mnist_full, cifar_alexnet ]
+          'mpc.script_args.dataset': [ adult, cifar_alexnet, glue_qnli_bert ]
+          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+          'network_type': [ lan, wan ]
+
+        plot_cols: [ 'host_idx', 'mpc.script_name', 'mpc.script_args.dataset', 'network_type' ]
+        group_cols: [ 'consistency_args.type' ]
+        bar_cols: [ 'mpc_type' ]
+
+        bar_styles:
+
+        - style: {label: ~, edgecolor: black}
+          filter: {"consistency_args.type": ["pc"]}
+
+        - style: {color: "#d5e1a3", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#e7eec9", edgecolor: grey}
+          filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+        - style: {color: "#4c72b0", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+        - style: {color: "#a6b8d8", edgecolor: grey}
+          filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+
+        legend_fig:
+          format: "{} {}"
+          cols: [ 'mpc_type', "$bar_part_col$" ]
+          kwargs: {loc: "upper center", ncol: 4, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
+
+
+        title:
+          format: "{} ({})"
+          plot_cols: [ "mpc.script_name", "mpc.script_args.dataset"]
+
+        group_labels:
+          cols: ['consistency_args.type']
+          format: "{}"
+
+        figure_size: [2.5, 1.8]
+        bar_width: 1.0 #1.2
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_bytes: ""
+          auditing_overhead_s: "Overhead"
+          auditing_overhead_bytes: "Overhead"
+          n_rounds: ""
+
+          ring: "Ring"
+          ring_split: "Ring"
+          custom_256: "Field"
+
+          audit_sample_knnshapley: "$\\bf{KNNShapley}$"
+          #audit_owner_unlearn: "Camel Unlearning"
+          audit_robustness: "$\\bf{Robustness}$"
+
+          audit_prediction_shap: "$\\bf{SHAP}$"
+          audit_fairness: "$\\bf{Fairness}$"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "C10"
+          glue_qnli_bert: "QNLI"
+
+          pc: "$\\bf{Ours}$"
+          cerebro: "PED"
+          sha3: "SHA3"
+          sha3s: "SHA3"
+
+          sh: "SH"
+          mal: "MAL"
+
+        show_debug_info: False
+
+
+        metrics:
+          lan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 60.0 # switch to mins from secs
+            y_label: "LAN Time [min]"
+
+#            y_lim_row: [ [0, 1], [0, 1], [0, 4], [0, 32], [0, 32], [0, 20], [0, 320], [0, 1000]]
+            y_lim_row: [ [0, 1], [0, 1], [0, 32], [0, 32], [0, 20], [0, 1000], [0, 12000]]
+
+            y_lim_dict: [{'selector': {'host_idx': '0', 'mpc.script_name': 'audit_fairness', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan'}, 'value': [0.0, 1.0]},
+                         {'selector': {'host_idx': '0', 'mpc.script_name': 'audit_robustness', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan'}, 'value': [0.0, 1.0]},
+                         {'selector': {'host_idx': '0', 'mpc.script_name': 'audit_robustness', 'mpc.script_args.dataset': 'cifar_alexnet', 'network_type': 'lan'}, 'value': [0.0, 32.0]},
+                         {'selector': {'host_idx': '0', 'mpc.script_name': 'audit_prediction_shap', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan'}, 'value': [0.0, 32.0]},
+                         {'selector': {'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan'}, 'value': [0.0, 20.0]},
+                         {'selector': {'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'cifar_alexnet', 'network_type': 'lan'}, 'value': [0.0, 1000.0]},
+                         {'selector': {'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'glue_qnli_bert', 'network_type': 'lan'}, 'value': [0.0, 12000.0]}]
+
+
+            n_y_ticks: 5
+
+            plot_cols_filter:
+              network_type: [ 'lan' ] # I only want lan
+
+
+
+          wan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 3600.0 # switch to hours from secs
+            y_label: "WAN Time [h]"
+
+
+            n_y_ticks: 5
+#            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 4.8], [0, 40], [0, 60], [0, 40], [0, 500], [0, 1600]]
+            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 40], [0, 60], [0, 40], [0, 1600], [0, 4000]]
+            y_lim_dict: [
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_fairness', 'mpc.script_args.dataset': 'adult', 'network_type': 'wan' }, 'value': [0.0, 2.4] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_robustness', 'mpc.script_args.dataset': 'adult', 'network_type': 'wan' }, 'value': [0.0, 2.4] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_robustness', 'mpc.script_args.dataset': 'cifar_alexnet', 'network_type': 'wan' }, 'value': [0.0, 40.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_prediction_shap', 'mpc.script_args.dataset': 'adult', 'network_type': 'wan' }, 'value': [0.0, 60.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'adult', 'network_type': 'wan' }, 'value': [0.0, 40.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'cifar_alexnet', 'network_type': 'wan' }, 'value': [0.0, 1600.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'glue_qnli_bert', 'network_type': 'wan' }, 'value': [0.0, 4000.0] }]
+
+            bar_cols_filter_last_row:
+              mpc_type: [ 'sh' ]
+            bar_pos_bias_last: 0.5
+            bar_cols_filter_last_row_num: 6
+
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+
+
+          wan_bandwidth:
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+            y_label: "Bandwidth [GB]"
+            y_unit_multiplicator: 1.0e-9 # transform to MB
+
+            plot_cols_filter:
+              network_type: [ 'lan' ] # I only want wan
+            n_y_ticks: 5
+
+#            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 50], [0, 500], [0, 500], [0, 400], [0, 8000], [0, 20000]]
+            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 500], [0, 500], [0, 500], [0, 20000], [0, 500000]]
+            y_lim_dict: [
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_fairness', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan' }, 'value': [0.0, 1.6] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_robustness', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan' }, 'value': [0.0, 1.6] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_robustness', 'mpc.script_args.dataset': 'cifar_alexnet', 'network_type': 'lan' }, 'value': [0.0, 500.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_prediction_shap', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan' }, 'value': [0.0, 500.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'adult', 'network_type': 'lan' }, 'value': [0.0, 500.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'cifar_alexnet', 'network_type': 'lan' }, 'value': [0.0, 20000.0] },
+              { 'selector': { 'host_idx': '0', 'mpc.script_name': 'audit_sample_knnshapley', 'mpc.script_args.dataset': 'glue_qnli_bert', 'network_type': 'lan' }, 'value': [0.0, 500000.0] }
+            ]
+
+
+  mnist:
+    experiments:
+      audit_robustness: "*"
+      audit_robustness_wan: "*"
+      audit_knnshapley: "*"
+      audit_knnshapley_wan: "*"
+#      audit_fairness: "*"
+#      audit_shap: "*"
+#      audit_shap_wan: "*"
+
+    extractors:
+      #      MpSpdzResultExtractor: { } # this parses results from the audit
+      MpSpdzStderrExtractor:
+        file_regex:
+          - ^stderr\.log$
+          - ^cerebro_input_stderr\.log$
+          - ^cerebro_output_stderr\.log$
+          - ^sha3_input_stderr\.log$
+          - ^sha3_output_stderr\.log$
+      ConsistencyExtractor: { }
+      IgnoreExtractor:
+        file_regex:
+          - ^stdout\.log$
+          - ^cerebro_input_stdout\.log$
+          - ^cerebro_output_stdout\.log$
+          - ^result-P[0-9]+-[0-9]+\.txt$
+          - ^sha3_input_stdout\.log$
+          - ^sha3_output_stdout\.log$
+    transformers:
+      - df.replace: { to_replace: "^adult_[a-zA-Z0-9]*", value: "adult", regex: True }
+      - df.replace: { to_replace: "^mnist_full_[a-zA-Z0-9]*", value: "mnist_full", regex: True }
+      - df.replace: { to_replace: "^cifar_alexnet_[a-zA-Z0-9]*", value: "cifar_alexnet", regex: True }
+
+      - name: TimerBandwidthAggregator
+      - name: ComputationMultiplierTransformer
+        timer_id_computation: 100
+      - name: CerebroMultiplierTransformer
+      - name: Sha3MultiplierTransformer
+
+      - name: StatTransformer
+        groupby_columns: [ suite_name, run, host_idx, exp_name, 'mpc.script_name', 'mpc_type', 'network_type', 'mpc.protocol_setup', 'mpc.domain', 'mpc.script_args.dataset', 'consistency_args.type' ]
+        stats:
+          mpc_time_s: [ "spdz_timer_99", "spdz_timer_100" ]
+
+          auditing_overhead_s: [ "consistency_convert_shares_share_switch_input_mus",
+                                 "consistency_poly_eval_poly_eval_mus",
+                                 "consistency_prove_verify_Prove Verify_mus",
+
+                                 "spdz_timer_98",
+
+                                 "cerebro_input_spdz_timer_95",
+                                 "consistency_cerebro_verify_Exponentiate_mus",
+
+                                 "sha3_input_spdz_timer_98",
+          ]
+
+          auditing_overhead_bytes: [ "consistency_convert_shares_share_switch_input_global_bytes",
+                                     "consistency_poly_eval_poly_eval_global_bytes",
+                                     "consistency_prove_verify_global_bytes",
+
+                                     "spdz_timer_bw_98",
+
+                                     "cerebro_input_spdz_timer_bw_95",
+
+                                     "sha3_input_spdz_timer_bw_98",
+          ]
+
+          global_data_sent_bytes: [  "spdz_timer_bw_99", "spdz_timer_bw_100" ]
+
+          n_rounds: [ "spdz_player_round_number" ]
+
+    loaders:
+      CsvSummaryLoader: { }
+      BarPlotLoader:
+
+        subplots:
+          rows: ["$metrics$", "network_type"]
+          cols: ["mpc.script_name", "mpc.script_args.dataset"]
+
+          share_y: none
+
+        cols_values_filter:
+          mpc.script_name: ['audit_fairness', 'audit_robustness', 'audit_prediction_shap', 'audit_sample_knnshapley' ]
+          'consistency_args.type': [ 'pc', 'sha3s', 'cerebro'] #, ,
+
+          mpc_type: [ 'sh', 'mal' ]
+
+          host_idx: [ 0 ] # only plot one party
+          'mpc.protocol_setup': [ 'semi_honest_3', 'sy-rep-ring-party' ] #
+          'mpc.script_args.round_nearest': [ False ] # TODO [nku] not sure what this should be
+          'mpc.script_args.dataset': [ mnist_full ] #[ "adult_3p", "mnist_full_3party", "cifar_alexnet_3party", "adult_2p", "mnist_full_2party", "cifar_alexnet_2party"] # "ember_3party"
+          'mpc.domain': [ 'ring_split' ] #[ 'ring_split',  'custom_256'] # 'field_128'
+          'network_type': [ lan, wan ]
+
+        plot_cols: [ 'host_idx', 'mpc.script_name', 'mpc.script_args.dataset', 'network_type' ]
+        group_cols: [ 'consistency_args.type' ]
+        bar_cols: [ 'mpc_type' ]
+
+        bar_styles:
+
+          - style: {label: ~, edgecolor: black}
+            filter: {"consistency_args.type": ["pc"]}
+
+          - style: {color: "#d5e1a3", edgecolor: grey}
+            filter: { "mpc_type": ["sh"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+          - style: {color: "#e7eec9", edgecolor: grey}
+            filter: { "mpc_type": ["sh"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+          - style: {color: "#4c72b0", edgecolor: grey}
+            filter: { "mpc_type": ["mal"], "$bar_part_col$": [mpc_time_s, global_data_sent_bytes] }
+
+          - style: {color: "#a6b8d8", edgecolor: grey}
+            filter: { "mpc_type": ["mal"], "$bar_part_col$": [auditing_overhead_s, auditing_overhead_bytes] }
+
+
+        legend_fig:
+          format: "{} {}"
+          cols: [ 'mpc_type', "$bar_part_col$" ]
+          kwargs: {loc: "upper center", ncol: 4, bbox_to_anchor: [0.51, 0.075], columnspacing: 3.5,  fancybox: True}
+
+
+        title:
+          format: "{} ({})"
+          plot_cols: [ "mpc.script_name", "mpc.script_args.dataset"]
+
+        group_labels:
+          cols: ['consistency_args.type']
+          format: "{}"
+
+        figure_size: [2.5, 1.8]
+        bar_width: 1.0 #1.2
+
+        labels:
+          mpc_time_s: ""
+          global_data_sent_bytes: ""
+          auditing_overhead_s: "Overhead"
+          auditing_overhead_bytes: "Overhead"
+          n_rounds: ""
+
+          ring: "Ring"
+          ring_split: "Ring"
+          custom_256: "Field"
+
+          audit_sample_knnshapley: "$\\bf{KNNShapley}$"
+          #audit_owner_unlearn: "Camel Unlearning"
+          audit_robustness: "$\\bf{Robustness}$"
+
+          audit_prediction_shap: "$\\bf{SHAP}$"
+          audit_fairness: "$\\bf{Fairness}$"
+
+          adult: "Adult"
+          mnist_full: "MNIST"
+          cifar_alexnet: "C10"
+
+          pc: "$\\bf{Ours}$"
+          cerebro: "PED"
+          sha3: "SHA3"
+          sha3s: "SHA3"
+
+          sh: "SH"
+          mal: "MAL"
+
+        show_debug_info: False
+
+
+        metrics:
+          lan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 60.0 # switch to mins from secs
+            y_label: "LAN Time [min]"
+
+#            y_lim_row: [ [0, 1], [0, 1], [0, 4], [0, 32], [0, 32], [0, 20], [0, 320], [0, 1000]]
+            y_lim_row: [ [0, 4], [0, 320] ]
+            n_y_ticks: 5
+
+            plot_cols_filter:
+              network_type: [ 'lan' ] # I only want lan
+
+
+
+          wan_time:
+            bar_part_cols: [ mpc_time_s, auditing_overhead_s ]
+            y_unit_divider: 3600.0 # switch to hours from secs
+            y_label: "WAN Time [h]"
+
+
+            n_y_ticks: 5
+#            y_lim_row: [ [0, 2.4], [0, 2.4], [0, 4.8], [0, 40], [0, 60], [0, 40], [0, 500], [0, 1600]]
+            y_lim_row: [ [0, 4.8], [0, 500] ]
+
+
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+
+
+          wan_bandwidth:
+            bar_part_cols: [ global_data_sent_bytes, auditing_overhead_bytes ]
+            y_label: "WAN Bandwidth [GB]"
+            y_unit_multiplicator: 1.0e-9 # transform to MB
+
+            plot_cols_filter:
+              network_type: [ 'wan' ] # I only want wan
+            n_y_ticks: 5
+
+#            y_lim_row: [ [0, 1.6], [0, 1.6], [0, 50], [0, 500], [0, 500], [0, 400], [0, 8000], [0, 20000]]
+            y_lim_row: [ [0, 50], [0, 8000] ]

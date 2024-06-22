@@ -1,0 +1,38 @@
+from Compiler.script_utils import output_utils
+
+from Compiler.script_utils.data import data
+
+
+from Compiler import ml
+from Compiler import library
+
+from Compiler.script_utils.audit import rand_smoothing
+
+from Compiler.script_utils import config, timers, input_consistency
+
+from Compiler.script_utils.consistency_cerebro import compute_commitment
+
+
+class CerebroConfig(config.BaseAuditModel):
+
+    pass
+
+program.options_from_args()
+cfg = config.from_program_args(program.args, CerebroConfig)
+
+program.use_trunc_pr = cfg.trunc_pr
+sfix.round_nearest = cfg.round_nearest
+ml.set_n_threads(cfg.n_threads)
+
+library.start_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
+
+input_x = sint(38329283)
+random_r = sint(384882923483823)
+
+library.start_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CEREBRO_VARIABLE)
+compute_commitment(input_x, random_r)
+library.stop_timer(timer_id=timers.TIMER_OUTPUT_CONSISTENCY_CEREBRO_VARIABLE)
+
+library.stop_timer(timer_id=timers.TIMER_OUTPUT_COMMIT)
+
+print_ln("Done computing commitments!")

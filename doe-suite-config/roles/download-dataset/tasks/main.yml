@@ -1,0 +1,37 @@
+
+
+- name: Remove all files in dataset dir
+  ansible.builtin.file:
+      path: "{{ dataset_dir }}"
+      state: absent
+
+- name: Download S3 Dataset
+  ansible.builtin.shell:
+    cmd: "aws s3 sync s3://{{ input_bucket_name }} {{ dataset_dir }}"
+
+
+- name: Find All Zip Files in Dataset Dir
+  ansible.builtin.find:
+    paths: "{{ dataset_dir }}"
+    patterns: "*.zip"
+  register: my_zip_files
+
+
+- name: Create a directory if it does not exist (for each dataset)
+  ansible.builtin.file:
+    path: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
+    state: directory
+    mode: '0755'
+  loop: "{{ my_zip_files.files }}"
+  loop_control:
+    loop_var: file
+
+- name: Unarchive a file that is already on the remote machine
+  ansible.builtin.unarchive:
+    src: "{{ file.path }}"
+    dest: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
+#    creates: "{{ exp_code_dir }}/MP-SPDZ/Player-Data/{{ file.path | basename | split('.') | first }}"
+    remote_src: yes
+  loop: "{{ my_zip_files.files }}"
+  loop_control:
+    loop_var: file
