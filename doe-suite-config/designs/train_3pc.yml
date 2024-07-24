@@ -67,7 +67,7 @@ sh:
       n: 3
       check_status: True
       init_roles:
-#        - setup-base
+        - setup-base
         - setup-consistency
         - setup-spdz-secrets
 #        - download-dataset
@@ -116,7 +116,7 @@ mal:
       n: 3
       check_status: True
       init_roles:
-#        - setup-base
+        - setup-base
         - setup-consistency
         - setup-spdz-secrets
 #        - download-dataset

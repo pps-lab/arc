@@ -62,7 +62,7 @@ audit_robustness_3pc:
       n: 3
       check_status: True
       init_roles:
-#        - setup-base
+        - setup-base
         - setup-consistency
         - setup-spdz-secrets
       $CMD$:
