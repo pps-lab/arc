@@ -4,22 +4,9 @@ instance_type: c5d.metal
 
 ec2_volume_size: 300
 
-#ec2_image_id: ami-0875ac3ffe3b458a3	 # precompiled ami, #4
-#ec2_volume_snapshot: snap-0a2a18f55b6287597
-
-#ec2_image_id: ami-05dc03650ed24f7b0	 # precompiled ami, #7
-#ec2_volume_snapshot: snap-0a08a9c94b0f7d790
-
-#ec2_image_id: ami-0de4fd9c36db9b1a0
-#ec2_volume_snapshot: snap-0107bab5c3090dd87
-
-# Updated for public git urls
-ec2_image_id: ami-0223ecdf25a4da08c
-ec2_volume_snapshot: snap-016b317f34f2b142f
-
-# AMI from Nikolay
-#ec2_image_id: ami-06dd92ecc74fdfb36
-#ec2_volume_snapshot: snap-0cdbc6abc38f4a630
+# Fresh ubuntu 22.04
+ec2_image_id: ami-07652eda1fbad7432
+ec2_volume_snapshot: snap-0e68fbd89b6ec1b9e
 
 instance_role: EC2WithS3Role
 

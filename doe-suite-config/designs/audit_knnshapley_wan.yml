@@ -59,6 +59,7 @@ audit_sample_knnshapley_wan:
       check_status: True
       init_roles:
         - setup-base
+        - download-dataset
         - setup-consistency
         - setup-spdz-secrets
         - setup-network-delay

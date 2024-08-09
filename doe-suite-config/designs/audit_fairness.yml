@@ -62,6 +62,7 @@ audit_fairness_3pc:
       check_status: True
       init_roles:
         - setup-base
+        - download-dataset
         - setup-consistency
         - setup-spdz-secrets
       $CMD$:

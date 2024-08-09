@@ -132,3 +132,12 @@ plots:
 docker:
 	cp ~/.ssh/id_rsa.pub docker_public_key.pub && \
 	docker build --ssh default -f Dockerfile-mpspdz -t mpspdz --progress=plain .
+
+does_config_dir=$(DOES_PROJECT_DIR)/doe-suite-config
+jupyter:
+	@cd "doe-suite" && source ".envrc" && \
+	make install cloud-check && \
+	cd $(does_config_dir) && \
+	(cd ../MP-SPDZ && Scripts/setup-ssl.sh) && \
+    (cd ../MP-SPDZ && Scripts/setup-ssl.sh 10 Player-SSL-Data) && \
+	poetry run jupyter lab --ip 0.0.0.0 --port 8888 --notebook-dir $(PWD)/

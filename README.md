@@ -317,10 +317,10 @@ The results are postprocessed using the ETL pipeline defined in [train.yml](doe-
 
 | Suite                                                                 | Description                                  | Est. Duration |
 |-----------------------------------------------------------------------|----------------------------------------------|---------------|
-| [train_3pc](doe-suite-config/designs/train_3pc.yml)                   | Training for Adult, MNIST and CIFAR-10 (LAN) | 2h            |
-| [train_3pc_wan](doe-suite-config/designs/train_3pc_wan.yml)           | Training for Adult, MNIST and CIFAR-10 (WAN) | 12h           |
-| [train_3pc_bert](doe-suite-config/designs/train_3pc_bert.yml)         | Training for QNLI (LAN)                      | 5h            |
-| [train_3pc_bert_wan](doe-suite-config/designs/train_3pc_bert_wan.yml) | Training for QNLI (WAN)                      | 4h            |
+| [train_3pc](doe-suite-config/designs/train_3pc.yml)                   | Training for Adult, MNIST and CIFAR-10 (LAN) | 8h            |
+| [train_3pc_wan](doe-suite-config/designs/train_3pc_wan.yml)           | Training for Adult, MNIST and CIFAR-10 (WAN) | 14h           |
+| [train_3pc_bert](doe-suite-config/designs/train_3pc_bert.yml)         | Training for QNLI (LAN)                      | 8h            |
+| [train_3pc_bert_wan](doe-suite-config/designs/train_3pc_bert_wan.yml) | Training for QNLI (WAN)                      | 8h            |
 
 </details>
 
@@ -332,11 +332,11 @@ The results are postprocessed using the ETL pipeline defined in [inference.yml](
     <summary>Available Suites</summary>
 
 | Suite                                                                         | Description                                                        | Est. Duration |
-|-------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------|
-| [inference_3pc](doe-suite-config/designs/inference_3pc.yml)                   | Inference for Adult, MNIST and CIFAR-10 (LAN)                      | 1h            |
-| [inference_3pc_wan](doe-suite-config/designs/inference_3pc_wan.yml)           | Inference for Adult, MNIST and CIFAR-10 (WAN)                      | 5h30m         |
-| [inference_3pc_bert](doe-suite-config/designs/inference_3pc_bert.yml)         | Inference for QNLI (LAN)                                           | 1h40m         |
-| [inference_3pc_bert_wan](doe-suite-config/designs/inference_3pc_bert_wan.yml) | Inference for QNLI (WAN)                                           | 6h            |
+|-------------------------------------------------------------------------------|--------------------------------------------------------------------|------------|
+| [inference_3pc](doe-suite-config/designs/inference_3pc.yml)                   | Inference for Adult, MNIST and CIFAR-10 (LAN)                      | 2h         |
+| [inference_3pc_wan](doe-suite-config/designs/inference_3pc_wan.yml)           | Inference for Adult, MNIST and CIFAR-10 (WAN)                      | 6h30m      |
+| [inference_3pc_bert](doe-suite-config/designs/inference_3pc_bert.yml)         | Inference for QNLI (LAN)                                           | 3h         |
+| [inference_3pc_bert_wan](doe-suite-config/designs/inference_3pc_bert_wan.yml) | Inference for QNLI (WAN)                                           | 6h         |
 
 </details>
 
@@ -346,25 +346,23 @@ The results are postprocessed using the ETL pipeline defined in [inference.yml](
 The inference experiments use the MP-SPDZ scripts for auditing defined in [scripts](scripts), starting with `audit_`.
 The results are postprocessed using the ETL pipeline defined in [audit.yml](doe-suite-config/super_etl/audit.yml).
 
-15:04 start
-
 The following experiments are available to run:
 <details>
     <summary>Available Suites</summary>
 
 | Suite                                                                               | Description                                                        | Est. Duration |
 |-------------------------------------------------------------------------------------|--------------------------------------------------------------------|---------------|
-| [audit_robustness](doe-suite-config/designs/audit_robustness.yml)                   | Robustness function (Sec. 5.1) for Adult, MNIST and CIFAR-10 (LAN) | 1h            |
+| [audit_robustness](doe-suite-config/designs/audit_robustness.yml)                   | Robustness function (Sec. 5.1) for Adult, MNIST and CIFAR-10 (LAN) | 2h            |
 | [audit_robustness_wan](doe-suite-config/designs/audit_robustness_wan.yml)           | Robustness function (Sec. 5.1) for Adult, MNIST and CIFAR-10 (WAN) | 6h            |
 | [audit_knnshapley](doe-suite-config/designs/audit_knnshapley.yml)                   | KNNShapley function (Sec. 5.2) for Adult, MNIST and CIFAR-10 (LAN) | 6h            |
 | [audit_knnshapley_wan](doe-suite-config/designs/audit_knnshapley_wan.yml)           | KNNShapley function (Sec. 5.2) for Adult, MNIST and CIFAR-10 (WAN) | 17h           |
 | [audit_fairness](doe-suite-config/designs/audit_fairness.yml)                       | Fairness function (Sec 5.1) for Adult, MNIST, and CIFAR-10 (LAN)   | 30m           |
 | [audit_fairness_wan](doe-suite-config/designs/audit_fairness_wan.yml)               | Fairness function (Sec 5.1) for Adult, MNIST, and CIFAR-10 (WAN)   | 2h40m         |
-| [audit_shap](doe-suite-config/designs/audit_shap.yml)                               | SHAP function (Sec. 5.3) for Adult, MNIST, and CIFAR-10 (LAN)      | 1h            |
+| [audit_shap](doe-suite-config/designs/audit_shap.yml)                               | SHAP function (Sec. 5.3) for Adult, MNIST, and CIFAR-10 (LAN)      | 2h            |
 | [audit_shap_wan](doe-suite-config/designs/audit_shap_wan.yml)                       | SHAP function (Sec. 5.3) for Adult, MNIST, and CIFAR-10 (WAN)      | 8h            |
-| [audit_knnshapley_bert](doe-suite-config/designs/audit_knnshapley_bert.yml)         | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, LAN)         | 2h          |
-| [audit_knnshapley_bert_mal](doe-suite-config/designs/audit_knnshapley_bert_mal.yml) | KNNShapley function (Sec. 5.2) for QNLI (Malicious, LAN)           | 4h          |
-| [audit_knnshapley_bert_wan](doe-suite-config/designs/audit_knnshapley_bert_wan.yml) | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, WAN)         | 2h          |
+| [audit_knnshapley_bert](doe-suite-config/designs/audit_knnshapley_bert.yml)         | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, LAN)         | 4h            |
+| [audit_knnshapley_bert_mal](doe-suite-config/designs/audit_knnshapley_bert_mal.yml) | KNNShapley function (Sec. 5.2) for QNLI (Malicious, LAN)           | 6h            |
+| [audit_knnshapley_bert_wan](doe-suite-config/designs/audit_knnshapley_bert_wan.yml) | KNNShapley function (Sec. 5.2) for QNLI (Semi-honest, WAN)         | 2h            |
 
 </details>
 

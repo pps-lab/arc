@@ -37,6 +37,7 @@
       - libboost-dev
       - libboost-thread-dev
       - libboost-iostreams-dev
+      - libboost-filesystem-dev
       - libntl-dev
       - libgmp-dev
       - libsodium-dev
@@ -48,6 +49,7 @@
       - cmake
       - yasm
       - pkg-config
+      - libomp-dev
     update_cache: yes
     state: present
 
@@ -120,33 +122,33 @@
 - name: "Compile MP-SPDZ (if some files dont exist)"
 #  when: mpspdz_compiled.stat.exists == False
   block:
-#    - name: "Make cmake 3.15" # TODO: Is this necessary?
-#      community.general.make:
-#        chdir: "{{ mpspdz_dir }}"
-#        jobs: "8"
-#        target: "cmake"
-    # TODO: compiling cmake and immediately doing the next module, messes it up
-#    - name: "Make boost 1.81"
-#      community.general.make:
-#        chdir: "{{ mpspdz_dir }}"
-#        jobs: "36"
-#        target: "boost"
+    - name: "Make cmake 3.15" # TODO: Is this necessary?
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "8"
+        target: "cmake"
+
+    - name: "Make boost 1.81"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "36"
+        target: "boost"
 #    # SOMEHOW THIS LIBOTE IS FAILING??
 #    - name: "Compile libote"
 #      community.general.make:
 #        chdir: "{{ mpspdz_dir }}"
 #        jobs: "36"
 #        target: "libote"
-#    - name: "Compile MP-SPDZ tldr to get all libraries"
-#      community.general.make:
-#        chdir: "{{ mpspdz_dir }}"
-#        jobs: "36"
-#        target: "tldr"
-#    - name: "Install libff"
-#      community.general.make:
-#        chdir: "{{ mpspdz_dir }}"
-#        jobs: "36"
-#        target: "libff"
+    - name: "Compile MP-SPDZ tldr to get all libraries"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "36"
+        target: "tldr"
+    - name: "Install libff"
+      community.general.make:
+        chdir: "{{ mpspdz_dir }}"
+        jobs: "36"
+        target: "libff"
     #  when: have_compiled_res.stat.exists == False
 
     - name: "Compile MP-SPDZ all"
@@ -262,13 +264,13 @@
 - name: Install Poetry
   when: poetry_stat.stat.exists == False
   block:
-    - name: Update repositories cache and install required packages
-      become: True
-      apt:
-        pkg:
-          - python3.9
-          - python3.9-venv
-        update_cache: yes
+#    - name: Update repositories cache and install required packages
+#      become: True
+#      apt:
+#        pkg:
+#          - python3.9
+#          - python3.9-venv
+#        update_cache: yes
 
     - name: Download get-pip.py
       ansible.builtin.get_url:
@@ -277,7 +279,7 @@
 
     - name: Install pip for python (via script)
       ansible.builtin.shell:
-        cmd: python3.9 /tmp/get-pip.py
+        cmd: python3 /tmp/get-pip.py
 
     - name: Download install-poetry.py
       ansible.builtin.get_url:
@@ -286,7 +288,7 @@
 
     - name: Install poetry with script install-poetry.py
       ansible.builtin.shell:
-        cmd: python3.9 /tmp/install-poetry.py
+        cmd: python3 /tmp/install-poetry.py
 
 - name: make path to poetry available in variable
   set_fact:
