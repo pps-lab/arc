@@ -209,12 +209,12 @@ MY_LDLIBS += -L/usr/local/opt/openssl/lib -L/opt/homebrew/lib -L/opt/homebrew/op
 
 **Datasets** You must store the relevant datasets in the `MP-SPDZ/Player-Data` directory.
 We provide the datasets from the paper, preprocessed to work with MP-SPDZ,
-in a public s3 bucket at `http://pps-mpspdz-data.s3.amazonaws.com/{DATASET_NAME}.zip`.
+in a public s3 bucket at `http://arc-mpspdz-data.s3.amazonaws.com/{DATASET_NAME}.zip`.
 Available datasets are: `adult_3p`, `mnist_full_3party`, `cifar_alexnet_3party`.
 For the QNLI dataset, the identifier is `glue_qnli_bert` but the data will be loaded by the compilation script so there is no need to download it.
 ```shell
 mkdir -p MP-SPDZ/Player-Data
-wget http://pps-mpspdz-data.s3.amazonaws.com/adult_3p.zip -O adult_3p.zip
+wget http://arc-mpspdz-data.s3.amazonaws.com/adult_3p.zip -O adult_3p.zip
 unzip -o adult_3p.zip -d MP-SPDZ/Player-Data/adult_3p
 ```
 Then run one of the tasks with the following command:
@@ -257,7 +257,7 @@ For each result shown in the paper, we have a separate section that contains:
 1. Code to create and display the plot shown in the paper and corresponding dataframe based on the output files from the benchmarks (stored in `doe-suite-results-cameraready`).
    These files can be downloaded from this polybox:
    ```shell
-   wget https://polybox.ethz.ch/index.php/s/XyjZP7QuXaPWft3/download -O doe-suite-results-cameraready.zip
+   wget https://polybox.ethz.ch/index.php/s/U6mfbqch0pmSg9U/download -O doe-suite-results-cameraready.zip
    unzip -o doe-suite-results-cameraready.zip -d .
    ```
 
