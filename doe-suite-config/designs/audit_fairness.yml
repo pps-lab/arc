@@ -64,7 +64,7 @@ audit_fairness_3pc:
         - setup-base
         - download-dataset
         - setup-consistency
-        - setup-spdz-secrets
+#        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"

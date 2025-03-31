@@ -70,7 +70,6 @@ wan:
         - setup-base
         - download-dataset
         - setup-consistency
-        - setup-spdz-secrets
         - setup-network-delay
       #        - download-dataset
       #        - setup-largeprimes

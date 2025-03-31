@@ -87,11 +87,11 @@
 #    path: "{{ mpspdz_dir }}/CONFIG"
 #    regexp: '-DPREP_DIR="Player-Data\/"'
 #    replace: '-DPREP_DIR="Player-Prep-Data/"'
-- name: Update CONFIG to customize player-ssl dir
-  ansible.builtin.replace:
-    path: "{{ mpspdz_dir }}/CONFIG"
-    regexp: '-DSSL_DIR="Player-Data\/"'
-    replace: '-DSSL_DIR="Player-SSL-Data/"'
+#- name: Update CONFIG to customize player-ssl dir
+#  ansible.builtin.replace:
+#    path: "{{ mpspdz_dir }}/CONFIG"
+#    regexp: '-DSSL_DIR="Player-Data\/"'
+#    replace: '-DSSL_DIR="Player-SSL-Data/"'
 
 # TODO: Look into this Player-Prep-Data dir ??
 - name: Update CONFIG to customize player-data dir
@@ -100,15 +100,20 @@
     regexp: '-DPREP_DIR="Player-Prep-Data\/"'
     replace: '-DPREP_DIR="Player-Data/"'
 
+- name: Remove old CONFIG.mine
+  ansible.builtin.file:
+    path: "{{ mpspdz_dir }}/CONFIG.mine"
+    state: absent
+
 - name: "Create Player-Data/ folder"
   ansible.builtin.file:
     path: "{{ mpspdz_dir }}/Player-Data"
     state: directory
 
-- name: "Create Player-SSL-Data/ folder"
-  ansible.builtin.file:
-    path: "{{ mpspdz_dir }}/Player-SSL-Data"
-    state: directory
+#- name: "Create Player-SSL-Data/ folder"
+#  ansible.builtin.file:
+#    path: "{{ mpspdz_dir }}/Player-SSL-Data"
+#    state: directory
 
 - name: "Create Player-Prep-Data/ folder"
   ansible.builtin.file:
@@ -127,6 +132,12 @@
         chdir: "{{ mpspdz_dir }}"
         jobs: "8"
         target: "cmake"
+
+    - name: Manually download boost (old link is broken from libOTe)
+      ansible.builtin.get_url:
+        url: https://archives.boost.io/release/1.83.0/source/boost_1_83_0.tar.bz2
+        dest: "{{ mpspdz_dir }}/deps/libOTe/cryptoTools/thirdparty/boost_1_83_0.tar.bz2"
+#        force: true
 
     - name: "Make boost 1.81"
       community.general.make:
@@ -197,7 +208,7 @@
 - name: Copy SSL Certificates
   ansible.builtin.copy:
     src: "{{ does_project_dir }}/MP-SPDZ/Player-SSL-Data/"
-    dest: "{{ mpspdz_dir }}/Player-SSL-Data/"
+    dest: "{{ mpspdz_dir }}/Player-Data/"
 
 # For some reason the above copy command gives checksum errors in some cases
 #- name: Copy SSL Certificates with rsync

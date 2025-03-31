@@ -73,7 +73,6 @@ audit_sample_knnshapley:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"

@@ -110,7 +110,6 @@ audit_sample_knnshapley_wan_mal:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
         - setup-network-delay
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"

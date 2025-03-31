@@ -21,7 +21,6 @@ two:
         - setup-base
         - setup-consistency
         - download-dataset
-        - setup-spdz-secrets
 #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
       $CMD$:

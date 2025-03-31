@@ -73,7 +73,6 @@ wan_sh:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
         - setup-network-delay
       #        - download-dataset
       #        - setup-largeprimes

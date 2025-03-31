@@ -64,7 +64,6 @@ audit_sample_knnshapley:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"
@@ -107,7 +106,6 @@ audit_sample_knnshapley_wan:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
         - setup-network-delay
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
@@ -151,7 +149,6 @@ audit_robustness_3pc:
       init_roles:
         - setup-base
         - setup-consistency
-        - setup-spdz-secrets
       $CMD$:
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 0) %]"
         - main: "[% my_run.cmd_mpspdz | replace('<PLAYER-ID>', 1) %]"

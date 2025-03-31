@@ -70,7 +70,6 @@ sh:
         - setup-base
         - download-dataset
         - setup-consistency
-        - setup-spdz-secrets
 #        - download-dataset
         #        - setup-largeprimes
 #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
@@ -120,7 +119,6 @@ mal:
         - setup-base
         - download-dataset
         - setup-consistency
-        - setup-spdz-secrets
 #        - download-dataset
       #        - setup-largeprimes
       #        - setup-network-delay # adjust latency + bandwidth limit -> doe-suite-config/roles/setup-network-delay/vars/main.yml
