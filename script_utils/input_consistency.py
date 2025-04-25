@@ -61,7 +61,10 @@ def compute_and_output_poly_array(input_objects: InputObject, player_input_id, n
         for i in range(len(inputs)):
             size = inputs[i].total_size()
             l += size
-            fmt.append({ "type": inputs[i].value_type.__name__, "length": size })
+            if inputs[i].value_type.__name__ == "my_squant":
+                fmt.append({ "type": "sfix", "length": size })
+            else:
+                fmt.append({ "type": inputs[i].value_type.__name__, "length": size })
 
         # full_arr = Array(l, sint)
         # idx = 0
